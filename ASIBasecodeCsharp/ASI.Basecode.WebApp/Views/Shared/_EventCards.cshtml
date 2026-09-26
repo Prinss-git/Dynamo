@@ -1,0 +1,52 @@
+﻿@model List<EventViewModel>
+@if (!Model.Any())
+{
+    <div class="empty-state"><i class="fa-regular fa-calendar"></i>No events to show.</div>
+}
+else
+{
+    <div class="event-grid">
+        @foreach (var e in Model)
+        {
+            <div class="event-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="event-org">@e.OrganizationName</span>
+                    @BadgeHelper.Badge(e.Status)
+                </div>
+                <h3>@e.Title</h3>
+                <div class="event-meta">
+                    <span><i class="fa-regular fa-calendar"></i> @e.StartTime.ToString("ddd, MMM d, yyyy h:mm tt")</span>
+                    <span><i class="fa-solid fa-location-dot"></i> @e.Venue</span>
+                    <span>
+                        <i class="fa-solid fa-users"></i>
+                        @if (e.IsUnlimited)
+                        {
+                            @:@e.RegisteredCount registered (no limit)
+                        }
+                        else
+                        {
+                            @:@e.RegisteredCount / @e.Capacity registered
+                        }
+                    </span>
+                    @if (e.IsRegistrationOpen)
+                    {
+                        <span><i class="fa-regular fa-clock"></i> Register until @e.RegistrationDeadline.ToString("MMM d, h:mm tt")</span>
+                    }
+                </div>
+                <div class="event-footer">
+                    <span>
+                        @if (e.MyRegistrationStatus.HasValue && e.MyRegistrationStatus != RegistrationStatus.Cancelled)
+                        {
+                            @BadgeHelper.Badge(e.MyRegistrationStatus)
+                        }
+                        else if (e.IsRegistrationOpen && e.SlotsLeft == 0)
+                        {
+                            <span class="small text-muted">Full – waitlist available</span>
+                        }
+                    </span>
+                    <a class="btn btn-sm btn-outline-primary" asp-controller="Event" asp-action="Details" asp-route-id="@e.Id">View details</a>
+                </div>
+            </div>
+        }
+    </div>
+}

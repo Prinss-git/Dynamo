@@ -34,5 +34,18 @@
         /// authentication Issuer
         /// </summary>
         public const string Issuer = "asi.basecode";
+
+        /// <summary>
+        /// Role names used by [Authorize(Roles = ...)]
+        /// </summary>
+        public const string RoleAdmin = "Admin";
+        public const string RoleOfficer = "Officer";
+        public const string RoleStudent = "Student";
+        public const string RolesManagers = "Admin,Officer";
+
+        /// <summary>
+        /// Claim that holds the numeric primary key of the signed-in user
+        /// </summary>
+        public const string ClaimAccountId = "AccountId";
     }
 }

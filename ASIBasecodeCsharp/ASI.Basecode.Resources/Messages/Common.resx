@@ -117,4 +117,34 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="SaveSuccess" xml:space="preserve">
+    <value>Record saved successfully.</value>
+  </data>
+  <data name="DeleteSuccess" xml:space="preserve">
+    <value>Record deleted successfully.</value>
+  </data>
+  <data name="RegisterAccountSuccess" xml:space="preserve">
+    <value>Account created. You can now log in.</value>
+  </data>
+  <data name="EventRegisterSuccess" xml:space="preserve">
+    <value>You are registered for this event.</value>
+  </data>
+  <data name="EventWaitlisted" xml:space="preserve">
+    <value>The event is full. You have been added to the waitlist.</value>
+  </data>
+  <data name="RegistrationCancelled" xml:space="preserve">
+    <value>Your registration has been cancelled.</value>
+  </data>
+  <data name="CheckInSuccess" xml:space="preserve">
+    <value>Checked in successfully.</value>
+  </data>
+  <data name="CheckOutSuccess" xml:space="preserve">
+    <value>Checked out successfully.</value>
+  </data>
+  <data name="AbsenteesMarked" xml:space="preserve">
+    <value>Event completed. Attendees who did not check in were marked absent.</value>
+  </data>
+  <data name="StatusUpdated" xml:space="preserve">
+    <value>Status updated successfully.</value>
+  </data>
 </root>

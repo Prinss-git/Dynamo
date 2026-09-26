@@ -1,0 +1,21 @@
+﻿@model List<EventViewModel>
+@{
+    ViewData["Title"] = "Browse Events";
+    var showPast = ViewBag.ShowPast == true;
+}
+<div class="page-header">
+    <div>
+        <h1>Events</h1>
+        <p class="subtitle">@(showPast ? "All published events" : "Upcoming events from student organizations")</p>
+    </div>
+    <form method="get" class="filter-bar">
+        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search title, venue or organization" />
+        <div class="custom-control custom-checkbox mx-1">
+            <input type="checkbox" class="custom-control-input" id="showPast" name="showPast" value="true" @(showPast ? "checked" : "") onchange="this.form.submit()" />
+            <label class="custom-control-label" for="showPast">Include past events</label>
+        </div>
+        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    </form>
+</div>
+
+@await Html.PartialAsync("_EventCards", Model)

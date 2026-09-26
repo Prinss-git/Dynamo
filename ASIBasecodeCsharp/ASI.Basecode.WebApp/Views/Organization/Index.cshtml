@@ -1,0 +1,62 @@
+﻿@model List<OrganizationViewModel>
+@{
+    ViewData["Title"] = "Organizations";
+}
+<div class="page-header">
+    <div>
+        <h1>Organizations</h1>
+        <p class="subtitle">Student organizations and their officers</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus"></i> New Organization</a>
+</div>
+
+<div class="panel">
+    <form method="get" class="filter-bar mb-3">
+        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search name or acronym" />
+        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    </form>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><i class="fa-solid fa-people-group"></i>No organizations found.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-app">
+                <thead>
+                    <tr><th>Organization</th><th>Adviser</th><th>Members</th><th>Events</th><th>Status</th><th class="text-right">Actions</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@o.Name</strong> @if (!string.IsNullOrEmpty(o.Acronym)) { <span class="text-muted">(@o.Acronym)</span> }
+                                @if (!string.IsNullOrEmpty(o.Description))
+                                {
+                                    <div class="small text-muted text-truncate" style="max-width: 380px">@o.Description</div>
+                                }
+                            </td>
+                            <td>@o.Adviser</td>
+                            <td>@o.MemberCount</td>
+                            <td>@o.EventCount</td>
+                            <td>@BadgeHelper.Badge(o.IsActive ? "Active" : "Inactive", o.IsActive ? "open" : "draft")</td>
+                            <td class="text-right text-nowrap">
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Members" asp-route-id="@o.Id" title="Members"><i class="fa-solid fa-users"></i></a>
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@o.Id" title="Edit"><i class="fa-solid fa-pen"></i></a>
+                                @if (o.EventCount == 0)
+                                {
+                                    <form asp-action="Delete" method="post" class="inline-form" data-confirm="Delete '@o.Name'? Its member list will also be removed.">
+                                        <input type="hidden" name="id" value="@o.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

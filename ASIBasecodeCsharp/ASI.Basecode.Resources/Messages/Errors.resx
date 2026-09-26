@@ -123,4 +123,67 @@
   <data name="UserExists" xml:space="preserve">
     <value>UserId already exists!</value>
   </data>
+  <data name="InvalidLogin" xml:space="preserve">
+    <value>Incorrect username or password.</value>
+  </data>
+  <data name="AccountInactive" xml:space="preserve">
+    <value>Your account has been deactivated. Please contact an administrator.</value>
+  </data>
+  <data name="StudentNumberExists" xml:space="preserve">
+    <value>Student number is already registered.</value>
+  </data>
+  <data name="NotFound" xml:space="preserve">
+    <value>The requested record was not found.</value>
+  </data>
+  <data name="NotAuthorized" xml:space="preserve">
+    <value>You are not allowed to manage this record.</value>
+  </data>
+  <data name="OrganizationExists" xml:space="preserve">
+    <value>An organization with the same name already exists.</value>
+  </data>
+  <data name="OrganizationHasEvents" xml:space="preserve">
+    <value>Organization cannot be deleted because it already has events.</value>
+  </data>
+  <data name="AlreadyMember" xml:space="preserve">
+    <value>User is already a member of this organization.</value>
+  </data>
+  <data name="InvalidEventSchedule" xml:space="preserve">
+    <value>Event end time must be later than the start time.</value>
+  </data>
+  <data name="InvalidDeadline" xml:space="preserve">
+    <value>Registration deadline must be on or before the event start time.</value>
+  </data>
+  <data name="CapacityBelowRegistered" xml:space="preserve">
+    <value>Capacity cannot be lower than the number of registered attendees.</value>
+  </data>
+  <data name="EventHasRegistrations" xml:space="preserve">
+    <value>Event cannot be deleted because it already has registrations. Cancel the event instead.</value>
+  </data>
+  <data name="RegistrationClosed" xml:space="preserve">
+    <value>Registration for this event is closed.</value>
+  </data>
+  <data name="AlreadyRegistered" xml:space="preserve">
+    <value>You are already registered for this event.</value>
+  </data>
+  <data name="CannotCancelRegistration" xml:space="preserve">
+    <value>This registration can no longer be cancelled.</value>
+  </data>
+  <data name="InvalidRegistrationCode" xml:space="preserve">
+    <value>No registration matches that code or student number for this event.</value>
+  </data>
+  <data name="RegistrationNotActive" xml:space="preserve">
+    <value>This registration is not active (cancelled or waitlisted).</value>
+  </data>
+  <data name="AlreadyCheckedIn" xml:space="preserve">
+    <value>Attendee is already checked in.</value>
+  </data>
+  <data name="NotCheckedIn" xml:space="preserve">
+    <value>Attendee has not checked in yet.</value>
+  </data>
+  <data name="AttendanceNotAllowed" xml:space="preserve">
+    <value>Attendance can only be recorded while the event is Open or Closed.</value>
+  </data>
+  <data name="InvalidStatusChange" xml:space="preserve">
+    <value>The event status cannot be changed to the selected value.</value>
+  </data>
 </root>

@@ -59,5 +59,95 @@ namespace ASI.Basecode.Resources.Messages {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Record saved successfully..
+        /// </summary>
+        public static string SaveSuccess {
+            get {
+                return ResourceManager.GetString("SaveSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Record deleted successfully..
+        /// </summary>
+        public static string DeleteSuccess {
+            get {
+                return ResourceManager.GetString("DeleteSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Account created. You can now log in..
+        /// </summary>
+        public static string RegisterAccountSuccess {
+            get {
+                return ResourceManager.GetString("RegisterAccountSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are registered for this event..
+        /// </summary>
+        public static string EventRegisterSuccess {
+            get {
+                return ResourceManager.GetString("EventRegisterSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The event is full. You have been added to the waitlist..
+        /// </summary>
+        public static string EventWaitlisted {
+            get {
+                return ResourceManager.GetString("EventWaitlisted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your registration has been cancelled..
+        /// </summary>
+        public static string RegistrationCancelled {
+            get {
+                return ResourceManager.GetString("RegistrationCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Checked in successfully..
+        /// </summary>
+        public static string CheckInSuccess {
+            get {
+                return ResourceManager.GetString("CheckInSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Checked out successfully..
+        /// </summary>
+        public static string CheckOutSuccess {
+            get {
+                return ResourceManager.GetString("CheckOutSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Event completed. Attendees who did not check in were marked absent..
+        /// </summary>
+        public static string AbsenteesMarked {
+            get {
+                return ResourceManager.GetString("AbsenteesMarked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Status updated successfully..
+        /// </summary>
+        public static string StatusUpdated {
+            get {
+                return ResourceManager.GetString("StatusUpdated", resourceCulture);
+            }
+        }
     }
 }

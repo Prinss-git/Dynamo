@@ -1,0 +1,51 @@
+﻿@model RegistrationViewModel
+@{
+    ViewData["Title"] = "Event Ticket";
+}
+<div class="page-header no-print">
+    <div>
+        <h1>Event Ticket</h1>
+        <p class="subtitle">Show this QR code to an officer at the venue to check in</p>
+    </div>
+    <div class="d-flex" style="gap: 8px">
+        <button type="button" class="btn btn-outline-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+        <a class="btn btn-outline-secondary" asp-action="MyEvents">Back</a>
+    </div>
+</div>
+
+<div class="panel ticket">
+    <div class="text-uppercase small font-weight-bold" style="color: var(--app-primary)">@Model.OrganizationName</div>
+    <h2 class="h4 mt-1">@Model.EventTitle</h2>
+    <p class="text-muted mb-3">
+        @Model.StartTime.ToString("dddd, MMMM d, yyyy h:mm tt")<br />
+        @Model.Venue
+    </p>
+
+    @if (Model.QrCodeSvg != null)
+    {
+        <div class="qr">@Html.Raw(Model.QrCodeSvg)</div>
+        <div class="code mt-2">@Model.RegistrationCode</div>
+        <p class="small text-muted mt-1">Registration code</p>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            This registration is @Model.Status.ToString().ToLower(), so there is no check-in QR code.
+        </div>
+    }
+
+    <hr />
+    <dl class="detail-list text-left">
+        <dt>Name</dt>
+        <dd>@Model.StudentName</dd>
+        <dt>Student number</dt>
+        <dd>@Model.StudentNumber</dd>
+        <dt>Status</dt>
+        <dd>@BadgeHelper.Badge(Model.Status)</dd>
+        @if (Model.AttendanceStatus.HasValue)
+        {
+            <dt>Attendance</dt>
+            <dd>@BadgeHelper.Badge(Model.AttendanceStatus)</dd>
+        }
+    </dl>
+</div>

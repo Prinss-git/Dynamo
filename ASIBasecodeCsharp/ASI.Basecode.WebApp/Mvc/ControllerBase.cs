@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using ASI.Basecode.Resources.Constants;
+using ASI.Basecode.Services.ServiceModels;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -9,6 +11,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using static ASI.Basecode.Resources.Constants.Enums;
 
 namespace ASI.Basecode.WebApp.Mvc
 {
@@ -75,6 +78,38 @@ namespace ASI.Basecode.WebApp.Mvc
         public string Supervisor
         {
             get { return User.FindFirst(ClaimTypes.Role).Value; }
+        }
+
+        /// <summary>
+        /// Signed-in user (primary key, username and role) for service-level permission checks.
+        /// </summary>
+        public CurrentUserModel CurrentUser
+        {
+            get
+            {
+                return new CurrentUserModel
+                {
+                    AccountId = int.Parse(User.FindFirst(Const.ClaimAccountId).Value),
+                    UserId = User.FindFirst(ClaimTypes.NameIdentifier).Value,
+                    Role = Enum.Parse<Role>(User.FindFirst(ClaimTypes.Role).Value),
+                };
+            }
+        }
+
+        /// <summary>
+        /// Shows a success toast on the next page.
+        /// </summary>
+        protected void NotifySuccess(string message)
+        {
+            TempData["SuccessMessage"] = message;
+        }
+
+        /// <summary>
+        /// Shows an error toast on the next page.
+        /// </summary>
+        protected void NotifyError(string message)
+        {
+            TempData["ErrorMessage"] = message;
         }
 
         /// <summary>

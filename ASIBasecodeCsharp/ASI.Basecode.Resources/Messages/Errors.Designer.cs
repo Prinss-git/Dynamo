@@ -77,5 +77,194 @@ namespace ASI.Basecode.Resources.Messages {
                 return ResourceManager.GetString("UserExists", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incorrect username or password..
+        /// </summary>
+        public static string InvalidLogin {
+            get {
+                return ResourceManager.GetString("InvalidLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your account has been deactivated. Please contact an administrator..
+        /// </summary>
+        public static string AccountInactive {
+            get {
+                return ResourceManager.GetString("AccountInactive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Student number is already registered..
+        /// </summary>
+        public static string StudentNumberExists {
+            get {
+                return ResourceManager.GetString("StudentNumberExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The requested record was not found..
+        /// </summary>
+        public static string NotFound {
+            get {
+                return ResourceManager.GetString("NotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are not allowed to manage this record..
+        /// </summary>
+        public static string NotAuthorized {
+            get {
+                return ResourceManager.GetString("NotAuthorized", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An organization with the same name already exists..
+        /// </summary>
+        public static string OrganizationExists {
+            get {
+                return ResourceManager.GetString("OrganizationExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Organization cannot be deleted because it already has events..
+        /// </summary>
+        public static string OrganizationHasEvents {
+            get {
+                return ResourceManager.GetString("OrganizationHasEvents", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to User is already a member of this organization..
+        /// </summary>
+        public static string AlreadyMember {
+            get {
+                return ResourceManager.GetString("AlreadyMember", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Event end time must be later than the start time..
+        /// </summary>
+        public static string InvalidEventSchedule {
+            get {
+                return ResourceManager.GetString("InvalidEventSchedule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Registration deadline must be on or before the event start time..
+        /// </summary>
+        public static string InvalidDeadline {
+            get {
+                return ResourceManager.GetString("InvalidDeadline", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Capacity cannot be lower than the number of registered attendees..
+        /// </summary>
+        public static string CapacityBelowRegistered {
+            get {
+                return ResourceManager.GetString("CapacityBelowRegistered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Event cannot be deleted because it already has registrations. Cancel the event instead..
+        /// </summary>
+        public static string EventHasRegistrations {
+            get {
+                return ResourceManager.GetString("EventHasRegistrations", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Registration for this event is closed..
+        /// </summary>
+        public static string RegistrationClosed {
+            get {
+                return ResourceManager.GetString("RegistrationClosed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are already registered for this event..
+        /// </summary>
+        public static string AlreadyRegistered {
+            get {
+                return ResourceManager.GetString("AlreadyRegistered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This registration can no longer be cancelled..
+        /// </summary>
+        public static string CannotCancelRegistration {
+            get {
+                return ResourceManager.GetString("CannotCancelRegistration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No registration matches that code or student number for this event..
+        /// </summary>
+        public static string InvalidRegistrationCode {
+            get {
+                return ResourceManager.GetString("InvalidRegistrationCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This registration is not active (cancelled or waitlisted)..
+        /// </summary>
+        public static string RegistrationNotActive {
+            get {
+                return ResourceManager.GetString("RegistrationNotActive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Attendee is already checked in..
+        /// </summary>
+        public static string AlreadyCheckedIn {
+            get {
+                return ResourceManager.GetString("AlreadyCheckedIn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Attendee has not checked in yet..
+        /// </summary>
+        public static string NotCheckedIn {
+            get {
+                return ResourceManager.GetString("NotCheckedIn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Attendance can only be recorded while the event is Open or Closed..
+        /// </summary>
+        public static string AttendanceNotAllowed {
+            get {
+                return ResourceManager.GetString("AttendanceNotAllowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The event status cannot be changed to the selected value..
+        /// </summary>
+        public static string InvalidStatusChange {
+            get {
+                return ResourceManager.GetString("InvalidStatusChange", resourceCulture);
+            }
+        }
     }
 }

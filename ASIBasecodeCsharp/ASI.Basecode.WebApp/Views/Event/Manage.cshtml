@@ -1,0 +1,72 @@
+﻿@model List<EventViewModel>
+@{
+    ViewData["Title"] = "Manage Events";
+    var selectedStatus = ViewBag.Status as EventStatus?;
+}
+<div class="page-header">
+    <div>
+        <h1>Manage Events</h1>
+        <p class="subtitle">Events of the organizations you manage</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus"></i> New Event</a>
+</div>
+
+<div class="panel">
+    <form method="get" class="filter-bar mb-3">
+        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search events" />
+        <select name="status" class="form-control" style="max-width: 180px" onchange="this.form.submit()">
+            <option value="">All statuses</option>
+            @foreach (EventStatus s in Enum.GetValues(typeof(EventStatus)))
+            {
+                <option value="@s" selected="@(selectedStatus == s)">@s</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    </form>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><i class="fa-regular fa-calendar"></i>No events found. Create one to get started.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-app">
+                <thead>
+                    <tr><th>Event</th><th>When</th><th>Registered</th><th>Waitlist</th><th>Attended</th><th>Status</th><th class="text-right">Actions</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model)
+                    {
+                        <tr>
+                            <td><a asp-action="Details" asp-route-id="@e.Id">@e.Title</a><div class="small text-muted">@e.OrganizationName · @e.Venue</div></td>
+                            <td class="text-nowrap">@e.StartTime.ToString("MMM d, yyyy")<div class="small text-muted">@e.StartTime.ToString("h:mm tt") – @e.EndTime.ToString("h:mm tt")</div></td>
+                            <td>@e.RegisteredCount@(e.IsUnlimited ? "" : " / " + e.Capacity)</td>
+                            <td>@e.WaitlistedCount</td>
+                            <td>@e.AttendedCount</td>
+                            <td>@BadgeHelper.Badge(e.Status)</td>
+                            <td class="text-right text-nowrap">
+                                @if (e.Status == EventStatus.Open || e.Status == EventStatus.Closed)
+                                {
+                                    <a class="btn btn-sm btn-primary" asp-controller="Attendance" asp-action="Index" asp-route-eventId="@e.Id" title="Take attendance"><i class="fa-solid fa-qrcode"></i></a>
+                                }
+                                @if (e.Status != EventStatus.Completed && e.Status != EventStatus.Cancelled)
+                                {
+                                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@e.Id" title="Edit"><i class="fa-solid fa-pen"></i></a>
+                                }
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Report" asp-action="Event" asp-route-id="@e.Id" title="Report"><i class="fa-solid fa-chart-column"></i></a>
+                                @if (e.RegisteredCount == 0 && e.WaitlistedCount == 0)
+                                {
+                                    <form asp-action="Delete" method="post" class="inline-form" data-confirm="Delete '@e.Title'?">
+                                        <input type="hidden" name="id" value="@e.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
