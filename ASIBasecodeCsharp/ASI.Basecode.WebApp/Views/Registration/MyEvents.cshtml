@@ -1,74 +1,93 @@
 ﻿@model List<RegistrationViewModel>
 @{
-    ViewData["Title"] = "My Registrations";
+    ViewData["Title"] = "My passes";
+    var now = DateTime.Now;
+    var current = Model.Where(r => r.Status != RegistrationStatus.Cancelled && r.EndTime >= now && r.EventStatus != EventStatus.Cancelled)
+                       .OrderBy(r => r.StartTime).ToList();
+    var history = Model.Except(current).ToList();
 }
-<div class="page-header">
+<div class="page-head">
     <div>
-        <h1>My Registrations</h1>
-        <p class="subtitle">Events you registered for and your attendance record</p>
+        <h1 class="page-title">My passes</h1>
+        <p class="page-sub">Show a pass's QR code at the door to check in.</p>
     </div>
-    <a class="btn btn-outline-primary" asp-controller="Event" asp-action="Index"><i class="fa-solid fa-calendar-days"></i> Browse events</a>
+    <div class="page-actions">
+        <a class="btn btn-outline" asp-controller="Event" asp-action="Index"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Browse events</a>
+    </div>
 </div>
 
-<div class="panel">
-    @if (!Model.Any())
-    {
-        <div class="empty-state"><i class="fa-solid fa-ticket"></i>You haven't registered for any events yet.</div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-app">
-                <thead>
-                    <tr><th>Event</th><th>When</th><th>Registration</th><th>Attendance</th><th class="text-right">Actions</th></tr>
-                </thead>
+@if (!current.Any())
+{
+    <div class="sheet">
+        @await Html.PartialAsync("_Empty", ("No passes yet", "Register for an event and its pass lands here, ready to show at the door."))
+    </div>
+}
+else
+{
+    <div class="rack" style="margin-bottom:28px">
+        @foreach (var r in current)
+        {
+            <article class="pass @(r.Status == RegistrationStatus.Registered ? "is-held" : "")">
+                <div class="pass-band"><div class="pass-org">@r.OrganizationName</div></div>
+                <div class="pass-body">
+                    <h2 class="pass-title"><a asp-controller="Event" asp-action="Details" asp-route-id="@r.EventId">@r.EventTitle</a></h2>
+                    <dl class="pass-fields">
+                        <div><dt class="label">Date</dt><dd>@r.StartTime.ToString("ddd, MMM d")</dd></div>
+                        <div><dt class="label">Time</dt><dd class="num">@r.StartTime.ToString("h:mm tt")</dd></div>
+                        <div style="grid-column:1/-1"><dt class="label">Venue</dt><dd>@r.Venue</dd></div>
+                    </dl>
+                    <div class="row-actions" style="margin:16px 0 6px;position:relative;z-index:1;flex-wrap:wrap">
+                        @if (r.Status == RegistrationStatus.Registered)
+                        {
+                            <a class="btn btn-primary btn-sm" asp-action="Ticket" asp-route-id="@r.Id"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Show pass</a>
+                        }
+                        @if (r.CanCancel)
+                        {
+                            <form asp-action="Cancel" method="post" class="inline-form" data-confirm="Give up your spot for '@r.EventTitle'?">
+                                <input type="hidden" name="id" value="@r.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+                <div class="pass-foot">
+                    <span class="label">@(r.Status == RegistrationStatus.Waitlisted ? "On the waitlist" : "Valid pass")</span>
+                    @BadgeHelper.Badge(r.AttendanceStatus.HasValue ? (Enum)r.AttendanceStatus : r.Status)
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@if (history.Any())
+{
+    <section class="sheet">
+        <div class="sheet-head"><h2 class="sheet-title">Attendance history</h2></div>
+        <div class="ledger-wrap">
+            <table class="ledger ledger--stack">
+                <thead><tr><th>Event</th><th>Date</th><th>Registration</th><th>Attendance</th><th>In / out</th></tr></thead>
                 <tbody>
-                    @foreach (var r in Model)
+                    @foreach (var r in history.OrderByDescending(h => h.StartTime))
                     {
                         <tr>
-                            <td>
-                                <a asp-controller="Event" asp-action="Details" asp-route-id="@r.EventId">@r.EventTitle</a>
-                                <div class="small text-muted">@r.OrganizationName · @r.Venue</div>
-                            </td>
-                            <td class="text-nowrap">@r.StartTime.ToString("MMM d, yyyy")<div class="small text-muted">@r.StartTime.ToString("h:mm tt")</div></td>
-                            <td>
-                                @BadgeHelper.Badge(r.Status)
+                            <td><div class="cell-main"><a asp-controller="Event" asp-action="Details" asp-route-id="@r.EventId">@r.EventTitle</a></div><div class="cell-sub">@r.OrganizationName</div></td>
+                            <td data-label="Date" class="nowrap">@r.StartTime.ToString("MMM d, yyyy")</td>
+                            <td data-label="Registration">
                                 @if (r.EventStatus == EventStatus.Cancelled)
                                 {
-                                    <div class="small text-danger">Event cancelled</div>
-                                }
-                            </td>
-                            <td>
-                                @if (r.AttendanceStatus.HasValue)
-                                {
-                                    @BadgeHelper.Badge(r.AttendanceStatus)
-                                    @if (r.CheckInTime.HasValue)
-                                    {
-                                        <div class="small text-muted">In @r.CheckInTime.Value.ToString("h:mm tt")@(r.CheckOutTime.HasValue ? " · Out " + r.CheckOutTime.Value.ToString("h:mm tt") : "")</div>
-                                    }
+                                    @BadgeHelper.Badge("Event cancelled", "cancelled")
                                 }
                                 else
                                 {
-                                    <span class="text-muted small">—</span>
+                                    @BadgeHelper.Badge(r.Status.ToString(), null, r.Status == RegistrationStatus.Cancelled ? "is-registration" : null)
                                 }
                             </td>
-                            <td class="text-right text-nowrap">
-                                @if (r.Status == RegistrationStatus.Registered && r.EventStatus != EventStatus.Cancelled)
-                                {
-                                    <a class="btn btn-sm btn-primary" asp-action="Ticket" asp-route-id="@r.Id"><i class="fa-solid fa-qrcode"></i> Ticket</a>
-                                }
-                                @if (r.CanCancel)
-                                {
-                                    <form asp-action="Cancel" method="post" class="inline-form" data-confirm="Cancel your registration for '@r.EventTitle'?">
-                                        <input type="hidden" name="id" value="@r.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
-                                    </form>
-                                }
-                            </td>
+                            <td data-label="Attendance">@(r.AttendanceStatus.HasValue ? BadgeHelper.Badge(r.AttendanceStatus) : BadgeHelper.Badge("Not recorded", "pending"))</td>
+                            <td data-label="In / out" class="num nowrap">@(r.CheckInTime?.ToString("h:mm tt") ?? "—")@(r.CheckOutTime.HasValue ? " / " + r.CheckOutTime.Value.ToString("h:mm tt") : "")</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    }
-</div>
+    </section>
+}

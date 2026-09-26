@@ -1,47 +1,45 @@
 ﻿@model OrganizationViewModel
 @{
     var isNew = Model.Id == 0;
-    ViewData["Title"] = isNew ? "New Organization" : "Edit Organization";
+    ViewData["Title"] = isNew ? "New organization" : "Edit organization";
 }
-<div class="page-header">
-    <h1>@ViewData["Title"]</h1>
+<a class="back" asp-action="Index"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Organizations</a>
+<div class="page-head">
+    <h1 class="page-title">@ViewData["Title"]</h1>
 </div>
 
-<div class="panel" style="max-width: 720px">
-    <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+<section class="sheet" style="max-width:760px">
+    <form asp-action="@(isNew ? "Create" : "Edit")" method="post" class="sheet-body">
         <input type="hidden" asp-for="Id" />
-        <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
-
-        <div class="form-row">
-            <div class="form-group col-md-8">
-                <label asp-for="Name"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger small"></span>
+        <div asp-validation-summary="ModelOnly"></div>
+        <div class="form-grid">
+            <div class="field span-8">
+                <label class="label" asp-for="Name">Name</label>
+                <input asp-for="Name" class="input" />
+                <span asp-validation-for="Name" class="text-danger"></span>
             </div>
-            <div class="form-group col-md-4">
-                <label asp-for="Acronym"></label>
-                <input asp-for="Acronym" class="form-control" />
-                <span asp-validation-for="Acronym" class="text-danger small"></span>
+            <div class="field span-4">
+                <label class="label" asp-for="Acronym">Acronym</label>
+                <input asp-for="Acronym" class="input" />
+                <span asp-validation-for="Acronym" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Adviser">Adviser</label>
+                <input asp-for="Adviser" class="input" />
+                <span asp-validation-for="Adviser" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Description">Description</label>
+                <textarea asp-for="Description" class="input" rows="4"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label class="check"><input asp-for="IsActive" /> Active: officers can create events for it</label>
             </div>
         </div>
-        <div class="form-group">
-            <label asp-for="Adviser"></label>
-            <input asp-for="Adviser" class="form-control" />
-            <span asp-validation-for="Adviser" class="text-danger small"></span>
-        </div>
-        <div class="form-group">
-            <label asp-for="Description"></label>
-            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-            <span asp-validation-for="Description" class="text-danger small"></span>
-        </div>
-        <div class="custom-control custom-checkbox mb-3">
-            <input asp-for="IsActive" class="custom-control-input" />
-            <label asp-for="IsActive" class="custom-control-label"></label>
-        </div>
-
-        <div class="d-flex" style="gap: 8px">
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">@(isNew ? "Create organization" : "Save changes")</button>
+            <a class="btn btn-outline" asp-action="Index">Cancel</a>
         </div>
     </form>
-</div>
+</section>

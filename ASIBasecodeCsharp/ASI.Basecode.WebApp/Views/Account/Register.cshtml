@@ -1,84 +1,77 @@
 ﻿@model UserViewModel
 @{
-    ViewBag.LoginView = true;
-    ViewData["Title"] = "Register";
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Create an account";
 }
-@section styles {
-    <link rel="stylesheet" href="~/css/login.css" />
-}
-<div class="container py-5 register-box" style="max-width: 100%;">
-    <div class="row d-flex justify-content-center align-items-center">
-        <div class="col-12">
-            <div class="card rounded-3 text-black">
-                <div class="card-body p-4 p-md-5">
-                    <div class="text-center">
-                        <img src="~/img/asi-logo-invert.svg" style="width: 185px;" alt="logo">
-                        <h5 class="mt-3 mb-4">Create a student account</h5>
+<div class="auth-stage wide">
+    @await Html.PartialAsync("_Lanyard")
+    <div class="idcard">
+        <div class="idcard-band">
+            <span class="brand">
+                @await Html.PartialAsync("_Mark")
+                <span class="brand-name">Student Org Events<small>Registration &amp; attendance</small></span>
+            </span>
+        </div>
+        <div class="idcard-body">
+            <h1 class="auth-title">Create a student account</h1>
+            <p class="auth-sub">Fill it in like your school ID. You'll use it to register for events and get your passes.</p>
+            <form method="post" asp-controller="Account" asp-action="Register">
+                <div asp-validation-summary="ModelOnly"></div>
+                <div class="form-grid">
+                    <div class="field span-8">
+                        <label class="label" asp-for="Name">Full name</label>
+                        <input asp-for="Name" class="input" autocomplete="name" placeholder="Juan Dela Cruz" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
                     </div>
-
-                    <form method="post" asp-controller="Account" asp-action="Register">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <div class="form-group">
-                            <label asp-for="Name">Full Name</label>
-                            <input asp-for="Name" class="form-control" placeholder="Juan Dela Cruz" />
-                            <span asp-validation-for="Name" class="text-danger small"></span>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label asp-for="StudentNumber"></label>
-                                <input asp-for="StudentNumber" class="form-control" placeholder="2024-00001" />
-                                <span asp-validation-for="StudentNumber" class="text-danger small"></span>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label asp-for="Email"></label>
-                                <input asp-for="Email" type="email" class="form-control" placeholder="name@school.edu" />
-                                <span asp-validation-for="Email" class="text-danger small"></span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-8">
-                                <label asp-for="Course"></label>
-                                <input asp-for="Course" class="form-control" placeholder="BS Information Technology" />
-                                <span asp-validation-for="Course" class="text-danger small"></span>
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label asp-for="YearLevel"></label>
-                                <select asp-for="YearLevel" class="form-control">
-                                    <option value="">--</option>
-                                    @for (var y = 1; y <= 6; y++)
-                                    {
-                                        <option value="@y">@y</option>
-                                    }
-                                </select>
-                                <span asp-validation-for="YearLevel" class="text-danger small"></span>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="UserId">Username</label>
-                            <input asp-for="UserId" class="form-control" placeholder="Choose a username" />
-                            <span asp-validation-for="UserId" class="text-danger small"></span>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label asp-for="Password"></label>
-                                <input asp-for="Password" type="password" class="form-control" />
-                                <span asp-validation-for="Password" class="text-danger small"></span>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label asp-for="ConfirmPassword"></label>
-                                <input asp-for="ConfirmPassword" type="password" class="form-control" />
-                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
-                            </div>
-                        </div>
-                        <div class="text-center pt-2 d-flex flex-column align-items-center">
-                            <button class="btn btn-primary btn-block login-btn gradient-custom-2 mb-3" type="submit">
-                                Register
-                            </button>
-                            <a asp-controller="Account" asp-action="Login">&#8592; Back to login</a>
-                        </div>
-                    </form>
+                    <div class="field span-4">
+                        <label class="label" asp-for="StudentNumber">Student no.</label>
+                        <input asp-for="StudentNumber" class="input num" placeholder="2024-00001" />
+                        <span asp-validation-for="StudentNumber" class="text-danger"></span>
+                    </div>
+                    <div class="field span-8">
+                        <label class="label" asp-for="Course">Course</label>
+                        <input asp-for="Course" class="input" placeholder="BS Information Technology" />
+                        <span asp-validation-for="Course" class="text-danger"></span>
+                    </div>
+                    <div class="field span-4">
+                        <label class="label" asp-for="YearLevel">Year</label>
+                        <select asp-for="YearLevel" class="input">
+                            <option value="">Select</option>
+                            @for (var y = 1; y <= 6; y++)
+                            {
+                                <option value="@y">Year @y</option>
+                            }
+                        </select>
+                        <span asp-validation-for="YearLevel" class="text-danger"></span>
+                    </div>
+                    <div class="field span-6">
+                        <label class="label" asp-for="Email">School email</label>
+                        <input asp-for="Email" type="email" class="input" autocomplete="email" placeholder="name@school.edu" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="field span-6">
+                        <label class="label" asp-for="UserId">Username</label>
+                        <input asp-for="UserId" class="input" autocomplete="username" autocapitalize="none" spellcheck="false" />
+                        <span asp-validation-for="UserId" class="text-danger"></span>
+                    </div>
+                    <div class="field span-6">
+                        <label class="label" asp-for="Password">Password</label>
+                        <input asp-for="Password" type="password" class="input" autocomplete="new-password" />
+                        <span class="hint">At least 6 characters.</span>
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    <div class="field span-6">
+                        <label class="label" asp-for="ConfirmPassword">Confirm password</label>
+                        <input asp-for="ConfirmPassword" type="password" class="input" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
                 </div>
-            </div>
+                <button class="btn btn-primary btn-block" type="submit">Create account</button>
+            </form>
+        </div>
+        <div class="idcard-foot">
+            <span>Already registered?</span>
+            <a asp-controller="Account" asp-action="Login">Sign in</a>
         </div>
     </div>
 </div>

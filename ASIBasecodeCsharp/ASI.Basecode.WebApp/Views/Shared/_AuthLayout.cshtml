@@ -1,0 +1,22 @@
+﻿@using static ASI.Basecode.Resources.Views.Screen
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#e5e9ef" />
+    <title>@ViewData["Title"] · Student Org Events</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="~/fonts/barlow/barlow-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="~/fonts/barlow/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" />
+    <link rel="stylesheet" href="~/css/pass.css" asp-append-version="true" />
+</head>
+<body class="id-auth">
+    @RenderBody()
+    <div class="foot" style="padding-bottom:24px">@Copyright</div>
+    @await Html.PartialAsync("_Scripts")
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

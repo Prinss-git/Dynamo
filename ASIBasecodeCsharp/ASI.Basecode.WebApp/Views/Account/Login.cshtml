@@ -1,60 +1,37 @@
 ﻿@model LoginViewModel
-@using static ASI.Basecode.Resources.Views.Screen
-@section styles {
-    <link rel="stylesheet" href="~/css/login.css" />
-}
 @{
-    ViewBag.LoginView = true;
-    ViewData["Title"] = "Login Page";
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Sign in";
 }
-<div>
-    @Html.AntiForgeryToken()
-</div>
-<div class="container py-5" style="display:flex; align-content:center;height:calc(100vh - 64px)">
-    <div class="row d-flex justify-content-center align-items-center h-100">
-        <div class="col-xl-10">
-            <div class="card rounded-3 text-black">
-                <div class="row g-0 w-1000px">
-                    <div class="col-lg-6">
-                        <div class="card-body p-md-5 mx-md-4">
-                            <div class="text-center">
-                                <img src="~/img/asi-logo-invert.svg"
-                                     style="width: 185px;" alt="logo">
-                            </div>
-                            <h5 class="text-center mt-3 mb-4">Event Registration &amp; Attendance</h5>
-                            <form method="post" asp-controller="Account" asp-action="Login" id="loginForm">
-                                <div class="form-outline mb-4">
-                                    <label class="form-label" for="form2Example11">@UserId</label>
-                                    <input type="text" id="form2Example11" class="form-control"
-                                           asp-for="UserId" placeholder="Enter username" />
-                                    <span asp-validation-for="UserId" class="text-danger"></span>
-                                </div>
-                                <div class="form-outline mb-4">
-                                    <label class="form-label" for="form2Example22">@Password</label>
-                                    <input type="password" id="form2Example22" class="form-control"
-                                           asp-for="Password" placeholder="Enter password" />
-                                    <span asp-validation-for="Password" class="text-danger"></span>
-                                </div>
-                                <div class="text-center pt-1 mb-5 pb-1 d-flex flex-column align-items-center">
-                                    <button class="btn btn-primary btn-block login-btn gradient-custom-2 mb-3" type="submit">
-                                        @Login
-                                    </button>
-                                    <div>
-                                        <a class="text-muted" href="#!">@ForgotPass</a>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-center pb-4">
-                                    <p class="mb-0 me-2 mr-1">@DontHaveAcc</p>
-                                    <a asp-controller="Account" asp-action="Register" class="btn btn-outline-danger">@CreateNew</a>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="col-lg-6 d-flex">
-                        <img style="width:400px"src="~/img/LiveIT.png" />
-                    </div>
+<div class="auth-stage">
+    @await Html.PartialAsync("_Lanyard")
+    <div class="idcard swing">
+        <div class="idcard-band">
+            <span class="brand">
+                @await Html.PartialAsync("_Mark")
+                <span class="brand-name">Student Org Events<small>Registration &amp; attendance</small></span>
+            </span>
+        </div>
+        <div class="idcard-body">
+            <h1 class="auth-title">Sign in</h1>
+            <p class="auth-sub">Use the username you registered with.</p>
+            <form method="post" asp-controller="Account" asp-action="Login" id="loginForm" novalidate>
+                <div class="field">
+                    <label class="label" asp-for="UserId">Username</label>
+                    <input asp-for="UserId" class="input" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus />
+                    <span asp-validation-for="UserId" class="text-danger"></span>
                 </div>
-            </div>
+                <div class="field">
+                    <label class="label" asp-for="Password">Password</label>
+                    <input asp-for="Password" type="password" class="input" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+            </form>
+        </div>
+        <div class="idcard-foot">
+            <span>New student?</span>
+            <a asp-controller="Account" asp-action="Register">Create an account</a>
         </div>
     </div>
 </div>

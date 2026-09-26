@@ -1,21 +1,21 @@
 ﻿@model List<EventViewModel>
 @{
-    ViewData["Title"] = "Browse Events";
+    ViewData["Title"] = "Browse events";
     var showPast = ViewBag.ShowPast == true;
 }
-<div class="page-header">
+<div class="page-head">
     <div>
-        <h1>Events</h1>
-        <p class="subtitle">@(showPast ? "All published events" : "Upcoming events from student organizations")</p>
+        <h1 class="page-title">Events</h1>
+        <p class="page-sub">@(showPast ? "Every published event, past and upcoming." : "What student organizations are running next. Open a pass to register.")</p>
     </div>
-    <form method="get" class="filter-bar">
-        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search title, venue or organization" />
-        <div class="custom-control custom-checkbox mx-1">
-            <input type="checkbox" class="custom-control-input" id="showPast" name="showPast" value="true" @(showPast ? "checked" : "") onchange="this.form.submit()" />
-            <label class="custom-control-label" for="showPast">Include past events</label>
-        </div>
-        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    </form>
 </div>
 
-@await Html.PartialAsync("_EventCards", Model)
+<form method="get" class="toolbar" style="margin-bottom:22px" role="search">
+    <label class="sr-only" for="search">Search events</label>
+    <input id="search" type="search" name="search" value="@ViewBag.Search" class="input" placeholder="Search title, venue or organization" />
+    <label class="check"><input type="checkbox" name="showPast" value="true" @(showPast ? "checked" : "") onchange="this.form.submit()" /> Include past events</label>
+    <button type="submit" class="btn btn-outline"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
+</form>
+
+@{ ViewData["EmptyText"] = string.IsNullOrEmpty(ViewBag.Search as string) ? "No organization has published an event yet." : "No event matches that search. Try a shorter word or an organization's acronym."; }
+@await Html.PartialAsync("_PassRack", Model)

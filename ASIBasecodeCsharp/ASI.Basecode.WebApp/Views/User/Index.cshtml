@@ -3,56 +3,61 @@
     ViewData["Title"] = "Users";
     var selectedRole = ViewBag.Role as Role?;
 }
-<div class="page-header">
+<div class="page-head">
     <div>
-        <h1>Users</h1>
-        <p class="subtitle">Accounts and roles</p>
+        <h1 class="page-title">Users</h1>
+        <p class="page-sub">Accounts and roles. Officers also need to be members of an organization.</p>
     </div>
-    <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-user-plus"></i> New User</a>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> New user</a>
+    </div>
 </div>
 
-<div class="panel">
-    <form method="get" class="filter-bar mb-3">
-        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search name, username or student no." />
-        <select name="role" class="form-control" style="max-width: 160px" onchange="this.form.submit()">
-            <option value="">All roles</option>
-            @foreach (Role r in Enum.GetValues(typeof(Role)))
-            {
-                <option value="@r" selected="@(selectedRole == r)">@r</option>
-            }
-        </select>
-        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    </form>
-
+<section class="sheet">
+    <div class="sheet-head">
+        <form method="get" class="toolbar" role="search">
+            <label class="sr-only" for="search">Search users</label>
+            <input id="search" type="search" name="search" value="@ViewBag.Search" class="input" placeholder="Name, username or student no." />
+            <label class="sr-only" for="role">Role</label>
+            <select id="role" name="role" class="input" onchange="this.form.submit()">
+                <option value="">All roles</option>
+                @foreach (Role r in Enum.GetValues(typeof(Role)))
+                {
+                    <option value="@r" selected="@(selectedRole == r)">@r</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-outline"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
+        </form>
+    </div>
     @if (!Model.Any())
     {
-        <div class="empty-state"><i class="fa-solid fa-users"></i>No users found.</div>
+        @await Html.PartialAsync("_Empty", ("No users found", "Nothing matches that search. Try part of a name or a student number."))
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-app">
+        <div class="ledger-wrap">
+            <table class="ledger ledger--stack">
                 <thead>
-                    <tr><th>Name</th><th>Username</th><th>Student No.</th><th>Course / Year</th><th>Role</th><th>Status</th><th class="text-right">Actions</th></tr>
+                    <tr><th>Name</th><th>Username</th><th>Student no.</th><th>Course / year</th><th>Role</th><th>Status</th><th class="r"><span class="sr-only">Actions</span></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var u in Model)
                     {
                         <tr>
-                            <td>@u.Name<div class="small text-muted">@u.Email</div></td>
-                            <td>@u.UserId</td>
-                            <td>@u.StudentNumber</td>
-                            <td>@u.Course@(u.YearLevel.HasValue ? " – " + u.YearLevel : "")</td>
-                            <td>@BadgeHelper.Badge(u.Role)</td>
-                            <td>@BadgeHelper.Badge(u.IsActive ? "Active" : "Inactive", u.IsActive ? "open" : "cancelled")</td>
-                            <td class="text-right text-nowrap">
-                                <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@u.Id" title="Edit"><i class="fa-solid fa-pen"></i></a>
-                                <form asp-action="ToggleActive" method="post" class="inline-form" data-confirm="@(u.IsActive ? "Deactivate" : "Activate") @u.Name?">
-                                    <input type="hidden" name="id" value="@u.Id" />
-                                    <button type="submit" class="btn btn-sm @(u.IsActive ? "btn-outline-danger" : "btn-outline-primary")" title="@(u.IsActive ? "Deactivate" : "Activate")">
-                                        <i class="fa-solid @(u.IsActive ? "fa-user-slash" : "fa-user-check")"></i>
-                                    </button>
-                                </form>
+                            <td><div class="cell-main">@u.Name</div><div class="cell-sub">@u.Email</div></td>
+                            <td data-label="Username">@u.UserId</td>
+                            <td data-label="Student no."><span class="code">@u.StudentNumber</span></td>
+                            <td data-label="Course">@u.Course@(u.YearLevel.HasValue ? " · Year " + u.YearLevel : "")</td>
+                            <td data-label="Role">@BadgeHelper.Badge(u.Role)</td>
+                            <td data-label="Status">@BadgeHelper.Badge(u.IsActive ? "Active" : "Inactive")</td>
+                            <td class="r">
+                                <div class="row-actions">
+                                    <a class="btn btn-outline btn-sm btn-icon" asp-action="Edit" asp-route-id="@u.Id" title="Edit @u.Name" aria-label="Edit @u.Name"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                                    <form asp-action="ToggleActive" method="post" class="inline-form" data-confirm="@(u.IsActive ? "Deactivate" : "Reactivate") @u.Name?">
+                                        <input type="hidden" name="id" value="@u.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline">@(u.IsActive ? "Deactivate" : "Reactivate")</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -60,4 +65,4 @@
             </table>
         </div>
     }
-</div>
+</section>

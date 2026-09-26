@@ -1,85 +1,82 @@
 ﻿@model EventViewModel
 @{
     var isNew = Model.Id == 0;
-    ViewData["Title"] = isNew ? "New Event" : "Edit Event";
+    ViewData["Title"] = isNew ? "New event" : "Edit event";
     var organizations = ViewBag.Organizations as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
 }
-<div class="page-header">
+<a class="back" href="@(isNew ? Url.Action("Manage") : Url.Action("Details", new { id = Model.Id }))"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> @(isNew ? "Manage events" : Model.Title)</a>
+<div class="page-head">
     <div>
-        <h1>@ViewData["Title"]</h1>
-        <p class="subtitle">@(isNew ? "New events start as Draft. Publish them from the event page to open registration." : Model.Title)</p>
+        <h1 class="page-title">@(isNew ? "New event" : "Edit event")</h1>
+        <p class="page-sub">@(isNew ? "New events start as drafts. Publish from the event page when you're ready to open registration." : "Changes show on every student's pass right away.")</p>
     </div>
 </div>
 
 @if (organizations == null || !organizations.Any())
 {
-    <div class="alert alert-warning">
-        You are not a member of any active organization, so you cannot create events. Ask an administrator to add you to an organization.
-    </div>
+    <div class="notice"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><div>You aren't a member of an active organization yet, so you can't create events. Ask an administrator to add you under Organizations.</div></div>
 }
 
-<div class="panel" style="max-width: 860px">
-    <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+<section class="sheet" style="max-width:880px">
+    <form asp-action="@(isNew ? "Create" : "Edit")" method="post" class="sheet-body">
         <input type="hidden" asp-for="Id" />
-        <div asp-validation-summary="All" class="text-danger small"></div>
+        <div asp-validation-summary="All"></div>
 
-        <div class="form-group">
-            <label asp-for="OrganizationId"></label>
-            <select asp-for="OrganizationId" asp-items="organizations" class="form-control">
-                <option value="">-- Select organization --</option>
-            </select>
-            <span asp-validation-for="OrganizationId" class="text-danger small"></span>
-        </div>
-        <div class="form-group">
-            <label asp-for="Title"></label>
-            <input asp-for="Title" class="form-control" />
-            <span asp-validation-for="Title" class="text-danger small"></span>
-        </div>
-        <div class="form-group">
-            <label asp-for="Description"></label>
-            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-            <span asp-validation-for="Description" class="text-danger small"></span>
-        </div>
-        <div class="form-group">
-            <label asp-for="Venue"></label>
-            <input asp-for="Venue" class="form-control" />
-            <span asp-validation-for="Venue" class="text-danger small"></span>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-4">
-                <label asp-for="StartTime"></label>
-                <input asp-for="StartTime" type="datetime-local" class="form-control" asp-format="{0:yyyy-MM-ddTHH:mm}" />
-                <span asp-validation-for="StartTime" class="text-danger small"></span>
+        <div class="form-grid">
+            <div class="field span-6">
+                <label class="label" asp-for="OrganizationId">Organization</label>
+                <select asp-for="OrganizationId" asp-items="organizations" class="input">
+                    <option value="">Select organization</option>
+                </select>
+                <span asp-validation-for="OrganizationId" class="text-danger"></span>
             </div>
-            <div class="form-group col-md-4">
-                <label asp-for="EndTime"></label>
-                <input asp-for="EndTime" type="datetime-local" class="form-control" asp-format="{0:yyyy-MM-ddTHH:mm}" />
-                <span asp-validation-for="EndTime" class="text-danger small"></span>
+            <div class="field span-6">
+                <label class="label" asp-for="Venue">Venue</label>
+                <input asp-for="Venue" class="input" placeholder="e.g. AVR 1, Main Building" />
+                <span asp-validation-for="Venue" class="text-danger"></span>
             </div>
-            <div class="form-group col-md-4">
-                <label asp-for="RegistrationDeadline"></label>
-                <input asp-for="RegistrationDeadline" type="datetime-local" class="form-control" asp-format="{0:yyyy-MM-ddTHH:mm}" />
-                <span asp-validation-for="RegistrationDeadline" class="text-danger small"></span>
+            <div class="field">
+                <label class="label" asp-for="Title">Title</label>
+                <input asp-for="Title" class="input" />
+                <span asp-validation-for="Title" class="text-danger"></span>
             </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label asp-for="Capacity"></label>
-                <input asp-for="Capacity" type="number" min="0" class="form-control" />
-                <small class="form-text text-muted">0 = unlimited. When full, new registrations go to the waitlist.</small>
-                <span asp-validation-for="Capacity" class="text-danger small"></span>
+            <div class="field">
+                <label class="label" asp-for="Description">Description</label>
+                <textarea asp-for="Description" class="input" rows="4" placeholder="What students should know: agenda, what to bring, dress code."></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
             </div>
-            <div class="form-group col-md-6">
-                <label asp-for="LateAfterMinutes"></label>
-                <input asp-for="LateAfterMinutes" type="number" min="0" class="form-control" />
-                <small class="form-text text-muted">Check-ins later than this many minutes after the start are marked Late.</small>
-                <span asp-validation-for="LateAfterMinutes" class="text-danger small"></span>
+            <div class="field span-4">
+                <label class="label" asp-for="StartTime">Starts</label>
+                <input asp-for="StartTime" type="datetime-local" class="input" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="StartTime" class="text-danger"></span>
+            </div>
+            <div class="field span-4">
+                <label class="label" asp-for="EndTime">Ends</label>
+                <input asp-for="EndTime" type="datetime-local" class="input" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="EndTime" class="text-danger"></span>
+            </div>
+            <div class="field span-4">
+                <label class="label" asp-for="RegistrationDeadline">Register by</label>
+                <input asp-for="RegistrationDeadline" type="datetime-local" class="input" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="RegistrationDeadline" class="text-danger"></span>
+            </div>
+            <div class="field span-6">
+                <label class="label" asp-for="Capacity">Seats</label>
+                <input asp-for="Capacity" type="number" min="0" class="input num" />
+                <span class="hint">0 means open seating. When seats run out, new sign-ups join the waitlist.</span>
+                <span asp-validation-for="Capacity" class="text-danger"></span>
+            </div>
+            <div class="field span-6">
+                <label class="label" asp-for="LateAfterMinutes">Late after (minutes)</label>
+                <input asp-for="LateAfterMinutes" type="number" min="0" class="input num" />
+                <span class="hint">Check-ins this many minutes after the start are marked Late.</span>
+                <span asp-validation-for="LateAfterMinutes" class="text-danger"></span>
             </div>
         </div>
 
-        <div class="d-flex" style="gap: 8px">
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a class="btn btn-outline-secondary" href="@(isNew ? Url.Action("Manage") : Url.Action("Details", new { id = Model.Id }))">Cancel</a>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">@(isNew ? "Create draft" : "Save changes")</button>
+            <a class="btn btn-outline" href="@(isNew ? Url.Action("Manage") : Url.Action("Details", new { id = Model.Id }))">Cancel</a>
         </div>
     </form>
-</div>
+</section>

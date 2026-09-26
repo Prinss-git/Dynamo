@@ -2,56 +2,62 @@
 @{
     ViewData["Title"] = "Organizations";
 }
-<div class="page-header">
+<div class="page-head">
     <div>
-        <h1>Organizations</h1>
-        <p class="subtitle">Student organizations and their officers</p>
+        <h1 class="page-title">Organizations</h1>
+        <p class="page-sub">Student organizations, their advisers and officers.</p>
     </div>
-    <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus"></i> New Organization</a>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus" aria-hidden="true"></i> New organization</a>
+    </div>
 </div>
 
-<div class="panel">
-    <form method="get" class="filter-bar mb-3">
-        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search name or acronym" />
-        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    </form>
-
+<section class="sheet">
+    <div class="sheet-head">
+        <form method="get" class="toolbar" role="search">
+            <label class="sr-only" for="search">Search organizations</label>
+            <input id="search" type="search" name="search" value="@ViewBag.Search" class="input" placeholder="Search name or acronym" />
+            <button type="submit" class="btn btn-outline"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
+        </form>
+    </div>
     @if (!Model.Any())
     {
-        <div class="empty-state"><i class="fa-solid fa-people-group"></i>No organizations found.</div>
+        @await Html.PartialAsync("_Empty", ("No organizations found", "Add the school's first organization, then assign its officers."))
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-app">
+        <div class="ledger-wrap">
+            <table class="ledger ledger--stack">
                 <thead>
-                    <tr><th>Organization</th><th>Adviser</th><th>Members</th><th>Events</th><th>Status</th><th class="text-right">Actions</th></tr>
+                    <tr><th>Organization</th><th>Adviser</th><th class="r">Members</th><th class="r">Events</th><th>Status</th><th class="r"><span class="sr-only">Actions</span></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var o in Model)
                     {
                         <tr>
                             <td>
-                                <strong>@o.Name</strong> @if (!string.IsNullOrEmpty(o.Acronym)) { <span class="text-muted">(@o.Acronym)</span> }
+                                <div class="cell-main"><a asp-action="Members" asp-route-id="@o.Id">@o.Name</a>@if (!string.IsNullOrEmpty(o.Acronym)) { <span class="muted" style="font-weight:500"> · @o.Acronym</span> }</div>
                                 @if (!string.IsNullOrEmpty(o.Description))
                                 {
-                                    <div class="small text-muted text-truncate" style="max-width: 380px">@o.Description</div>
+                                    <div class="cell-sub" style="max-width:52ch">@o.Description</div>
                                 }
                             </td>
-                            <td>@o.Adviser</td>
-                            <td>@o.MemberCount</td>
-                            <td>@o.EventCount</td>
-                            <td>@BadgeHelper.Badge(o.IsActive ? "Active" : "Inactive", o.IsActive ? "open" : "draft")</td>
-                            <td class="text-right text-nowrap">
-                                <a class="btn btn-sm btn-outline-primary" asp-action="Members" asp-route-id="@o.Id" title="Members"><i class="fa-solid fa-users"></i></a>
-                                <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@o.Id" title="Edit"><i class="fa-solid fa-pen"></i></a>
-                                @if (o.EventCount == 0)
-                                {
-                                    <form asp-action="Delete" method="post" class="inline-form" data-confirm="Delete '@o.Name'? Its member list will also be removed.">
-                                        <input type="hidden" name="id" value="@o.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                                    </form>
-                                }
+                            <td data-label="Adviser">@o.Adviser</td>
+                            <td data-label="Members" class="r num">@o.MemberCount</td>
+                            <td data-label="Events" class="r num">@o.EventCount</td>
+                            <td data-label="Status">@BadgeHelper.Badge(o.IsActive ? "Active" : "Inactive")</td>
+                            <td class="r">
+                                <div class="row-actions">
+                                    <a class="btn btn-outline btn-sm" asp-action="Members" asp-route-id="@o.Id"><i class="fa-solid fa-users" aria-hidden="true"></i> Members</a>
+                                    <a class="btn btn-outline btn-sm btn-icon" asp-action="Edit" asp-route-id="@o.Id" title="Edit @o.Name" aria-label="Edit @o.Name"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                                    @if (o.EventCount == 0)
+                                    {
+                                        <form asp-action="Delete" method="post" class="inline-form" data-confirm="Delete '@o.Name'? Its member list is removed too.">
+                                            <input type="hidden" name="id" value="@o.Id" />
+                                            <button type="submit" class="btn btn-danger btn-sm btn-icon" title="Delete @o.Name" aria-label="Delete @o.Name"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                                        </form>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
@@ -59,4 +65,4 @@
             </table>
         </div>
     }
-</div>
+</section>

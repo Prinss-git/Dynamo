@@ -1,67 +1,76 @@
 ﻿@model List<EventViewModel>
 @{
-    ViewData["Title"] = "Manage Events";
+    ViewData["Title"] = "Manage events";
     var selectedStatus = ViewBag.Status as EventStatus?;
 }
-<div class="page-header">
+<div class="page-head">
     <div>
-        <h1>Manage Events</h1>
-        <p class="subtitle">Events of the organizations you manage</p>
+        <h1 class="page-title">Manage events</h1>
+        <p class="page-sub">Events of the organizations you run.</p>
     </div>
-    <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus"></i> New Event</a>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus" aria-hidden="true"></i> New event</a>
+    </div>
 </div>
 
-<div class="panel">
-    <form method="get" class="filter-bar mb-3">
-        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search events" />
-        <select name="status" class="form-control" style="max-width: 180px" onchange="this.form.submit()">
-            <option value="">All statuses</option>
-            @foreach (EventStatus s in Enum.GetValues(typeof(EventStatus)))
-            {
-                <option value="@s" selected="@(selectedStatus == s)">@s</option>
-            }
-        </select>
-        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-    </form>
+<section class="sheet">
+    <div class="sheet-head">
+        <form method="get" class="toolbar" role="search">
+            <label class="sr-only" for="search">Search events</label>
+            <input id="search" type="search" name="search" value="@ViewBag.Search" class="input" placeholder="Search events" />
+            <label class="sr-only" for="status">Status</label>
+            <select id="status" name="status" class="input" onchange="this.form.submit()">
+                <option value="">All statuses</option>
+                @foreach (EventStatus s in Enum.GetValues(typeof(EventStatus)))
+                {
+                    <option value="@s" selected="@(selectedStatus == s)">@s</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-outline"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
+        </form>
+    </div>
 
     @if (!Model.Any())
     {
-        <div class="empty-state"><i class="fa-regular fa-calendar"></i>No events found. Create one to get started.</div>
+        @await Html.PartialAsync("_Empty", ("No events found", selectedStatus.HasValue || !string.IsNullOrEmpty(ViewBag.Search as string) ? "Nothing matches these filters. Clear them to see every event." : "Create your first event. It starts as a draft only you can see."))
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-app">
+        <div class="ledger-wrap">
+            <table class="ledger ledger--stack">
                 <thead>
-                    <tr><th>Event</th><th>When</th><th>Registered</th><th>Waitlist</th><th>Attended</th><th>Status</th><th class="text-right">Actions</th></tr>
+                    <tr><th>Event</th><th>When</th><th>Registered</th><th>Waitlist</th><th>Attended</th><th>Status</th><th class="r"><span class="sr-only">Actions</span></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var e in Model)
                     {
+                        var running = e.Status == EventStatus.Open || e.Status == EventStatus.Closed;
                         <tr>
-                            <td><a asp-action="Details" asp-route-id="@e.Id">@e.Title</a><div class="small text-muted">@e.OrganizationName · @e.Venue</div></td>
-                            <td class="text-nowrap">@e.StartTime.ToString("MMM d, yyyy")<div class="small text-muted">@e.StartTime.ToString("h:mm tt") – @e.EndTime.ToString("h:mm tt")</div></td>
-                            <td>@e.RegisteredCount@(e.IsUnlimited ? "" : " / " + e.Capacity)</td>
-                            <td>@e.WaitlistedCount</td>
-                            <td>@e.AttendedCount</td>
-                            <td>@BadgeHelper.Badge(e.Status)</td>
-                            <td class="text-right text-nowrap">
-                                @if (e.Status == EventStatus.Open || e.Status == EventStatus.Closed)
-                                {
-                                    <a class="btn btn-sm btn-primary" asp-controller="Attendance" asp-action="Index" asp-route-eventId="@e.Id" title="Take attendance"><i class="fa-solid fa-qrcode"></i></a>
-                                }
-                                @if (e.Status != EventStatus.Completed && e.Status != EventStatus.Cancelled)
-                                {
-                                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@e.Id" title="Edit"><i class="fa-solid fa-pen"></i></a>
-                                }
-                                <a class="btn btn-sm btn-outline-primary" asp-controller="Report" asp-action="Event" asp-route-id="@e.Id" title="Report"><i class="fa-solid fa-chart-column"></i></a>
-                                @if (e.RegisteredCount == 0 && e.WaitlistedCount == 0)
-                                {
-                                    <form asp-action="Delete" method="post" class="inline-form" data-confirm="Delete '@e.Title'?">
-                                        <input type="hidden" name="id" value="@e.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                                    </form>
-                                }
+                            <td><div class="cell-main"><a asp-action="Details" asp-route-id="@e.Id">@e.Title</a></div><div class="cell-sub">@e.OrganizationName · @e.Venue</div></td>
+                            <td data-label="When" class="nowrap">@e.StartTime.ToString("MMM d, yyyy")<div class="cell-sub">@e.StartTime.ToString("h:mm tt") – @e.EndTime.ToString("h:mm tt")</div></td>
+                            <td data-label="Registered" class="num">@e.RegisteredCount@(e.IsUnlimited ? "" : " / " + e.Capacity)</td>
+                            <td data-label="Waitlist" class="num">@e.WaitlistedCount</td>
+                            <td data-label="Attended" class="num">@e.AttendedCount</td>
+                            <td data-label="Status">@BadgeHelper.Badge(e.Status)</td>
+                            <td class="r">
+                                <div class="row-actions">
+                                    @if (running)
+                                    {
+                                        <a class="btn btn-key btn-sm" asp-controller="Attendance" asp-action="Index" asp-route-eventId="@e.Id"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Check in</a>
+                                    }
+                                    @if (e.Status != EventStatus.Completed && e.Status != EventStatus.Cancelled)
+                                    {
+                                        <a class="btn btn-outline btn-sm btn-icon" asp-action="Edit" asp-route-id="@e.Id" title="Edit @e.Title" aria-label="Edit @e.Title"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                                    }
+                                    <a class="btn btn-outline btn-sm btn-icon" asp-controller="Report" asp-action="Event" asp-route-id="@e.Id" title="Report for @e.Title" aria-label="Report for @e.Title"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></a>
+                                    @if (e.RegisteredCount == 0 && e.WaitlistedCount == 0)
+                                    {
+                                        <form asp-action="Delete" method="post" class="inline-form" data-confirm="Delete '@e.Title'? This can't be undone.">
+                                            <input type="hidden" name="id" value="@e.Id" />
+                                            <button type="submit" class="btn btn-danger btn-sm btn-icon" title="Delete @e.Title" aria-label="Delete @e.Title"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                                        </form>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
@@ -69,4 +78,4 @@
             </table>
         </div>
     }
-</div>
+</section>

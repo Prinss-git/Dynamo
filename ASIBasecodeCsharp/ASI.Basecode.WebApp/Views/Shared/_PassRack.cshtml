@@ -1,0 +1,71 @@
+﻿@model List<EventViewModel>
+@if (!Model.Any())
+{
+    <div class="sheet">
+        @await Html.PartialAsync("_Empty", ("No events here yet", ViewData["EmptyText"] as string ?? "When an organization opens registration, its pass shows up here."))
+    </div>
+}
+else
+{
+    <div class="rack">
+        @foreach (var e in Model)
+        {
+            var mine = e.MyRegistrationStatus.HasValue && e.MyRegistrationStatus != RegistrationStatus.Cancelled;
+            var held = e.MyRegistrationStatus == RegistrationStatus.Registered;
+            var filled = e.IsUnlimited ? 0 : (int)Math.Round(10.0 * Math.Min(e.RegisteredCount, e.Capacity) / Math.Max(e.Capacity, 1));
+            <article class="pass @(held ? "is-held" : "")">
+                <div class="pass-band">
+                    <div class="pass-org">@(e.OrganizationName)</div>
+                    @if (!mine && e.Status != EventStatus.Open)
+                    {
+                        @BadgeHelper.Badge(e.Status)
+                    }
+                </div>
+                <div class="pass-body">
+                    <h3 class="pass-title"><a asp-controller="Event" asp-action="Details" asp-route-id="@e.Id">@e.Title</a></h3>
+                    <dl class="pass-fields">
+                        <div><dt class="label">Date</dt><dd>@e.StartTime.ToString("ddd, MMM d")</dd></div>
+                        <div><dt class="label">Time</dt><dd class="num">@e.StartTime.ToString("h:mm tt")</dd></div>
+                        <div><dt class="label">Venue</dt><dd>@e.Venue</dd></div>
+                        <div>
+                            <dt class="label">Seats</dt>
+                            @if (e.IsUnlimited)
+                            {
+                                <dd class="num">@e.RegisteredCount going</dd>
+                            }
+                            else
+                            {
+                                <dd class="num">@e.RegisteredCount of @e.Capacity</dd>
+                                <div class="seat-meter" aria-hidden="true">
+                                    @for (var i = 0; i < 10; i++)
+                                    {
+                                        <span class="@(i < filled ? "on" : "")"></span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </dl>
+                </div>
+                <div class="pass-foot">
+                    @if (mine)
+                    {
+                        <span class="label">Your pass</span>
+                        @BadgeHelper.Badge(e.MyRegistrationStatus)
+                    }
+                    else if (e.IsRegistrationOpen)
+                    {
+                        <span class="label">Register by @e.RegistrationDeadline.ToString("MMM d, h:mm tt")</span>
+                        @if (e.SlotsLeft == 0)
+                        {
+                            @BadgeHelper.Badge("Waitlist", "waitlisted")
+                        }
+                    }
+                    else
+                    {
+                        <span class="label">Registration closed</span>
+                    }
+                </div>
+            </article>
+        }
+    </div>
+}

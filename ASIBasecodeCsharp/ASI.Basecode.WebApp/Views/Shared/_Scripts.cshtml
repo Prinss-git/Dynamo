@@ -1,0 +1,17 @@
+﻿<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script>
+    toastr.options = { positionClass: "toast-top-center", timeOut: 3500, closeButton: true, progressBar: true };
+    // Messages set by controllers through TempData
+    (function () {
+        var success = @Html.Raw(Json.Serialize(TempData["SuccessMessage"]));
+        var warning = @Html.Raw(Json.Serialize(TempData["WarningMessage"]));
+        var error = @Html.Raw(Json.Serialize(TempData["ErrorMessage"]));
+        if (success) toastr.success(success);
+        if (warning) toastr.warning(warning);
+        if (error) toastr.error(error);
+    })();
+</script>

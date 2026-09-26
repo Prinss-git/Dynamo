@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-26T00:00:00Z",
+  "title": "Design System: Student Org Events",
+  "extensions": {
+    "colorMeta": {
+      "desk": { "role": "neutral", "displayName": "Laminate Desk", "canonical": "#e5e9ef", "tonalRamp": ["oklch(15% 0.008 255)", "oklch(27% 0.008 255)", "oklch(39% 0.008 255)", "oklch(51% 0.008 255)", "oklch(63% 0.008 255)", "oklch(75% 0.008 255)", "oklch(87% 0.008 255)", "oklch(95% 0.008 255)"] },
+      "card": { "role": "neutral", "displayName": "Card Stock", "canonical": "#ffffff" },
+      "card-2": { "role": "neutral", "displayName": "Quiet Fill", "canonical": "#f4f6f9" },
+      "navy": { "role": "primary", "displayName": "ID Navy", "canonical": "#0e2a47", "tonalRamp": ["oklch(15% 0.06 250)", "oklch(26% 0.065 250)", "oklch(36% 0.08 250)", "oklch(47% 0.08 250)", "oklch(58% 0.07 250)", "oklch(70% 0.05 250)", "oklch(84% 0.03 250)", "oklch(95% 0.012 250)"] },
+      "navy-2": { "role": "primary", "displayName": "Band Hover Navy", "canonical": "#1b4470" },
+      "navy-ink": { "role": "primary", "displayName": "Band Ink", "canonical": "#cfdbe8" },
+      "rail-muted": { "role": "primary", "displayName": "Rail Label Blue-Grey", "canonical": "#9fb3c8" },
+      "gold": { "role": "secondary", "displayName": "Lanyard Marigold", "canonical": "#f2b705", "tonalRamp": ["oklch(25% 0.06 85)", "oklch(35% 0.08 85)", "oklch(48% 0.1 85)", "oklch(60% 0.13 85)", "oklch(72% 0.155 85)", "oklch(80% 0.165 85)", "oklch(88% 0.12 90)", "oklch(97% 0.05 95)"] },
+      "gold-deep": { "role": "secondary", "displayName": "Deep Marigold", "canonical": "#8a6400" },
+      "gold-wash": { "role": "secondary", "displayName": "Marigold Wash", "canonical": "#fff4cc" },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#142033" },
+      "muted": { "role": "neutral", "displayName": "Muted Slate", "canonical": "#526073" },
+      "rule": { "role": "neutral", "displayName": "Hairline", "canonical": "#d5dbe3" },
+      "rule-strong": { "role": "neutral", "displayName": "Strong Hairline", "canonical": "#b9c3cf" },
+      "ok": { "role": "state", "displayName": "Go Green", "canonical": "#17693f", "tonalRamp": ["oklch(20% 0.06 152)", "oklch(30% 0.08 152)", "oklch(45% 0.11 152)", "oklch(55% 0.12 152)", "oklch(65% 0.12 152)", "oklch(76% 0.09 152)", "oklch(88% 0.05 152)", "oklch(95% 0.025 152)"] },
+      "ok-wash": { "role": "state", "displayName": "Go Green Wash", "canonical": "#e2f3e9" },
+      "warn": { "role": "state", "displayName": "Hold Amber", "canonical": "#8f5200" },
+      "warn-wash": { "role": "state", "displayName": "Hold Amber Wash", "canonical": "#fdf0d8" },
+      "bad": { "role": "state", "displayName": "Void Red", "canonical": "#a8231c", "tonalRamp": ["oklch(22% 0.08 28)", "oklch(32% 0.12 28)", "oklch(48% 0.17 28)", "oklch(58% 0.17 28)", "oklch(68% 0.13 28)", "oklch(78% 0.09 28)", "oklch(89% 0.04 28)", "oklch(95% 0.02 28)"] },
+      "bad-wash": { "role": "state", "displayName": "Void Red Wash", "canonical": "#fbe4e2" },
+      "idle": { "role": "state", "displayName": "Idle Slate", "canonical": "#55606e" },
+      "idle-wash": { "role": "state", "displayName": "Idle Slate Wash", "canonical": "#eceff3" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles only." },
+      "headline": { "displayName": "Headline", "purpose": "Officer door card title; auth title and ID holder name sit at this scale." },
+      "title": { "displayName": "Title", "purpose": "Sheet titles, pass titles, punch-card name, empty-state title." },
+      "figure": { "displayName": "Figure", "purpose": "Tabular values in the field strip and door counts." },
+      "body": { "displayName": "Body", "purpose": "Reading text and form values; descriptions cap at 68ch." },
+      "label": { "displayName": "Field Label", "purpose": "Condensed caps label over a value; ledger heads, tags, tab labels." },
+      "code": { "displayName": "ID Code", "purpose": "Spaced monospaced registration code under the ticket QR; student numbers inline." }
+    },
+    "shadows": [
+      { "name": "resting-paper", "value": "0 1px 2px rgba(14,42,71,.08), 0 2px 6px rgba(14,42,71,.06)", "purpose": "Sheets, field strips, passes, door card." },
+      { "name": "lifted-paper", "value": "0 6px 18px rgba(14,42,71,.14), 0 2px 4px rgba(14,42,71,.08)", "purpose": "Hovered pass, mobile menu sheet, toasts." },
+      { "name": "hanging-id", "value": "0 14px 40px rgba(14,42,71,.20), 0 2px 6px rgba(14,42,71,.10)", "purpose": "The ID card hanging from its lanyard." },
+      { "name": "cut-through", "value": "inset 0 1px 2px rgba(0,0,0,.35)", "purpose": "Lanyard slots and the punch hole." },
+      { "name": "focus-ring-input", "value": "0 0 0 3px rgba(242,183,5,.55)", "purpose": "Input focus, paired with a navy border." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(.16, 1, .3, 1)", "purpose": "The system easing for swing, punch and row flash." },
+      { "name": "lanyard-swing", "value": "1.1s ease-out; rotate -4deg > 1.6deg > -.6deg > 0, origin 50% -80px", "purpose": "The hanging ID settles once on first view. Off under reduced motion." },
+      { "name": "punch", "value": ".28s ease-out; scale 0 > 1.12 > 1", "purpose": "Hole punches into the result card on successful check-in." },
+      { "name": "chad", "value": ".7s cubic-bezier(.3,0,.8,.6) .12s; translate(14px,90px) rotate(120deg), fade out", "purpose": "The punched chad falls away." },
+      { "name": "row-flash", "value": "1.6s ease-out; gold-wash > transparent", "purpose": "The checked-in ledger row flashes once; part of the punch moment." },
+      { "name": "state-transition", "value": ".15s", "purpose": "Colour and border changes on buttons and inputs." }
+    ],
+    "breakpoints": [
+      { "name": "phone-stack", "value": "720px" },
+      { "name": "desk-split", "value": "760px" },
+      { "name": "rail", "value": "992px" },
+      { "name": "detail-split", "value": "1100px" },
+      { "name": "desk-wide", "value": "1600px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Navy solid button for the main action of a form or page.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Sign in</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 8px; font-family: 'Barlow', system-ui, sans-serif; font-weight: 600; font-size: .98rem; line-height: 1; border: 1px solid transparent; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s; } .ds-btn-primary { background: #0e2a47; color: #fff; border-color: #0e2a47; } .ds-btn-primary:hover { background: #1b4470; border-color: #1b4470; } .ds-btn:focus-visible { outline: 3px solid #f2b705; outline-offset: 2px; }"
+    },
+    {
+      "name": "Key Button",
+      "kind": "button",
+      "refersTo": "button-key",
+      "description": "Marigold button reserved for the door action (open the check-in desk, check in).",
+      "html": "<button class=\"ds-btn-key\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M1 1h6v6H1zm2 2v2h2V3zm6-2h6v6H9zm2 2v2h2V3zM1 9h6v6H1zm2 2v2h2v-2zm6-2h2v2H9zm4 0h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2H9zm4 0h2v2h-2z\"/></svg> Check in</button>",
+      "css": ".ds-btn-key { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 8px; font-family: 'Barlow', system-ui, sans-serif; font-weight: 600; font-size: .98rem; background: #f2b705; color: #0e2a47; border: 1px solid #f2b705; cursor: pointer; transition: background-color .15s, box-shadow .15s; } .ds-btn-key:hover { background: #ffc81f; border-color: #e0a800; box-shadow: 0 2px 8px rgba(138,100,0,.25); } .ds-btn-key:focus-visible { outline: 3px solid #0e2a47; outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Default secondary and row action.",
+      "html": "<button class=\"ds-btn-outline\">Event details</button>",
+      "css": ".ds-btn-outline { min-height: 44px; padding: 0 18px; border-radius: 8px; font-family: 'Barlow', system-ui, sans-serif; font-weight: 600; font-size: .98rem; background: #fff; color: #0e2a47; border: 1px solid #b9c3cf; cursor: pointer; transition: border-color .15s; } .ds-btn-outline:hover { border-color: #0e2a47; } .ds-btn-outline:focus-visible { outline: 3px solid #f2b705; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Navy condensed caps label over a 44px white input with a marigold focus ring.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-u\">Username</label><input id=\"ds-u\" class=\"ds-input\" placeholder=\"e.g. acruz\"></div>",
+      "css": ".ds-field { max-width: 320px; } .ds-label { display: block; margin-bottom: 6px; font-family: 'Barlow Condensed', 'Barlow', system-ui, sans-serif; font-weight: 600; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #0e2a47; } .ds-input { display: block; width: 100%; min-height: 44px; padding: 8px 12px; font: 400 1rem 'Barlow', system-ui, sans-serif; color: #142033; background: #fff; border: 1px solid #b9c3cf; border-radius: 8px; transition: border-color .15s, box-shadow .15s; } .ds-input::placeholder { color: #707b89; } .ds-input:focus { outline: none; border-color: #0e2a47; box-shadow: 0 0 0 3px rgba(242,183,5,.55); }"
+    },
+    {
+      "name": "Status Tag",
+      "kind": "chip",
+      "refersTo": "tag-ok",
+      "description": "Condensed caps status chip with a dot; one state vocabulary everywhere.",
+      "html": "<span class=\"ds-tag ds-tag-ok\">Registered</span> <span class=\"ds-tag ds-tag-warn\">Waitlisted</span> <span class=\"ds-tag ds-tag-bad\">Absent</span> <span class=\"ds-tag ds-tag-final\">Completed</span> <span class=\"ds-tag ds-tag-pending\">Pending</span>",
+      "css": ".ds-tag { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px; font-family: 'Barlow Condensed', 'Barlow', system-ui, sans-serif; font-weight: 700; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; border: 1px solid transparent; } .ds-tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; } .ds-tag-ok { color: #17693f; background: #e2f3e9; } .ds-tag-warn { color: #8f5200; background: #fdf0d8; } .ds-tag-bad { color: #a8231c; background: #fbe4e2; } .ds-tag-final { color: #fff; background: #0e2a47; } .ds-tag-pending { color: #55606e; background: transparent; border: 1px dashed #b9c3cf; } .ds-tag-pending::before { background: transparent; border: 1.5px solid currentColor; }"
+    },
+    {
+      "name": "Navigation Rail",
+      "kind": "nav",
+      "refersTo": "nav-rail",
+      "description": "Navy rail; the current page is a white tab with a marigold slot marker.",
+      "html": "<nav class=\"ds-rail\"><span class=\"ds-rail-label\">Run events</span><a class=\"ds-nav\" aria-current=\"page\" href=\"#\">Dashboard</a><a class=\"ds-nav\" href=\"#\">Manage events</a><a class=\"ds-nav\" href=\"#\">Reports</a></nav>",
+      "css": ".ds-rail { width: 248px; background: #0e2a47; padding: 16px 14px; display: flex; flex-direction: column; gap: 2px; font-family: 'Barlow', system-ui, sans-serif; } .ds-rail-label { font-family: 'Barlow Condensed', 'Barlow', sans-serif; font-weight: 600; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #9fb3c8; padding: 10px 12px 6px; } .ds-nav { position: relative; display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #e8eef5; text-decoration: none; font-weight: 500; } .ds-nav:hover { background: #1b4470; color: #fff; } .ds-nav[aria-current='page'] { background: #fff; color: #0e2a47; font-weight: 600; } .ds-nav[aria-current='page']::after { content: ''; position: absolute; right: 12px; top: 50%; width: 16px; height: 6px; margin-top: -3px; border-radius: 3px; background: #f2b705; } .ds-nav:focus-visible { outline: 3px solid #f2b705; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ledger",
+      "kind": "custom",
+      "refersTo": "ledger-header",
+      "description": "Plain dense table on a white sheet: navy condensed caps heads, hairline rules, tabular numerals.",
+      "html": "<div class=\"ds-sheet\"><table class=\"ds-ledger\"><thead><tr><th>Event</th><th>Registered</th><th>Status</th></tr></thead><tbody><tr><td><div class=\"ds-main\">Tech Talk: Careers in Software</div><div class=\"ds-sub\">AVR 1, Main Building</div></td><td>4 / 50</td><td><span class=\"ds-tag\">Open</span></td></tr><tr><td><div class=\"ds-main\">Hackathon 2026 Orientation</div><div class=\"ds-sub\">Innovation Hub</div></td><td>3 / 3</td><td><span class=\"ds-tag\">Open</span></td></tr></tbody></table></div>",
+      "css": ".ds-sheet { background: #fff; border: 1px solid #d5dbe3; border-radius: 10px; box-shadow: 0 1px 2px rgba(14,42,71,.08), 0 2px 6px rgba(14,42,71,.06); overflow: hidden; font-family: 'Barlow', system-ui, sans-serif; color: #142033; } .ds-ledger { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; } .ds-ledger th { background: #f4f6f9; color: #0e2a47; font-family: 'Barlow Condensed', 'Barlow', sans-serif; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; text-align: left; padding: 10px 14px; border-bottom: 1px solid #b9c3cf; } .ds-ledger td { padding: 12px 14px; border-bottom: 1px solid #d5dbe3; } .ds-ledger tbody tr:last-child td { border-bottom: 0; } .ds-ledger tbody tr:hover td { background: #f8fafc; } .ds-main { font-weight: 600; } .ds-sub { color: #526073; font-size: .88rem; margin-top: 2px; } .ds-tag { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: #17693f; background: #e2f3e9; }"
+    },
+    {
+      "name": "Event Pass",
+      "kind": "card",
+      "refersTo": "pass",
+      "description": "The signature event card: navy band with lanyard slot, label-over-value fields, marigold valid stripe when held.",
+      "html": "<article class=\"ds-pass ds-held\"><div class=\"ds-band\"><div class=\"ds-org\">Computer Science Society</div></div><div class=\"ds-body\"><h3 class=\"ds-title\">Tech Talk: Careers in Software</h3><dl class=\"ds-fields\"><div><dt class=\"ds-lbl\">Date</dt><dd>Sat, Sep 26</dd></div><div><dt class=\"ds-lbl\">Time</dt><dd>11:00 PM</dd></div><div><dt class=\"ds-lbl\">Venue</dt><dd>AVR 1</dd></div><div><dt class=\"ds-lbl\">Seats</dt><dd>4 of 50</dd></div></dl></div><div class=\"ds-foot\"><span class=\"ds-lbl\">Your pass</span><span class=\"ds-tag\">Registered</span></div></article>",
+      "css": ".ds-pass { position: relative; width: 300px; display: flex; flex-direction: column; background: #fff; border-radius: 14px; box-shadow: 0 1px 2px rgba(14,42,71,.08), 0 2px 6px rgba(14,42,71,.06); overflow: hidden; font-family: 'Barlow', system-ui, sans-serif; color: #142033; transition: box-shadow .25s cubic-bezier(.16,1,.3,1); } .ds-pass:hover { box-shadow: 0 6px 18px rgba(14,42,71,.14), 0 2px 4px rgba(14,42,71,.08); } .ds-band { position: relative; background: #0e2a47; color: #fff; padding: 26px 18px 12px; } .ds-band::before { content: ''; position: absolute; top: 9px; left: 50%; width: 44px; height: 9px; margin-left: -22px; border-radius: 5px; background: #e5e9ef; box-shadow: inset 0 1px 2px rgba(0,0,0,.35); } .ds-org { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: .08em; text-transform: uppercase; } .ds-body { padding: 16px 18px 6px; } .ds-title { margin: 0 0 14px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.45rem; line-height: 1.08; } .ds-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; margin: 0; } .ds-fields dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; } .ds-lbl { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #526073; } .ds-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px 16px; } .ds-held .ds-foot { background: #f2b705; } .ds-held .ds-foot .ds-lbl { color: #0e2a47; } .ds-tag { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: #17693f; background: #e2f3e9; }"
+    },
+    {
+      "name": "Field Strip",
+      "kind": "custom",
+      "refersTo": "sheet",
+      "description": "Counts read as ID fields in one hairline-divided bar, instead of KPI cards.",
+      "html": "<dl class=\"ds-strip\"><div><dt>Registered</dt><dd>42<small> / 50</small></dd></div><div><dt>Checked in</dt><dd>31</dd></div><div><dt>Waitlisted</dt><dd>6</dd></div></dl>",
+      "css": ".ds-strip { display: flex; flex-wrap: wrap; margin: 0; background: #fff; border: 1px solid #d5dbe3; border-radius: 10px; box-shadow: 0 1px 2px rgba(14,42,71,.08), 0 2px 6px rgba(14,42,71,.06); overflow: hidden; } .ds-strip > div { flex: 1 1 140px; padding: 14px 20px; border-right: 1px solid #d5dbe3; margin-right: -1px; } .ds-strip dt { margin: 0 0 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #526073; } .ds-strip dd { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.9rem; line-height: 1; color: #0e2a47; font-variant-numeric: tabular-nums; } .ds-strip small { font-family: 'Barlow', sans-serif; font-weight: 500; font-size: .95rem; color: #526073; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Pass Rack and the Registrar's Desk",
+    "overview": "Every registration is a school ID pass you wear. The interface is a cool laminate-grey desk (the page ground) on which two kinds of paper lie: white card-stock passes with a navy ID header band, a punched lanyard slot and, when the pass is yours and valid, a marigold stripe along the bottom; and plain white sheets that carry forms and dense ledgers. The pass is the object students hold and officers punch. The sheet is the record admins read and print.\n\nDensity is split by paper type. Passes are generous and tactile: condensed caps field labels sit over values exactly as on a printed ID, numbers are tabular, codes are monospaced and letter-spaced for reading aloud. Sheets are quiet and dense: navy condensed-caps column heads on a pale fill, hairline rules, no decoration inside rows. Navy is the ink of record and the chrome (rail, top bar, header bands); marigold is the strap, the valid stripe, the key action and the focus ring.\n\nThe system refuses the purple SaaS sidebar-and-KPI-card dashboard. Counts read as ID fields in a single strip, not as a grid of floating stat cards. Motion is limited to the lanyard swing when an ID first appears and the hole-punch (with its row flash) when a check-in succeeds.",
+    "keyCharacteristics": [
+      "Laminate-grey desk ground; white card stock and white sheets on top of it.",
+      "Navy ID header band with a punched lanyard slot on every pass-type object.",
+      "Marigold is the lanyard, the \"valid\" stripe, the key action and focus; never a background wash for whole regions.",
+      "Condensed caps field labels over plain values; tabular numerals; monospaced ID codes.",
+      "Pass look on events, tickets, auth, the officer door card and the check-in result only. Tables stay plain ledgers.",
+      "Two motions only: lanyard swing and punch."
+    ],
+    "rules": [
+      { "name": "The Navy Ink Rule", "body": "Anything set on marigold is set in navy. White on marigold does not exist in this system.", "section": "colors" },
+      { "name": "The One Vocabulary Rule", "body": "Every status in the product maps to exactly one of the four state pairs (or navy for final states such as Completed and Admin, marigold wash for Officer). A new status joins an existing pair; it never gets a new hue.", "section": "colors" },
+      { "name": "The Seen-Through Rule", "body": "Holes and slots (lanyard slot, punch hole) are filled with the desk colour and an inset shadow, so they read as cut through the card to the desk beneath.", "section": "colors" },
+      { "name": "The Label-Over-Value Rule", "body": "Data is presented as a condensed caps label above a plain value, as on a printed ID. Labels name a field; they never introduce a heading.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "Every count, time, seat figure and ledger column uses tabular numerals.", "section": "typography" },
+      { "name": "The Navy Shadow Rule", "body": "Shadows are tinted with navy (14,42,71), never neutral black; only cut-through holes use black insets. Print drops all shadows.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do put the pass look (navy band, lanyard slot, marigold stripe) only on events, tickets, auth, the officer door card and the check-in result.",
+      "Do keep officer and admin tables as plain, dense ledgers: navy condensed caps heads on quiet fill, hairline rules, tabular numerals, tags for status.",
+      "Do present data as condensed caps labels over plain values, and show counts in a single field strip.",
+      "Do set every text on marigold in navy, and reserve the marigold key button for the door action.",
+      "Do keep touch targets at 44px minimum and focus visible with the 3px marigold ring.",
+      "Do tint shadows navy and drop them when printing.",
+      "Do limit motion to the lanyard swing and the punch (with its row flash), both behind prefers-reduced-motion."
+    ],
+    "donts": [
+      "Don't put pass bands, slots, stripes or lanyards inside table rows.",
+      "Don't build dashboards from grids of floating KPI stat cards, and don't use purple or gradient SaaS chrome.",
+      "Don't introduce a new hue for a new status; map it to an existing state pair.",
+      "Don't put a QR code on marigold; it sits on white card stock above the stripe for scan contrast.",
+      "Don't set a small caps label above a heading as an eyebrow; labels name fields only.",
+      "Don't add school names, crests, mottos or vendor branding; the brand mark is the lanyard-pass glyph only."
+    ]
+  }
+}

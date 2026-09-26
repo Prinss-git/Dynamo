@@ -1,51 +1,53 @@
 ﻿@model RegistrationViewModel
 @{
-    ViewData["Title"] = "Event Ticket";
+    ViewData["Title"] = "Event pass";
 }
-<div class="page-header no-print">
-    <div>
-        <h1>Event Ticket</h1>
-        <p class="subtitle">Show this QR code to an officer at the venue to check in</p>
-    </div>
-    <div class="d-flex" style="gap: 8px">
-        <button type="button" class="btn btn-outline-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
-        <a class="btn btn-outline-secondary" asp-action="MyEvents">Back</a>
-    </div>
-</div>
+<a class="back no-print" asp-action="MyEvents"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> My passes</a>
 
-<div class="panel ticket">
-    <div class="text-uppercase small font-weight-bold" style="color: var(--app-primary)">@Model.OrganizationName</div>
-    <h2 class="h4 mt-1">@Model.EventTitle</h2>
-    <p class="text-muted mb-3">
-        @Model.StartTime.ToString("dddd, MMMM d, yyyy h:mm tt")<br />
-        @Model.Venue
-    </p>
-
-    @if (Model.QrCodeSvg != null)
-    {
-        <div class="qr">@Html.Raw(Model.QrCodeSvg)</div>
-        <div class="code mt-2">@Model.RegistrationCode</div>
-        <p class="small text-muted mt-1">Registration code</p>
-    }
-    else
-    {
-        <div class="alert alert-warning">
-            This registration is @Model.Status.ToString().ToLower(), so there is no check-in QR code.
+<div style="max-width:420px;margin:0 auto">
+    @await Html.PartialAsync("_Lanyard")
+    <article class="idcard swing" aria-label="Event pass for @Model.EventTitle">
+        <div class="idcard-band">
+            <div class="pass-org">@Model.OrganizationName</div>
+            <h1 class="page-title" style="color:#fff;font-size:1.8rem;margin-top:4px">@Model.EventTitle</h1>
         </div>
-    }
+        <div class="idcard-body">
+            <div class="id-person">
+                <div class="id-photo" aria-hidden="true">@BadgeHelper.Initials(Model.StudentName)</div>
+                <div>
+                    <div class="id-name">@Model.StudentName</div>
+                    <div class="label" style="margin-top:6px">Student no.</div>
+                    <div class="code" style="font-size:1.05rem">@Model.StudentNumber</div>
+                </div>
+            </div>
+            <dl class="id-fields">
+                <div><dt class="label">Date</dt><dd>@Model.StartTime.ToString("ddd, MMM d, yyyy")</dd></div>
+                <div><dt class="label">Time</dt><dd class="num">@Model.StartTime.ToString("h:mm tt")</dd></div>
+                <div class="wide"><dt class="label">Venue</dt><dd>@Model.Venue</dd></div>
+            </dl>
 
-    <hr />
-    <dl class="detail-list text-left">
-        <dt>Name</dt>
-        <dd>@Model.StudentName</dd>
-        <dt>Student number</dt>
-        <dd>@Model.StudentNumber</dd>
-        <dt>Status</dt>
-        <dd>@BadgeHelper.Badge(Model.Status)</dd>
-        @if (Model.AttendanceStatus.HasValue)
-        {
-            <dt>Attendance</dt>
-            <dd>@BadgeHelper.Badge(Model.AttendanceStatus)</dd>
-        }
-    </dl>
+            <div class="id-strip">
+                @if (Model.QrCodeSvg != null)
+                {
+                    <div class="qr" role="img" aria-label="QR code for registration @Model.RegistrationCode">@Html.Raw(Model.QrCodeSvg)</div>
+                    <div class="id-code">@Model.RegistrationCode</div>
+                    <p class="muted" style="margin:6px 0 0;font-size:.9rem">If the scanner struggles, read this code to the officer.</p>
+                }
+                else
+                {
+                    <div class="notice" style="margin:0;text-align:left">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                        <div>This pass is @Model.Status.ToString().ToLower(), so it has no check-in code yet.</div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="idcard-foot">
+            <span>@(Model.AttendanceStatus.HasValue ? "Attendance" : "Standing")</span>
+            @BadgeHelper.Badge(Model.AttendanceStatus.HasValue ? (Enum)Model.AttendanceStatus : Model.Status)
+        </div>
+    </article>
+    <div class="form-actions no-print" style="justify-content:center;margin-top:20px">
+        <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print" aria-hidden="true"></i> Print pass</button>
+    </div>
 </div>

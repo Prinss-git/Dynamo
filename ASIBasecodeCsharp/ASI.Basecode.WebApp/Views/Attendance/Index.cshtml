@@ -1,108 +1,116 @@
 ﻿@model AttendanceSheetModel
 @{
-    ViewData["Title"] = "Attendance – " + Model.Event.Title;
+    ViewData["Title"] = "Check-in · " + Model.Event.Title;
     var ev = Model.Event;
     var canCheckIn = ev.Status == EventStatus.Open || ev.Status == EventStatus.Closed;
 }
-<div class="page-header">
+<a class="back" asp-controller="Event" asp-action="Details" asp-route-id="@ev.Id"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> @ev.Title</a>
+<div class="page-head">
     <div>
-        <h1>Attendance</h1>
-        <p class="subtitle">
-            <a asp-controller="Event" asp-action="Details" asp-route-id="@ev.Id">@ev.Title</a>
-            · @ev.StartTime.ToString("MMM d, yyyy h:mm tt") · @ev.Venue · @BadgeHelper.Badge(ev.Status)
-        </p>
+        <h1 class="page-title">Check-in desk</h1>
+        <p class="page-sub">@ev.OrganizationName · @ev.StartTime.ToString("ddd, MMM d · h:mm tt") · @ev.Venue</p>
     </div>
-    <div class="d-flex" style="gap: 8px">
-        <a class="btn btn-outline-primary" asp-controller="Report" asp-action="Event" asp-route-id="@ev.Id"><i class="fa-solid fa-chart-column"></i> Report</a>
-        <a class="btn btn-outline-secondary" asp-controller="Report" asp-action="ExportEvent" asp-route-id="@ev.Id"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
+    <div class="page-actions desk-actions-top">
+        <a class="btn btn-outline" asp-controller="Report" asp-action="Event" asp-route-id="@ev.Id"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Report</a>
+        <a class="btn btn-outline" asp-controller="Report" asp-action="ExportEvent" asp-route-id="@ev.Id"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> CSV</a>
     </div>
 </div>
 
-<div class="stat-grid">
-    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-users"></i></div><div><div class="stat-value">@Model.Attendees.Count</div><div class="stat-label">Registered</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div><div><div class="stat-value" id="count-present">@Model.PresentCount</div><div class="stat-label">Present</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-clock"></i></div><div><div class="stat-value" id="count-late">@Model.LateCount</div><div class="stat-label">Late</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div><div><div class="stat-value" id="count-pending">@Model.PendingCount</div><div class="stat-label">Not yet checked in</div></div></div>
-</div>
 
-<div class="row">
+<div class="@(canCheckIn ? "desk-grid" : "")">
     @if (canCheckIn)
     {
-        <div class="col-xl-4">
-            <div class="panel">
-                <h2>Check in</h2>
+        <section class="sheet" aria-labelledby="scan-title">
+            <div class="sheet-head"><h2 class="sheet-title" id="scan-title">Scan a pass</h2></div>
+            <div class="sheet-body scan-body">
                 <div id="qr-reader"></div>
-                <p class="small text-muted text-center mt-2 mb-3">Scan the QR code on the student's ticket, or type the registration code / student number below.</p>
-                <form id="checkin-form" autocomplete="off">
+                <div>
+                <form id="checkin-form" autocomplete="off" style="margin-top:16px">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="eventId" value="@ev.Id" />
-                    <div class="input-group">
-                        <input type="text" name="code" id="checkin-code" class="form-control" placeholder="Code or student number" required />
-                        <div class="input-group-append">
-                            <button type="submit" class="btn btn-primary">Check in</button>
-                        </div>
+                    <label class="label" for="checkin-code" style="display:block;margin-bottom:6px">Or type the code or student no.</label>
+                    <div class="scan-entry">
+                        <input type="text" name="code" id="checkin-code" class="input" placeholder="e.g. TT4K9QZP2A" required autocapitalize="characters" spellcheck="false" />
+                        <button type="submit" class="btn btn-key">Check in</button>
                     </div>
                 </form>
-                <div id="checkin-result" class="checkin-result" role="status" aria-live="polite"></div>
+
+                <div id="punch-card" class="punch-card" role="status" aria-live="polite">
+                    <div class="pass-band"><div class="pass-org" id="punch-org">@ev.OrganizationName</div></div>
+                    <span class="punch-hole" aria-hidden="true"></span>
+                    <span class="punch-chad" aria-hidden="true"></span>
+                    <div class="punch-body">
+                        <div class="punch-name" id="punch-name"></div>
+                        <div class="code" id="punch-number"></div>
+                        <p class="punch-msg" id="punch-msg"></p>
+                    </div>
+                </div>
+                </div>
             </div>
-        </div>
+        </section>
     }
-    <div class="@(canCheckIn ? "col-xl-8" : "col-12")">
-        <div class="panel">
-            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap" style="gap: 8px">
-                <h2 class="panel-title mb-0">Attendees</h2>
-                <input type="search" id="attendee-filter" class="form-control form-control-sm" style="max-width: 240px" placeholder="Filter by name or number" />
+
+    <div>
+        <dl class="fields fields--compact">
+        <div><dt class="label">Registered</dt><dd>@Model.Attendees.Count</dd></div>
+        <div><dt class="label">Present</dt><dd id="count-present">@Model.PresentCount</dd></div>
+        <div><dt class="label">Late</dt><dd id="count-late">@Model.LateCount</dd></div>
+        <div><dt class="label">Not yet in</dt><dd id="count-pending">@Model.PendingCount</dd></div>
+    </dl>
+        <section class="sheet">
+            <div class="sheet-head">
+                <h2 class="sheet-title">Attendees</h2>
+                <label class="sr-only" for="attendee-filter">Filter attendees</label>
+                <input type="search" id="attendee-filter" class="input" style="max-width:260px" placeholder="Filter by name or number" />
             </div>
             @if (!canCheckIn)
             {
-                <p class="small text-muted">Check-in is only available while the event is Open or Closed. You can still correct individual records below.</p>
+                <div class="notice" style="margin:16px 20px 0"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><div>Scanning is only available while the event is Open or Closed. You can still correct individual records below.</div></div>
             }
             @if (!Model.Attendees.Any())
             {
-                <div class="empty-state"><i class="fa-solid fa-users"></i>No registered attendees yet.</div>
+                @await Html.PartialAsync("_Empty", ("No one registered yet", "Registered students appear here, ready to be checked in."))
             }
             else
             {
-                <div class="table-responsive">
-                    <table class="table table-app" id="attendee-table">
+                <div class="ledger-wrap">
+                    <table class="ledger ledger--stack" id="attendee-table">
                         <thead>
-                            <tr><th>Student</th><th>Code</th><th>Status</th><th>In / Out</th><th class="text-right">Update</th></tr>
+                            <tr><th>Student</th><th>Code</th><th>Status</th><th>In / out</th><th class="r">Record</th></tr>
                         </thead>
                         <tbody>
                             @foreach (var a in Model.Attendees)
                             {
                                 <tr data-registration-id="@a.Id" data-search="@((a.StudentName + " " + a.StudentNumber + " " + a.RegistrationCode).ToLower())">
-                                    <td>@a.StudentName<div class="small text-muted">@a.StudentNumber · @a.Course</div></td>
-                                    <td><code>@a.RegistrationCode</code></td>
-                                    <td class="cell-status">@BadgeHelper.Badge(a.AttendanceStatus)</td>
-                                    <td class="cell-time small text-nowrap">
-                                        @(a.CheckInTime?.ToString("h:mm tt") ?? "—")
-                                        @if (a.CheckOutTime.HasValue)
-                                        {
-                                            <span> / @a.CheckOutTime.Value.ToString("h:mm tt")</span>
-                                        }
-                                    </td>
-                                    <td class="text-right">
-                                        <form asp-action="SetStatus" method="post" class="form-inline justify-content-end flex-nowrap" style="gap: 4px">
-                                            <input type="hidden" name="id" value="@a.Id" />
-                                            <input type="hidden" name="eventId" value="@ev.Id" />
-                                            <select name="status" class="form-control form-control-sm">
-                                                @foreach (AttendanceStatus s in Enum.GetValues(typeof(AttendanceStatus)))
-                                                {
-                                                    <option value="@s" selected="@(a.AttendanceStatus == s)">@s</option>
-                                                }
-                                            </select>
-                                            <input type="text" name="remarks" value="@a.Remarks" class="form-control form-control-sm" placeholder="Remarks" style="width: 110px" />
-                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Save"><i class="fa-solid fa-floppy-disk"></i></button>
-                                        </form>
-                                        @if (canCheckIn && a.CheckInTime.HasValue && !a.CheckOutTime.HasValue)
-                                        {
-                                            <form asp-action="CheckOut" method="post" class="d-inline-block mt-1">
+                                    <td><div class="cell-main">@a.StudentName</div><div class="cell-sub"><span class="code">@a.StudentNumber</span> · @a.Course</div></td>
+                                    <td data-label="Code"><code>@a.RegistrationCode</code></td>
+                                    <td data-label="Status" class="cell-status">@BadgeHelper.Badge(a.AttendanceStatus)</td>
+                                    <td data-label="In / out" class="cell-time num nowrap">@(a.CheckInTime?.ToString("h:mm tt") ?? "—")@(a.CheckOutTime.HasValue ? " / " + a.CheckOutTime.Value.ToString("h:mm tt") : "")</td>
+                                    <td class="r">
+                                        <div class="row-actions" style="flex-wrap:wrap">
+                                            <form asp-action="SetStatus" method="post" class="row-actions" style="flex-wrap:nowrap">
                                                 <input type="hidden" name="id" value="@a.Id" />
                                                 <input type="hidden" name="eventId" value="@ev.Id" />
-                                                <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-right-from-bracket"></i> Check out</button>
+                                                <label class="sr-only" for="status-@a.Id">Status for @a.StudentName</label>
+                                                <select name="status" id="status-@a.Id" class="input" style="min-height:36px;width:auto;padding:4px 8px">
+                                                    @foreach (AttendanceStatus s in Enum.GetValues(typeof(AttendanceStatus)))
+                                                    {
+                                                        <option value="@s" selected="@(a.AttendanceStatus == s)">@s</option>
+                                                    }
+                                                </select>
+                                                <label class="sr-only" for="remarks-@a.Id">Remarks for @a.StudentName</label>
+                                                <input type="text" name="remarks" id="remarks-@a.Id" value="@a.Remarks" class="input" placeholder="Remarks" style="min-height:36px;width:120px;padding:4px 8px" />
+                                                <button type="submit" class="btn btn-outline btn-sm">Save</button>
                                             </form>
-                                        }
+                                            @if (canCheckIn && a.CheckInTime.HasValue && !a.CheckOutTime.HasValue)
+                                            {
+                                                <form asp-action="CheckOut" method="post" class="inline-form">
+                                                    <input type="hidden" name="id" value="@a.Id" />
+                                                    <input type="hidden" name="eventId" value="@ev.Id" />
+                                                    <button type="submit" class="btn btn-outline btn-sm"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Check out</button>
+                                                </form>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -110,21 +118,28 @@
                     </table>
                 </div>
             }
-        </div>
+        </section>
 
         @if (Model.Waitlist.Any())
         {
-            <div class="panel">
-                <h2>Waitlist (@Model.Waitlist.Count)</h2>
-                <ol class="mb-0">
-                    @foreach (var w in Model.Waitlist)
-                    {
-                        <li>@w.StudentName <span class="text-muted small">(@w.StudentNumber) · since @w.RegisteredTime.ToString("MMM d, h:mm tt")</span></li>
-                    }
-                </ol>
-            </div>
+            <section class="sheet">
+                <div class="sheet-head"><h2 class="sheet-title">Waitlist</h2><span class="muted num">@Model.Waitlist.Count waiting</span></div>
+                <div class="sheet-body">
+                    <ol class="waitlist">
+                        @foreach (var w in Model.Waitlist)
+                        {
+                            <li>@w.StudentName <span class="muted">(<span class="code">@w.StudentNumber</span>) · since @w.RegisteredTime.ToString("MMM d, h:mm tt")</span></li>
+                        }
+                    </ol>
+                </div>
+            </section>
         }
     </div>
+</div>
+
+<div class="page-actions desk-actions-bottom">
+        <a class="btn btn-outline" asp-controller="Report" asp-action="Event" asp-route-id="@ev.Id"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Report</a>
+        <a class="btn btn-outline" asp-controller="Report" asp-action="ExportEvent" asp-route-id="@ev.Id"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> CSV</a>
 </div>
 
 @section Scripts {
@@ -134,7 +149,6 @@
     }
     <script>
         (function () {
-            // Client-side filter for the attendee table
             var filter = document.getElementById("attendee-filter");
             if (filter) {
                 filter.addEventListener("input", function () {
@@ -148,15 +162,9 @@
             var form = document.getElementById("checkin-form");
             if (!form) return;
 
-            var resultBox = document.getElementById("checkin-result");
+            var card = document.getElementById("punch-card");
             var codeInput = document.getElementById("checkin-code");
             var busy = false, lastCode = null, lastTime = 0;
-
-            function escapeHtml(text) {
-                var div = document.createElement("div");
-                div.textContent = text == null ? "" : text;
-                return div.innerHTML;
-            }
 
             function bump(id, delta) {
                 var el = document.getElementById(id);
@@ -164,19 +172,29 @@
             }
 
             function showResult(data) {
-                var who = data.studentName ? "<strong>" + escapeHtml(data.studentName) + "</strong> (" + escapeHtml(data.studentNumber) + ")<br/>" : "";
-                var extra = data.status ? "<br/><span class=\"small\">" + escapeHtml(data.status) + (data.time ? " · " + escapeHtml(data.time) : "") + "</span>" : "";
-                resultBox.className = "checkin-result " + (data.success ? "ok" : "fail");
-                resultBox.innerHTML = who + escapeHtml(data.message) + extra;
+                document.getElementById("punch-name").textContent = data.studentName || (data.success ? "" : "Not checked in");
+                document.getElementById("punch-number").textContent = data.studentNumber || "";
+                var msg = data.message || "";
+                if (data.status) msg += " " + data.status + (data.time ? " · " + data.time : "");
+                document.getElementById("punch-msg").textContent = msg;
+                card.className = "punch-card show " + (data.success ? "ok" : "fail");
+                void card.offsetWidth; // restart the punch animation
+                if (data.success) card.classList.add("animate");
             }
 
             function updateRow(data) {
                 var row = document.querySelector("tr[data-registration-id='" + data.registrationId + "']");
                 if (!row) return;
                 var css = data.status.toLowerCase();
-                row.querySelector(".cell-status").innerHTML = "<span class=\"badge badge-status badge-" + css + "\">" + escapeHtml(data.status) + "</span>";
+                var tag = document.createElement("span");
+                tag.className = "tag tag-" + css;
+                tag.textContent = data.status;
+                var cell = row.querySelector(".cell-status");
+                cell.innerHTML = "";
+                cell.appendChild(tag);
                 row.querySelector(".cell-time").textContent = data.time;
                 row.querySelector("select[name='status']").value = data.status;
+                row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
                 bump(css === "late" ? "count-late" : "count-present", 1);
                 bump("count-pending", -1);
             }
@@ -184,7 +202,7 @@
             function checkIn(code) {
                 code = (code || "").trim();
                 if (!code || busy) return;
-                // The scanner reports the same code many times per second; ignore repeats for 3 seconds.
+                // The scanner reports the same code many times a second; ignore repeats for 3 seconds.
                 var now = Date.now();
                 if (code === lastCode && now - lastTime < 3000) return;
                 lastCode = code; lastTime = now; busy = true;
@@ -199,26 +217,38 @@
                     .then(function (res) { return res.json(); })
                     .then(function (data) {
                         showResult(data);
-                        if (data.success) {
-                            updateRow(data);
-                            toastr.success(data.studentName + " checked in");
-                        }
+                        if (data.success) updateRow(data);
                     })
-                    .catch(function () { showResult({ success: false, message: "Could not reach the server. Please try again." }); })
+                    .catch(function () { showResult({ success: false, message: "Couldn't reach the server. Check the connection and scan again." }); })
                     .finally(function () { busy = false; codeInput.value = ""; codeInput.focus(); });
             }
 
             form.addEventListener("submit", function (e) {
                 e.preventDefault();
-                lastCode = null; // manual entry always goes through
+                lastCode = null; // typed entry always goes through
                 checkIn(codeInput.value);
             });
 
             if (window.Html5QrcodeScanner) {
                 var scanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 220, height: 220 } }, false);
                 scanner.render(function (decodedText) { checkIn(decodedText); }, function () { /* no QR in frame */ });
+                var labels = {
+                    "html5-qrcode-button-camera-permission": "Start camera",
+                    "html5-qrcode-button-camera-start": "Start scanning",
+                    "html5-qrcode-button-camera-stop": "Stop scanning"
+                };
+                var relabel = function () {
+                    Object.keys(labels).forEach(function (id) {
+                        var b = document.getElementById(id);
+                        if (b && b.textContent.trim() !== labels[id]) {
+                            b.innerHTML = '<i class="fa-solid fa-camera" aria-hidden="true"></i> ' + labels[id];
+                        }
+                    });
+                };
+                relabel();
+                new MutationObserver(relabel).observe(document.getElementById("qr-reader"), { childList: true, subtree: true });
             } else {
-                document.getElementById("qr-reader").innerHTML = "<p class=\"small text-muted text-center\">QR scanner unavailable. Use manual entry.</p>";
+                document.getElementById("qr-reader").innerHTML = "<p class=\"muted\" style=\"padding:16px;margin:0\">The camera scanner couldn't load. Type the code below instead.</p>";
             }
         })();
     </script>

@@ -1,76 +1,126 @@
-﻿@using static ASI.Basecode.Resources.Views.Screen
+﻿@using ASI.Basecode.Resources.Constants
+@using System.Security.Claims
+@using static ASI.Basecode.Resources.Views.Screen
 @{
-    var isAuthPage = ViewBag.LoginView == true;
-    var showShell = !isAuthPage && User.Identity?.IsAuthenticated == true;
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var isAdmin = User.IsInRole(Const.RoleAdmin);
+    var isManager = isAdmin || User.IsInRole(Const.RoleOfficer);
+    var isStudent = User.IsInRole(Const.RoleStudent);
+    var name = User.Identity?.Name ?? "";
+    var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+
+    bool Is(string c, params string[] actions) =>
+        string.Equals(controller, c, StringComparison.OrdinalIgnoreCase)
+        && (actions.Length == 0 || actions.Any(a => string.Equals(action, a, StringComparison.OrdinalIgnoreCase)));
+
+    // (label, short label, icon, url, active, group)
+    var nav = new List<(string Label, string Short, string Icon, string Url, bool Active, string Group)>
+    {
+        ("Dashboard", "Home", "fa-house", Url.Action("Index", "Home"), Is("Home"), ""),
+        ("Browse events", "Events", "fa-calendar-days", Url.Action("Index", "Event"), Is("Event", "Index", "Details") && !isManager || Is("Event", "Index"), ""),
+    };
+    if (isStudent)
+    {
+        nav.Add(("My passes", "Passes", "fa-id-badge", Url.Action("MyEvents", "Registration"), Is("Registration"), ""));
+    }
+    if (isManager)
+    {
+        nav.Add(("Manage events", "Manage", "fa-clipboard-list", Url.Action("Manage", "Event"), Is("Event", "Manage", "Create", "Edit", "Details") || Is("Attendance"), "Run events"));
+        nav.Add(("Reports", "Reports", "fa-chart-column", Url.Action("Index", "Report"), Is("Report"), "Run events"));
+    }
+    if (isAdmin)
+    {
+        nav.Add(("Organizations", "Orgs", "fa-people-group", Url.Action("Index", "Organization"), Is("Organization"), "Administration"));
+        nav.Add(("Users", "Users", "fa-users", Url.Action("Index", "User"), Is("User"), "Administration"));
+    }
+    // Mobile tab bar: at most five destinations
+    var tabs = isAdmin ? nav.Where(n => n.Short != "Events").ToList() : nav.Take(5).ToList();
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Event Registration &amp; Attendance</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/main.css" />
-    <link rel="stylesheet" href="~/css/style.css" />
-    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0e2a47" />
+    <title>@ViewData["Title"] · Student Org Events</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="~/fonts/barlow/barlow-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="~/fonts/barlow/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" />
+    <link rel="stylesheet" href="~/css/pass.css" asp-append-version="true" />
     @RenderSection("Styles", required: false)
 </head>
-<body class="@(showShell ? "app-body" : "")">
-    @if (showShell)
-    {
-        @await Html.PartialAsync("_Header")
-        <div class="app-shell">
-            <aside class="app-sidebar">
-                @await Html.PartialAsync("_Sidebar")
-            </aside>
-            <main role="main" class="app-main">
-                @RenderBody()
-                <div class="app-footer">@Copyright</div>
-            </main>
-        </div>
-    }
-    else
-    {
-        <div class="container">
-            <main role="main">
-                @RenderBody()
-            </main>
-        </div>
-        <footer class="border-top footer text-muted">
-            <div class="container">
-                @Copyright
+<body class="id-app">
+    <header class="topbar">
+        <a class="brand" href="@Url.Action("Index", "Home")">
+            @await Html.PartialAsync("_Mark")
+            <span class="brand-name">Student Org Events</span>
+        </a>
+        <details class="topbar-menu">
+            <summary aria-label="Account menu"><span class="monogram">@BadgeHelper.Initials(name)</span></summary>
+            <div class="menu-sheet">
+                <div class="whoami">
+                    <div><div class="whoami-name">@name</div><div class="whoami-role">@role</div></div>
+                </div>
+                @foreach (var item in nav.Except(tabs))
+                {
+                    <a href="@item.Url"><i class="fa-solid @item.Icon" aria-hidden="true"></i> @item.Label</a>
+                }
+                <a asp-controller="Account" asp-action="SignOutUser"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out</a>
             </div>
-        </footer>
-    }
+        </details>
+    </header>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-    <script src="https://kit.fontawesome.com/7a7c645416.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        // Configure Toastr options
-        toastr.options = {
-            positionClass: "toast-top-center", // Set the notification position to center
-            timeOut: 3500,
-            closeButton: true,
-            progressBar: true
-        };
+    <div class="shell">
+        <nav class="rail" aria-label="Main">
+            <a class="brand" href="@Url.Action("Index", "Home")">
+                @await Html.PartialAsync("_Mark")
+                <span class="brand-name">Student Org Events<small>Registration &amp; attendance</small></span>
+            </a>
+            @foreach (var group in nav.GroupBy(n => n.Group))
+            {
+                <div class="nav-group">
+                    @if (!string.IsNullOrEmpty(group.Key))
+                    {
+                        <span class="label">@group.Key</span>
+                    }
+                    @foreach (var item in group)
+                    {
+                        <a class="nav-item" href="@item.Url" aria-current="@(item.Active ? "page" : null)">
+                            <i class="fa-solid @item.Icon" aria-hidden="true"></i> @item.Label
+                        </a>
+                    }
+                </div>
+            }
+            <div class="rail-foot">
+                <div class="whoami">
+                    <span class="monogram">@BadgeHelper.Initials(name)</span>
+                    <div style="min-width:0"><div class="whoami-name">@name</div><div class="whoami-role">@role</div></div>
+                </div>
+                <a class="nav-item" asp-controller="Account" asp-action="SignOutUser"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out</a>
+            </div>
+        </nav>
 
-        // Messages set by controllers through TempData
-        (function () {
-            var success = @Html.Raw(Json.Serialize(TempData["SuccessMessage"]));
-            var warning = @Html.Raw(Json.Serialize(TempData["WarningMessage"]));
-            var error = @Html.Raw(Json.Serialize(TempData["ErrorMessage"]));
-            if (success) toastr.success(success);
-            if (warning) toastr.warning(warning);
-            if (error) toastr.error(error);
-        })();
-    </script>
+        <main class="main" id="main">
+            <div class="main-inner">
+                @RenderBody()
+                <div class="foot">@Copyright</div>
+            </div>
+        </main>
+    </div>
+
+    <nav class="tabbar" aria-label="Main">
+        @foreach (var item in tabs)
+        {
+            <a class="tab" href="@item.Url" aria-current="@(item.Active ? "page" : null)">
+                <i class="fa-solid @item.Icon" aria-hidden="true"></i><span>@item.Short</span>
+            </a>
+        }
+    </nav>
+
+    @await Html.PartialAsync("_Scripts")
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,0 +1,123 @@
+{
+  "title": "Choose the visual world",
+  "question": "The roll assigned the Class Record. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Class Record",
+      "kicker": "THE ROLL",
+      "lineage": "the green-bound class record book teachers keep attendance in",
+      "thesis": "Every event is a page in the school's class record; check-in writes the mark in the row.",
+      "palette": ["#1f4d3a", "#fbfbf8", "#2d5aa0", "#c8322b", "#1d2433"],
+      "materials": ["bottle-green book cloth", "white bond with blue rules", "red margin line", "ballpoint and red-pen marks"],
+      "viewport": "A ruled sheet headed like a class record (organization, event, date, venue) with numbered student rows; the attendance column fills with ✓, L and A as officers scan.",
+      "risk": "Reads as bureaucratic if the marks and the check-in moment are set timidly.",
+      "raised": [
+        { "from": "challenger-seven-segment", "raise": "Absence is drawn: capacity renders as fixed ruled slots, empty ones visible as ghost rows, and pending cells keep their blank ruled box." },
+        { "from": "challenger-gameboy", "raise": "Palette capped at five inks with no tints-of-everything; selection and pressed states invert (paper on green) instead of adding new colors." },
+        { "from": "challenger-sneaker-boxes", "raise": "One fixed header grid rules every event everywhere: organization, title, date slot, venue, seats; cards, sheets and tickets all read it the same way." },
+        { "from": "challenger-one-bit", "raise": "One state vocabulary everywhere: ✓ present in ink blue, L late and A absent in red pen, blank is pending, struck-through is cancelled." }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "School ID & Lanyard Pass",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "the laminated school ID and event lanyard pass",
+      "thesis": "Every registration is a pass you wear; the app is a rack of IDs.",
+      "palette": ["#0e2a47", "#ffffff", "#f2b705", "#e4e8ee"],
+      "materials": ["laminated card stock", "barcode strip", "lanyard clip slot"],
+      "viewport": "The student's next pass front and center as a badge with the QR where the barcode strip sits; events as a stack of passes.",
+      "risk": "The most familiar reading of an events app; strong on tickets but thin on officer and admin tables."
+    },
+    {
+      "id": "challenger-zine",
+      "label": "Copy-Shop Org Flyer",
+      "verdict": "competitive",
+      "lineage": "photocopied org flyers on colored copy stock",
+      "thesis": "Each organization owns a paper stock; events are typed sheets pinned by color.",
+      "palette": ["#e8b33a", "#d9453a", "#5b8bd6", "#f4f1e8", "#1a1a1a"],
+      "materials": ["colored copy stock", "typewriter column", "platen-enlarged caps"],
+      "viewport": "A goldenrod sheet for the org, one typed column of event detail under a copier-enlarged title.",
+      "case": "Students know org flyers by heart (holds audience); loses on clarity for dense attendance tables.",
+      "risk": "Typed single column fights the officer's check-in list and reports."
+    },
+    {
+      "id": "challenger-seven-segment",
+      "label": "Seven-Segment Scoreboard",
+      "verdict": "declined",
+      "lineage": "scoreboards and LED counters",
+      "thesis": "Check-in as a live door counter.",
+      "palette": ["#111111", "#ff3b2f", "#3a0f0c"],
+      "materials": ["LED segments", "ghost cells"],
+      "viewport": "A giant lit count of who has entered.",
+      "case": "Loses both axes: fun at the door, useless for browsing or reports.",
+      "kept": "Designed absence: empty slots and pending cells are drawn, not omitted.",
+      "risk": "Novelty with no reading surface."
+    },
+    {
+      "id": "challenger-gameboy",
+      "label": "Four-Shade Handheld",
+      "verdict": "declined",
+      "lineage": "four-green handheld screens",
+      "thesis": "The school events app as a pixel handheld.",
+      "palette": ["#9bbc0f", "#8bac0f", "#306230", "#0f380f"],
+      "materials": ["pixel tiles", "dither"],
+      "viewport": "A framed pixel screen with bordered menus.",
+      "case": "Loses both axes: one pixel size cannot carry names and tables.",
+      "kept": "A hard palette cap and inversion as the only selection state.",
+      "risk": "Unreadable for real rosters."
+    },
+    {
+      "id": "challenger-sneaker-boxes",
+      "label": "Archive Box Wall",
+      "verdict": "declined",
+      "lineage": "stacked sneaker box end labels",
+      "thesis": "Events as a wall of labeled boxes.",
+      "palette": ["#d1602a", "#111111", "#f7f5f0"],
+      "materials": ["box board", "end labels"],
+      "viewport": "A wall of end labels, one per event.",
+      "case": "Loses both axes: no campus resonance.",
+      "kept": "One rigid label grid ruling every item.",
+      "risk": "Foreign to students and officers."
+    },
+    {
+      "id": "challenger-one-bit",
+      "label": "One-Bit Desktop",
+      "verdict": "declined",
+      "lineage": "early one-bit desktops",
+      "thesis": "Windows and marching ants.",
+      "palette": ["#000000", "#ffffff"],
+      "materials": ["dither", "window chrome"],
+      "viewport": "Overlapping windows per event.",
+      "case": "Loses both axes: window chrome fights phones at the door.",
+      "kept": "One consistent state vocabulary across every control.",
+      "risk": "Retro costume."
+    },
+    {
+      "id": "challenger-tensegrity",
+      "label": "Tensegrity Column",
+      "verdict": "declined",
+      "lineage": "kinetic tensegrity sculpture",
+      "thesis": "Capacity as tension and slack.",
+      "palette": ["#1b1b1b", "#d8d6d0", "#c62b2b"],
+      "materials": ["carbon rods", "red cord"],
+      "viewport": "A force diagram of registrations.",
+      "case": "Loses both axes: metaphor with no audience.",
+      "kept": "Every value labelled where it sits.",
+      "risk": "Abstract."
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code" },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A clean admin dashboard: sidebar, stat cards, tables, one brand accent.",
+    "palette": ["#ffffff", "#111827", "#2563eb"],
+    "materials": ["clean grid", "system UI type"],
+    "viewport": "Sidebar navigation, KPI cards across the top, a data table below.",
+    "risk": "Indistinguishable from every other school system by design."
+  },
+  "steer": true
+}

@@ -1,70 +1,74 @@
 ﻿@model AttendanceSheetModel
 @{
-    ViewData["Title"] = "Report – " + Model.Event.Title;
+    ViewData["Title"] = "Report · " + Model.Event.Title;
     var ev = Model.Event;
 }
-<div class="page-header">
+<a class="back no-print" asp-action="Index"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> All reports</a>
+<div class="page-head">
     <div>
-        <h1>@ev.Title</h1>
-        <p class="subtitle">@ev.OrganizationName · @ev.StartTime.ToString("MMMM d, yyyy h:mm tt") · @ev.Venue · @BadgeHelper.Badge(ev.Status)</p>
+        <h1 class="page-title">@ev.Title</h1>
+        <p class="page-sub">@ev.OrganizationName · @ev.StartTime.ToString("MMMM d, yyyy · h:mm tt") · @ev.Venue</p>
     </div>
-    <div class="d-flex no-print" style="gap: 8px">
-        <button type="button" class="btn btn-outline-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
-        <a class="btn btn-outline-secondary" asp-action="ExportEvent" asp-route-id="@ev.Id"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
+    <div class="page-actions no-print">
+        <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+        <a class="btn btn-outline" asp-action="ExportEvent" asp-route-id="@ev.Id"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> Export CSV</a>
     </div>
 </div>
 
-<div class="stat-grid">
-    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-users"></i></div><div><div class="stat-value">@Model.Attendees.Count</div><div class="stat-label">Registered</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div><div><div class="stat-value">@Model.PresentCount</div><div class="stat-label">Present</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-clock"></i></div><div><div class="stat-value">@Model.LateCount</div><div class="stat-label">Late</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-user-xmark"></i></div><div><div class="stat-value">@Model.AbsentCount</div><div class="stat-label">Absent</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-percent"></i></div><div><div class="stat-value">@Model.AttendanceRate%</div><div class="stat-label">Attendance rate</div></div></div>
-</div>
+<dl class="fields">
+    <div><dt class="label">Status</dt><dd style="font-size:1rem;padding-top:6px">@BadgeHelper.Badge(ev.Status)</dd></div>
+    <div><dt class="label">Registered</dt><dd>@Model.Attendees.Count</dd></div>
+    <div><dt class="label">Present</dt><dd>@Model.PresentCount</dd></div>
+    <div><dt class="label">Late</dt><dd>@Model.LateCount</dd></div>
+    <div><dt class="label">Absent</dt><dd>@Model.AbsentCount</dd></div>
+    <div><dt class="label">Turnout</dt><dd>@Model.AttendanceRate<small>%</small></dd></div>
+</dl>
 
-<div class="panel">
-    <h2>Attendance list</h2>
+<section class="sheet">
+    <div class="sheet-head"><h2 class="sheet-title">Attendance record</h2></div>
     @if (!Model.Attendees.Any())
     {
-        <div class="empty-state"><i class="fa-solid fa-users"></i>No registered attendees.</div>
+        @await Html.PartialAsync("_Empty", ("No registered attendees", "Nobody registered for this event."))
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-app">
+        <div class="ledger-wrap">
+            <table class="ledger ledger--stack">
                 <thead>
-                    <tr><th>#</th><th>Student</th><th>Course / Year</th><th>Registered</th><th>Status</th><th>Check-in</th><th>Check-out</th><th>Remarks</th></tr>
+                    <tr><th class="r">#</th><th>Student</th><th>Course / year</th><th>Registered</th><th>Status</th><th>In</th><th>Out</th><th>Remarks</th></tr>
                 </thead>
                 <tbody>
                     @{ var i = 1; }
                     @foreach (var a in Model.Attendees)
                     {
                         <tr>
-                            <td>@(i++)</td>
-                            <td>@a.StudentName<div class="small text-muted">@a.StudentNumber</div></td>
-                            <td>@a.Course@(a.YearLevel.HasValue ? " – " + a.YearLevel : "")</td>
-                            <td class="small text-nowrap">@a.RegisteredTime.ToString("MMM d, h:mm tt")</td>
-                            <td>@BadgeHelper.Badge(a.AttendanceStatus)</td>
-                            <td class="small text-nowrap">@(a.CheckInTime?.ToString("h:mm tt") ?? "—")</td>
-                            <td class="small text-nowrap">@(a.CheckOutTime?.ToString("h:mm tt") ?? "—")</td>
-                            <td class="small">@a.Remarks</td>
+                            <td class="r num muted">@(i++)</td>
+                            <td><div class="cell-main">@a.StudentName</div><div class="cell-sub"><span class="code">@a.StudentNumber</span></div></td>
+                            <td data-label="Course">@a.Course@(a.YearLevel.HasValue ? " · Year " + a.YearLevel : "")</td>
+                            <td data-label="Registered" class="num nowrap">@a.RegisteredTime.ToString("MMM d, h:mm tt")</td>
+                            <td data-label="Status">@BadgeHelper.Badge(a.AttendanceStatus)</td>
+                            <td data-label="In" class="num nowrap">@(a.CheckInTime?.ToString("h:mm tt") ?? "—")</td>
+                            <td data-label="Out" class="num nowrap">@(a.CheckOutTime?.ToString("h:mm tt") ?? "—")</td>
+                            <td data-label="Remarks">@a.Remarks</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
     }
-</div>
+</section>
 
 @if (Model.Waitlist.Any())
 {
-    <div class="panel">
-        <h2>Waitlist (@Model.Waitlist.Count)</h2>
-        <ol class="mb-0">
-            @foreach (var w in Model.Waitlist)
-            {
-                <li>@w.StudentName <span class="text-muted small">(@w.StudentNumber)</span></li>
-            }
-        </ol>
-    </div>
+    <section class="sheet">
+        <div class="sheet-head"><h2 class="sheet-title">Waitlist</h2><span class="muted num">@Model.Waitlist.Count waiting</span></div>
+        <div class="sheet-body">
+            <ol class="waitlist">
+                @foreach (var w in Model.Waitlist)
+                {
+                    <li>@w.StudentName <span class="muted">(<span class="code">@w.StudentNumber</span>)</span></li>
+                }
+            </ol>
+        </div>
+    </section>
 }

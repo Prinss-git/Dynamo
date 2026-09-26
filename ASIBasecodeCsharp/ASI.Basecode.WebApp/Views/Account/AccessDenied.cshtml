@@ -1,9 +1,15 @@
 ﻿@{
-    ViewData["Title"] = "Access Denied";
+    ViewData["Title"] = "No access";
 }
-<div class="panel empty-state" style="max-width: 520px; margin: 40px auto;">
-    <i class="fa-solid fa-lock"></i>
-    <h1 class="h4">Access denied</h1>
-    <p>Your role does not have access to that page.</p>
-    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Back to dashboard</a>
+<div class="sheet" style="max-width:560px;margin:40px auto">
+    <div class="empty">
+        <svg width="72" height="56" viewBox="0 0 72 56" aria-hidden="true" focusable="false">
+            <rect x="14" y="6" width="44" height="46" rx="6" fill="#ffffff" stroke="#a8231c" stroke-width="2" />
+            <rect x="29" y="11" width="14" height="4" rx="2" fill="#a8231c" />
+            <path d="M27 26 L45 44 M45 26 L27 44" stroke="#a8231c" stroke-width="3.5" stroke-linecap="round" />
+        </svg>
+        <div class="empty-title">Your pass doesn't open this door</div>
+        <p>This page is for a different role. If you think you should have access, ask an administrator.</p>
+        <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Back to dashboard</a>
+    </div>
 </div>
