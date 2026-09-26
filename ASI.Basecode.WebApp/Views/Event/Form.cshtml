@@ -1,0 +1,85 @@
+﻿@model EventViewModel
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "New Event" : "Edit Event";
+    var organizations = ViewBag.Organizations as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
+}
+<div class="page-header">
+    <div>
+        <h1>@ViewData["Title"]</h1>
+        <p class="subtitle">@(isNew ? "New events start as Draft. Publish them from the event page to open registration." : Model.Title)</p>
+    </div>
+</div>
+
+@if (organizations == null || !organizations.Any())
+{
+    <div class="alert alert-warning">
+        You are not a member of any active organization, so you cannot create events. Ask an administrator to add you to an organization.
+    </div>
+}
+
+<div class="panel" style="max-width: 860px">
+    <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="All" class="text-danger small"></div>
+
+        <div class="form-group">
+            <label asp-for="OrganizationId"></label>
+            <select asp-for="OrganizationId" asp-items="organizations" class="form-control">
+                <option value="">-- Select organization --</option>
+            </select>
+            <span asp-validation-for="OrganizationId" class="text-danger small"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Title"></label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger small"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Description"></label>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Description" class="text-danger small"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Venue"></label>
+            <input asp-for="Venue" class="form-control" />
+            <span asp-validation-for="Venue" class="text-danger small"></span>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label asp-for="StartTime"></label>
+                <input asp-for="StartTime" type="datetime-local" class="form-control" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="StartTime" class="text-danger small"></span>
+            </div>
+            <div class="form-group col-md-4">
+                <label asp-for="EndTime"></label>
+                <input asp-for="EndTime" type="datetime-local" class="form-control" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="EndTime" class="text-danger small"></span>
+            </div>
+            <div class="form-group col-md-4">
+                <label asp-for="RegistrationDeadline"></label>
+                <input asp-for="RegistrationDeadline" type="datetime-local" class="form-control" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="RegistrationDeadline" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label asp-for="Capacity"></label>
+                <input asp-for="Capacity" type="number" min="0" class="form-control" />
+                <small class="form-text text-muted">0 = unlimited. When full, new registrations go to the waitlist.</small>
+                <span asp-validation-for="Capacity" class="text-danger small"></span>
+            </div>
+            <div class="form-group col-md-6">
+                <label asp-for="LateAfterMinutes"></label>
+                <input asp-for="LateAfterMinutes" type="number" min="0" class="form-control" />
+                <small class="form-text text-muted">Check-ins later than this many minutes after the start are marked Late.</small>
+                <span asp-validation-for="LateAfterMinutes" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="d-flex" style="gap: 8px">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-outline-secondary" href="@(isNew ? Url.Action("Manage") : Url.Action("Details", new { id = Model.Id }))">Cancel</a>
+        </div>
+    </form>
+</div>

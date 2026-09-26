@@ -1,0 +1,52 @@
+﻿@using ASI.Basecode.Resources.Constants
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    string Active(string c, string a = null) =>
+        string.Equals(controller, c, StringComparison.OrdinalIgnoreCase)
+        && (a == null || string.Equals(action, a, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
+    var isAdmin = User.IsInRole(Const.RoleAdmin);
+    var isManager = isAdmin || User.IsInRole(Const.RoleOfficer);
+    var isStudent = User.IsInRole(Const.RoleStudent);
+}
+<nav>
+    <a class="nav-link-item @Active("Home")" asp-controller="Home" asp-action="Index">
+        <i class="fa-solid fa-gauge"></i> Dashboard
+    </a>
+    <a class="nav-link-item @Active("Event", "Index")" asp-controller="Event" asp-action="Index">
+        <i class="fa-solid fa-calendar-days"></i> Browse Events
+    </a>
+    @if (isStudent)
+    {
+        <a class="nav-link-item @Active("Registration")" asp-controller="Registration" asp-action="MyEvents">
+            <i class="fa-solid fa-ticket"></i> My Registrations
+        </a>
+    }
+
+    @if (isManager)
+    {
+        <div class="nav-section">Management</div>
+        <a class="nav-link-item @(Active("Event", "Manage") + Active("Event", "Create") + Active("Event", "Edit") + Active("Attendance"))" asp-controller="Event" asp-action="Manage">
+            <i class="fa-solid fa-list-check"></i> Manage Events
+        </a>
+        <a class="nav-link-item @Active("Report")" asp-controller="Report" asp-action="Index">
+            <i class="fa-solid fa-chart-column"></i> Reports
+        </a>
+    }
+
+    @if (isAdmin)
+    {
+        <div class="nav-section">Administration</div>
+        <a class="nav-link-item @Active("Organization")" asp-controller="Organization" asp-action="Index">
+            <i class="fa-solid fa-people-group"></i> Organizations
+        </a>
+        <a class="nav-link-item @Active("User")" asp-controller="User" asp-action="Index">
+            <i class="fa-solid fa-users-gear"></i> Users
+        </a>
+    }
+
+    <div class="nav-section">Account</div>
+    <a class="nav-link-item" asp-controller="Account" asp-action="SignOutUser">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </a>
+</nav>

@@ -1,0 +1,63 @@
+﻿@model List<EventReportItemModel>
+@{
+    ViewData["Title"] = "Reports";
+    var organizations = ViewBag.Organizations as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
+    var totalRegistered = Model.Sum(m => m.Registered);
+    var totalAttended = Model.Sum(m => m.Present + m.Late);
+    var totalRate = totalRegistered == 0 ? 0 : Math.Round(totalAttended * 100m / totalRegistered, 1);
+}
+<div class="page-header">
+    <div>
+        <h1>Attendance Reports</h1>
+        <p class="subtitle">Registration and attendance per event</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="ExportSummary" asp-route-organizationId="@ViewBag.OrganizationId"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-calendar"></i></div><div><div class="stat-value">@Model.Count</div><div class="stat-label">Events</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-users"></i></div><div><div class="stat-value">@totalRegistered</div><div class="stat-label">Registrations</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div><div><div class="stat-value">@totalAttended</div><div class="stat-label">Attended (present + late)</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-percent"></i></div><div><div class="stat-value">@totalRate%</div><div class="stat-label">Overall attendance</div></div></div>
+</div>
+
+<div class="panel">
+    <form method="get" class="filter-bar mb-3">
+        <select name="organizationId" asp-items="organizations" class="form-control" style="max-width: 320px" onchange="this.form.submit()">
+            <option value="">All organizations</option>
+        </select>
+    </form>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><i class="fa-solid fa-chart-column"></i>No published events yet.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-app">
+                <thead>
+                    <tr><th>Event</th><th>Date</th><th>Status</th><th>Registered</th><th>Present</th><th>Late</th><th>Absent</th><th style="min-width: 140px">Attendance</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td><a asp-action="Event" asp-route-id="@r.EventId">@r.Title</a><div class="small text-muted">@r.OrganizationName</div></td>
+                            <td class="text-nowrap">@r.StartTime.ToString("MMM d, yyyy")</td>
+                            <td>@BadgeHelper.Badge(r.Status)</td>
+                            <td>@r.Registered</td>
+                            <td>@r.Present</td>
+                            <td>@r.Late</td>
+                            <td>@r.Absent</td>
+                            <td>
+                                <div class="small">@r.AttendanceRate%</div>
+                                <div class="progress progress-thin"><div class="progress-bar" style="width: @r.AttendanceRate.ToString(System.Globalization.CultureInfo.InvariantCulture)%; background: var(--app-primary)"></div></div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

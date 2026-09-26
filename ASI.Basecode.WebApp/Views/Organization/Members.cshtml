@@ -1,0 +1,78 @@
+﻿@model OrganizationMembersModel
+@{
+    ViewData["Title"] = "Members – " + Model.Organization.Name;
+}
+<div class="page-header">
+    <div>
+        <h1>@Model.Organization.Name</h1>
+        <p class="subtitle">Members and officers. Users with the Officer role can manage this organization's events.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="panel">
+            <h2>Add member</h2>
+            <form asp-action="AddMember" method="post">
+                <input type="hidden" name="organizationId" value="@Model.Organization.Id" />
+                <div class="form-group">
+                    <label for="memberId">User</label>
+                    <select name="memberId" id="memberId" class="form-control" required>
+                        <option value="">-- Select user --</option>
+                        @foreach (var u in Model.AvailableUsers)
+                        {
+                            <option value="@u.Id">@u.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="position">Position</label>
+                    <input type="text" name="position" id="position" class="form-control" placeholder="e.g. President, Secretary, Member" maxlength="50" />
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Add</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="panel">
+            <h2>Members (@Model.Members.Count)</h2>
+            @if (!Model.Members.Any())
+            {
+                <div class="empty-state"><i class="fa-solid fa-users"></i>No members yet.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-app">
+                        <thead><tr><th>Name</th><th>Role</th><th>Position</th><th>Joined</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var m in Model.Members)
+                            {
+                                <tr>
+                                    <td>@m.MemberName<div class="small text-muted">@(m.StudentNumber ?? m.UserId)</div></td>
+                                    <td>@BadgeHelper.Badge(m.Role)</td>
+                                    <td>
+                                        <form asp-action="UpdateMember" method="post" class="form-inline flex-nowrap" style="gap: 4px">
+                                            <input type="hidden" name="id" value="@m.Id" />
+                                            <input type="hidden" name="organizationId" value="@m.OrganizationId" />
+                                            <input type="text" name="position" value="@m.Position" class="form-control form-control-sm" maxlength="50" style="width: 140px" />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Save position"><i class="fa-solid fa-floppy-disk"></i></button>
+                                        </form>
+                                    </td>
+                                    <td class="small text-nowrap">@m.JoinedTime.ToString("MMM d, yyyy")</td>
+                                    <td class="text-right">
+                                        <form asp-action="RemoveMember" method="post" class="inline-form" data-confirm="Remove @m.MemberName from this organization?">
+                                            <input type="hidden" name="id" value="@m.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove"><i class="fa-solid fa-user-minus"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,15 +1,47 @@
-# C# BaseCode
-## _ASI Bridge/JumpStart Program BaseCode_
+# Student Organization Event Registration and Attendance System
+_Built on the ASI Bridge/JumpStart C# BaseCode (ASP.NET Core MVC + Razor, .NET 9, PostgreSQL)_
 
-This is the base code that will be used during the bridge and jumpstart program.
-```
-```
+Student organizations publish events, students register (with automatic waitlisting when an event is full),
+and officers take attendance by scanning each student's QR ticket.
+
+## Features
+| Role | Can do |
+|---|---|
+| **Admin** | Everything below, plus manage organizations, organization members, users and roles |
+| **Officer** | Create / edit / publish / close / complete events **for organizations they are a member of**, take attendance (QR scan, code or student number), check-out, override attendance status, view reports and export CSV |
+| **Student** | Self-register an account, browse events, register / cancel, join waitlists, view QR ticket, see attendance history |
+
+Event lifecycle: `Draft → Open → Closed → Completed` (or `Cancelled`). Students only see non-draft events.
+Marking an event **Completed** records every registered student who never checked in as **Absent**.
+Check-ins later than *Late After (minutes)* past the start time are recorded as **Late**.
+
 ## Installation
-1.  Open the `.sln` file.
-    _※Use Visual Studio 2022_
-2.  Change connection strings on the `appsettings.json` base on your server
-3.  Set `ASI.Basecode.WebApp` as the Startup project.
-4.  Clean and ReBuild the solution.
+1. Requirements: Visual Studio 2022 (or the .NET 9 SDK) and PostgreSQL 13+.
+2. Create the database and load the schema + demo data:
+   ```
+   psql -U postgres -c "CREATE DATABASE student_event_db;"
+   psql -U postgres -d student_event_db -f Database/student_event_db.sql
+   ```
+   (Or run the same two steps from pgAdmin's Query Tool.) Re-running the script resets all tables.
+3. Update `ConnectionStrings:DefaultConnection` in `ASI.Basecode.WebApp/appsettings.json` with your PostgreSQL password.
+4. Set `ASI.Basecode.WebApp` as the Startup project, then Clean and Rebuild the solution and run.
+
+### Demo accounts
+| Username | Password | Role |
+|---|---|---|
+| `admin` | `Admin@123` | Admin |
+| `msantos` | `Officer@123` | Officer (President, Computer Science Society) |
+| `jreyes` | `Officer@123` | Officer (Governor, Engineering Student Council) |
+| `student1` … `student6` | `Student@123` | Student |
+
+The QR scanner uses the device camera, which browsers only allow on `https://` or `localhost`.
+
+## Database
+Tables (snake_case, mapped by EF Core's `UseSnakeCaseNamingConvention()`):
+`users`, `organizations`, `organization_members`, `events`, `event_registrations`, `attendances`.
+The schema lives in `Database/student_event_db.sql`; `AsiBasecodeDBContext` must stay in sync with it.
+Passwords are encrypted with the existing `PasswordManager` using `TokenAuthentication:SecretKey`, so changing
+that key invalidates the seeded passwords.
 
 ## Code Structure
 
@@ -29,5 +61,3 @@ This is the base code that will be used during the bridge and jumpstart program.
     - This is where you put the connection logic to the APIs.
     - Make sure that the controllers are clean and no other logic should involve.
     - If it involves additional logic, move the logic into the service file.
-```
-```

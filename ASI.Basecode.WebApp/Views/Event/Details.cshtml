@@ -1,0 +1,148 @@
+﻿@model EventViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var statusChanges = ViewBag.StatusChanges as List<EventStatus>;
+    var isStudent = User.IsInRole(ASI.Basecode.Resources.Constants.Const.RoleStudent);
+    var hasActiveRegistration = Model.MyRegistrationStatus.HasValue && Model.MyRegistrationStatus != RegistrationStatus.Cancelled;
+}
+<div class="page-header">
+    <div>
+        <div class="text-uppercase small font-weight-bold" style="color: var(--app-primary)">@Model.OrganizationName</div>
+        <h1>@Model.Title</h1>
+    </div>
+    <div>@BadgeHelper.Badge(Model.Status)</div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="panel">
+            <dl class="detail-list">
+                <dt>Starts</dt>
+                <dd>@Model.StartTime.ToString("dddd, MMMM d, yyyy h:mm tt")</dd>
+                <dt>Ends</dt>
+                <dd>@Model.EndTime.ToString("dddd, MMMM d, yyyy h:mm tt")</dd>
+                <dt>Venue</dt>
+                <dd>@Model.Venue</dd>
+                <dt>Registration deadline</dt>
+                <dd>@Model.RegistrationDeadline.ToString("MMMM d, yyyy h:mm tt")</dd>
+                <dt>Capacity</dt>
+                <dd>
+                    @if (Model.IsUnlimited)
+                    {
+                        @:No limit (@Model.RegisteredCount registered)
+                    }
+                    else
+                    {
+                        @:@Model.RegisteredCount / @Model.Capacity registered, @Model.SlotsLeft slot(s) left
+                    }
+                    @if (Model.WaitlistedCount > 0)
+                    {
+                        <span class="text-muted">· @Model.WaitlistedCount on waitlist</span>
+                    }
+                </dd>
+                @if (Model.CanManage)
+                {
+                    <dt>Late after</dt>
+                    <dd>@Model.LateAfterMinutes minute(s) past start</dd>
+                }
+            </dl>
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <hr />
+                <p style="white-space: pre-line" class="mb-0">@Model.Description</p>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        @if (isStudent)
+        {
+            <div class="panel">
+                <h2>Your registration</h2>
+                @if (hasActiveRegistration)
+                {
+                    <p>Status: @BadgeHelper.Badge(Model.MyRegistrationStatus)</p>
+                    @if (Model.MyRegistrationStatus == RegistrationStatus.Waitlisted)
+                    {
+                        <p class="small text-muted">You'll be moved to Registered automatically if a slot opens up.</p>
+                    }
+                    <div class="d-flex flex-wrap" style="gap: 8px">
+                        @if (Model.MyRegistrationStatus == RegistrationStatus.Registered)
+                        {
+                            <a class="btn btn-primary" asp-controller="Registration" asp-action="Ticket" asp-route-id="@Model.MyRegistrationId"><i class="fa-solid fa-qrcode"></i> Show ticket</a>
+                        }
+                        @if ((Model.Status == EventStatus.Open || Model.Status == EventStatus.Closed) && DateTime.Now < Model.StartTime)
+                        {
+                            <form asp-controller="Registration" asp-action="Cancel" method="post" class="inline-form" data-confirm="Cancel your registration for this event?">
+                                <input type="hidden" name="id" value="@Model.MyRegistrationId" />
+                                <input type="hidden" name="returnUrl" value="@Url.Action("Details", new { id = Model.Id })" />
+                                <button type="submit" class="btn btn-outline-danger">Cancel registration</button>
+                            </form>
+                        }
+                    </div>
+                }
+                else if (Model.IsRegistrationOpen)
+                {
+                    <form asp-controller="Registration" asp-action="Register" method="post">
+                        <input type="hidden" name="eventId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-primary btn-block">
+                            @(Model.SlotsLeft == 0 ? "Join waitlist" : "Register for this event")
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Registration is closed for this event.</p>
+                }
+            </div>
+        }
+
+        @if (Model.CanManage)
+        {
+            <div class="panel">
+                <h2>Manage</h2>
+                <div class="d-flex flex-column" style="gap: 8px">
+                    @if (Model.Status == EventStatus.Open || Model.Status == EventStatus.Closed)
+                    {
+                        <a class="btn btn-primary" asp-controller="Attendance" asp-action="Index" asp-route-eventId="@Model.Id"><i class="fa-solid fa-qrcode"></i> Take attendance</a>
+                    }
+                    <a class="btn btn-outline-primary" asp-controller="Report" asp-action="Event" asp-route-id="@Model.Id"><i class="fa-solid fa-chart-column"></i> Attendance report</a>
+                    @if (Model.Status != EventStatus.Completed && Model.Status != EventStatus.Cancelled)
+                    {
+                        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.Id"><i class="fa-solid fa-pen"></i> Edit details</a>
+                    }
+                </div>
+
+                @if (statusChanges != null && statusChanges.Any())
+                {
+                    <hr />
+                    <div class="small text-muted mb-2">Change status</div>
+                    <div class="d-flex flex-wrap" style="gap: 6px">
+                        @foreach (var status in statusChanges)
+                        {
+                            var confirm = status switch
+                            {
+                                EventStatus.Completed => "Mark this event as completed? Registered students who did not check in will be marked Absent.",
+                                EventStatus.Cancelled => "Cancel this event? This cannot be undone.",
+                                _ => $"Change status to {status}?"
+                            };
+                            var label = status switch
+                            {
+                                EventStatus.Open => Model.Status == EventStatus.Draft ? "Publish & open registration" : "Reopen registration",
+                                EventStatus.Closed => "Close registration",
+                                EventStatus.Completed => "Mark completed",
+                                EventStatus.Cancelled => "Cancel event",
+                                _ => status.ToString()
+                            };
+                            <form asp-action="ChangeStatus" method="post" class="inline-form" data-confirm="@confirm">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="status" value="@status" />
+                                <button type="submit" class="btn btn-sm @(status == EventStatus.Cancelled ? "btn-outline-danger" : "btn-outline-primary")">@label</button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

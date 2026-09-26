@@ -21,11 +21,12 @@
                                 <img src="~/img/asi-logo-invert.svg"
                                      style="width: 185px;" alt="logo">
                             </div>
-                            <form method="post" action="/Account/Login" id="loginForm">
+                            <h5 class="text-center mt-3 mb-4">Event Registration &amp; Attendance</h5>
+                            <form method="post" asp-controller="Account" asp-action="Login" id="loginForm">
                                 <div class="form-outline mb-4">
                                     <label class="form-label" for="form2Example11">@UserId</label>
                                     <input type="text" id="form2Example11" class="form-control"
-                                           asp-for="UserId" placeholder="Enter userid" />
+                                           asp-for="UserId" placeholder="Enter username" />
                                     <span asp-validation-for="UserId" class="text-danger"></span>
                                 </div>
                                 <div class="form-outline mb-4">
@@ -57,13 +58,3 @@
         </div>
     </div>
 </div>
-
-@section scripts {
-    <script>
-        // Check for error message and display Toastr notification
-        var errorMessage = '@TempData["ErrorMessage"]';
-        if (errorMessage) {
-            toastr.error(errorMessage);
-        }
-    </script>
-}

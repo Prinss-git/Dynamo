@@ -1,13 +1,19 @@
-﻿@using Microsoft.AspNetCore.Http
-@inject IHttpContextAccessor HttpContextAccessor
-<header class="@((ViewBag.LoginView == true) ? "hide-navbar" : "")">
-    <div class="logosec hover-pointer">
-        <img src="~/img/asi-logo-invert.svg"
-             style="width: 185px;" alt="logo"
+﻿@using System.Security.Claims
+<header class="app-header @((ViewBag.LoginView == true) ? "hide-navbar" : "")">
+    <div class="brand">
+        <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <img src="~/img/asi-logo-invert.svg" class="hover-pointer"
+             style="width: 150px;" alt="logo"
              onclick="window.location.href = '@Url.Action("Index", "Home")';">
+        <span class="brand-title">Event Registration &amp; Attendance</span>
     </div>
     <div class="logosec">
-        @HttpContextAccessor.HttpContext.Session.GetString("UserName")
+        <div class="user-name">
+            @User.Identity?.Name
+            <span class="user-role">@User.FindFirst(ClaimTypes.Role)?.Value</span>
+        </div>
         <div class="mr-20 hover-pointer" style="position: relative">
             <div class="dp">
                 <img src="~/img/profile-logo.png"
@@ -16,10 +22,6 @@
             </div>
             <div class="dropdown">
                 <ul>
-                    <li>
-                        <i class="fa-solid fa-gear"></i>
-                        <a href="#">Settings</a>
-                    </li>
                     <li>
                         <i class="fa-solid fa-right-from-bracket"></i>
                         <a asp-action="SignOutUser" asp-controller="Account">Logout</a>

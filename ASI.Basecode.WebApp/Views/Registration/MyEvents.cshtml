@@ -1,0 +1,74 @@
+﻿@model List<RegistrationViewModel>
+@{
+    ViewData["Title"] = "My Registrations";
+}
+<div class="page-header">
+    <div>
+        <h1>My Registrations</h1>
+        <p class="subtitle">Events you registered for and your attendance record</p>
+    </div>
+    <a class="btn btn-outline-primary" asp-controller="Event" asp-action="Index"><i class="fa-solid fa-calendar-days"></i> Browse events</a>
+</div>
+
+<div class="panel">
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><i class="fa-solid fa-ticket"></i>You haven't registered for any events yet.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-app">
+                <thead>
+                    <tr><th>Event</th><th>When</th><th>Registration</th><th>Attendance</th><th class="text-right">Actions</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Event" asp-action="Details" asp-route-id="@r.EventId">@r.EventTitle</a>
+                                <div class="small text-muted">@r.OrganizationName · @r.Venue</div>
+                            </td>
+                            <td class="text-nowrap">@r.StartTime.ToString("MMM d, yyyy")<div class="small text-muted">@r.StartTime.ToString("h:mm tt")</div></td>
+                            <td>
+                                @BadgeHelper.Badge(r.Status)
+                                @if (r.EventStatus == EventStatus.Cancelled)
+                                {
+                                    <div class="small text-danger">Event cancelled</div>
+                                }
+                            </td>
+                            <td>
+                                @if (r.AttendanceStatus.HasValue)
+                                {
+                                    @BadgeHelper.Badge(r.AttendanceStatus)
+                                    @if (r.CheckInTime.HasValue)
+                                    {
+                                        <div class="small text-muted">In @r.CheckInTime.Value.ToString("h:mm tt")@(r.CheckOutTime.HasValue ? " · Out " + r.CheckOutTime.Value.ToString("h:mm tt") : "")</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                            <td class="text-right text-nowrap">
+                                @if (r.Status == RegistrationStatus.Registered && r.EventStatus != EventStatus.Cancelled)
+                                {
+                                    <a class="btn btn-sm btn-primary" asp-action="Ticket" asp-route-id="@r.Id"><i class="fa-solid fa-qrcode"></i> Ticket</a>
+                                }
+                                @if (r.CanCancel)
+                                {
+                                    <form asp-action="Cancel" method="post" class="inline-form" data-confirm="Cancel your registration for '@r.EventTitle'?">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

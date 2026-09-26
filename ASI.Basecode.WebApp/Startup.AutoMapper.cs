@@ -26,6 +26,22 @@ namespace ASI.Basecode.WebApp
             public AutoMapperProfileConfiguration()
             {
                 CreateMap<UserViewModel, User>();
+                CreateMap<UserModel, User>()
+                    .ForMember(d => d.Id, o => o.Ignore())
+                    .ForMember(d => d.Password, o => o.Ignore())
+                    .ForMember(d => d.CreatedTime, o => o.Ignore());
+                CreateMap<User, UserModel>()
+                    .ForMember(d => d.Password, o => o.Ignore());
+
+                CreateMap<OrganizationViewModel, Organization>()
+                    .ForMember(d => d.Id, o => o.Ignore());
+                CreateMap<Organization, OrganizationViewModel>();
+
+                // Status only changes through IEventService.ChangeStatus
+                CreateMap<EventViewModel, Event>()
+                    .ForMember(d => d.Id, o => o.Ignore())
+                    .ForMember(d => d.Status, o => o.Ignore())
+                    .ForMember(d => d.Organization, o => o.Ignore());
             }
         }
     }

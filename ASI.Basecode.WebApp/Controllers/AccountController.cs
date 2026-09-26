@@ -82,31 +82,33 @@ namespace ASI.Basecode.WebApp.Controllers
         public async Task<IActionResult> Login(LoginViewModel model, string returnUrl)
         {
             this._session.SetString("HasSession", "Exist");
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
 
-            //User user = null;
-
-            User user = new() { Id = 0, UserId = "0", Name = "Name", Password = "Password" };
-            
-            await this._signInManager.SignInAsync(user);
-            this._session.SetString("UserName", model.UserId);
-
-            return RedirectToAction("Index", "Home");
-
-            /*var loginResult = _userService.AuthenticateUser(model.UserId, model.Password, ref user);
+            User user = null;
+            var loginResult = _userService.AuthenticateUser(model.UserId, model.Password, ref user);
             if (loginResult == LoginResult.Success)
             {
                 // 認証OK
                 await this._signInManager.SignInAsync(user);
                 this._session.SetString("UserName", user.Name);
+                this._session.SetString("Role", user.Role.ToString());
+
+                returnUrl ??= TempData["returnUrl"] as string;
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
                 return RedirectToAction("Index", "Home");
             }
-            else
-            {
-                // 認証NG
-                TempData["ErrorMessage"] = "Incorrect UserId or Password";
-                return View();
-            }
-            return View();*/
+
+            // 認証NG
+            TempData["ErrorMessage"] = loginResult == LoginResult.Inactive
+                ? Resources.Messages.Errors.AccountInactive
+                : Resources.Messages.Errors.InvalidLogin;
+            return View(model);
         }
 
         [HttpGet]
@@ -120,9 +122,15 @@ namespace ASI.Basecode.WebApp.Controllers
         [AllowAnonymous]
         public IActionResult Register(UserViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
             try
             {
                 _userService.AddUser(model);
+                TempData["SuccessMessage"] = Resources.Messages.Common.RegisterAccountSuccess;
                 return RedirectToAction("Login", "Account");
             }
             catch(InvalidDataException ex)
@@ -131,8 +139,18 @@ namespace ASI.Basecode.WebApp.Controllers
             }
             catch(Exception ex)
             {
+                this.HandleExceptionLog(ex, model.UserId);
                 TempData["ErrorMessage"] = Resources.Messages.Errors.ServerError;
             }
+            return View(model);
+        }
+
+        /// <summary>
+        /// Shown when a signed-in user opens a page their role cannot access.
+        /// </summary>
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
             return View();
         }
 

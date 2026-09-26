@@ -1,0 +1,72 @@
+﻿@model UserModel
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "New User" : "Edit User";
+}
+<div class="page-header">
+    <h1>@ViewData["Title"]</h1>
+</div>
+
+<div class="panel" style="max-width: 760px">
+    <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label asp-for="Name"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+            <div class="form-group col-md-6">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" type="email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label asp-for="UserId"></label>
+                <input asp-for="UserId" class="form-control" />
+                <span asp-validation-for="UserId" class="text-danger small"></span>
+            </div>
+            <div class="form-group col-md-6">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" type="password" class="form-control" autocomplete="new-password"
+                       placeholder="@(isNew ? "" : "Leave blank to keep current password")" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label asp-for="Role"></label>
+                <select asp-for="Role" asp-items="Html.GetEnumSelectList<Role>()" class="form-control"></select>
+            </div>
+            <div class="form-group col-md-4">
+                <label asp-for="StudentNumber"></label>
+                <input asp-for="StudentNumber" class="form-control" />
+                <span asp-validation-for="StudentNumber" class="text-danger small"></span>
+            </div>
+            <div class="form-group col-md-4">
+                <label asp-for="YearLevel"></label>
+                <input asp-for="YearLevel" type="number" min="1" max="6" class="form-control" />
+                <span asp-validation-for="YearLevel" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="Course"></label>
+            <input asp-for="Course" class="form-control" />
+            <span asp-validation-for="Course" class="text-danger small"></span>
+        </div>
+        <div class="custom-control custom-checkbox mb-3">
+            <input asp-for="IsActive" class="custom-control-input" />
+            <label asp-for="IsActive" class="custom-control-label"></label>
+        </div>
+        <p class="small text-muted">Officers can manage events only for organizations they are a member of (Organizations → Members).</p>
+
+        <div class="d-flex" style="gap: 8px">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+        </div>
+    </form>
+</div>

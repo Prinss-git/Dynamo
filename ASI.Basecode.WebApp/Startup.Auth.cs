@@ -42,7 +42,7 @@ namespace ASI.Basecode.WebApp
                     Name = $"{this._environment.ApplicationName}_{token.CookieName}"
                 };
                 options.LoginPath = new PathString("/Account/Login");
-                options.AccessDeniedPath = new PathString("/html/Forbidden.html");
+                options.AccessDeniedPath = new PathString("/Account/AccessDenied");
                 options.ReturnUrlParameter = "ReturnUrl";
                 options.TicketDataFormat = new CustomJwtDataFormat(SecurityAlgorithms.HmacSha256, _tokenValidationParameters, Configuration, tokenProviderOptionsFactory);
             });
@@ -58,6 +58,7 @@ namespace ASI.Basecode.WebApp
             this._services.AddMvc(options =>
             {
                 options.Filters.Add(new AuthorizeFilter("RequireAuthenticatedUser"));
+                options.Filters.Add(new ASI.Basecode.WebApp.Mvc.ServiceExceptionFilter());
             });
         }
     }

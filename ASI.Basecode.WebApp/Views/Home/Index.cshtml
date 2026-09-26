@@ -1,8 +1,137 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model DashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
 }
-
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="page-header">
+    <div>
+        <h1>Welcome, @Model.Name</h1>
+        <p class="subtitle">@DateTime.Now.ToString("dddd, MMMM d, yyyy")</p>
+    </div>
+    @if (Model.Role != Role.Student)
+    {
+        <a class="btn btn-primary" asp-controller="Event" asp-action="Create"><i class="fa-solid fa-plus"></i> New Event</a>
+    }
 </div>
+
+@if (Model.Role == Role.Student)
+{
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-ticket"></i></div>
+            <div><div class="stat-value">@Model.MyUpcomingCount</div><div class="stat-label">Upcoming registrations</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div><div class="stat-value">@Model.MyAttendedCount</div><div class="stat-label">Events attended</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-door-open"></i></div>
+            <div><div class="stat-value">@Model.OpenEventCount</div><div class="stat-label">Events open for registration</div></div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="panel-title mb-0">My upcoming events</h2>
+            <a asp-controller="Registration" asp-action="MyEvents" class="small">View all</a>
+        </div>
+        @if (!Model.MyUpcoming.Any())
+        {
+            <div class="empty-state"><i class="fa-regular fa-calendar"></i>You have no upcoming registrations.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-app">
+                    <thead><tr><th>Event</th><th>When</th><th>Venue</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var r in Model.MyUpcoming)
+                        {
+                            <tr>
+                                <td><a asp-controller="Event" asp-action="Details" asp-route-id="@r.EventId">@r.EventTitle</a><div class="small text-muted">@r.OrganizationName</div></td>
+                                <td>@r.StartTime.ToString("MMM d, yyyy h:mm tt")</td>
+                                <td>@r.Venue</td>
+                                <td>@BadgeHelper.Badge(r.Status)</td>
+                                <td class="text-right">
+                                    @if (r.Status == RegistrationStatus.Registered)
+                                    {
+                                        <a class="btn btn-sm btn-outline-primary" asp-controller="Registration" asp-action="Ticket" asp-route-id="@r.Id"><i class="fa-solid fa-qrcode"></i> Ticket</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="panel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="panel-title mb-0">Open for registration</h2>
+            <a asp-controller="Event" asp-action="Index" class="small">Browse all events</a>
+        </div>
+        @await Html.PartialAsync("_EventCards", Model.UpcomingEvents)
+    </div>
+}
+else
+{
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-people-group"></i></div>
+            <div><div class="stat-value">@Model.OrganizationCount</div><div class="stat-label">@(Model.Role == Role.Admin ? "Organizations" : "My organizations")</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-user-graduate"></i></div>
+            <div><div class="stat-value">@Model.StudentCount</div><div class="stat-label">@(Model.Role == Role.Admin ? "Active students" : "Organization members")</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+            <div><div class="stat-value">@Model.ActiveEventCount</div><div class="stat-label">Open / closed events</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+            <div><div class="stat-value">@Model.TotalRegistrations</div><div class="stat-label">Registrations</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-percent"></i></div>
+            <div><div class="stat-value">@Model.OverallAttendanceRate%</div><div class="stat-label">Attendance rate</div></div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="panel-title mb-0">Upcoming events</h2>
+            <a asp-controller="Event" asp-action="Manage" class="small">Manage events</a>
+        </div>
+        @if (!Model.UpcomingEvents.Any())
+        {
+            <div class="empty-state"><i class="fa-regular fa-calendar"></i>No upcoming events.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-app">
+                    <thead><tr><th>Event</th><th>When</th><th>Registered</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var e in Model.UpcomingEvents)
+                        {
+                            <tr>
+                                <td><a asp-controller="Event" asp-action="Details" asp-route-id="@e.Id">@e.Title</a><div class="small text-muted">@e.OrganizationName</div></td>
+                                <td>@e.StartTime.ToString("MMM d, yyyy h:mm tt")</td>
+                                <td>@e.RegisteredCount@(e.IsUnlimited ? "" : " / " + e.Capacity)</td>
+                                <td>@BadgeHelper.Badge(e.Status)</td>
+                                <td class="text-right">
+                                    @if (e.Status == EventStatus.Open || e.Status == EventStatus.Closed)
+                                    {
+                                        <a class="btn btn-sm btn-primary" asp-controller="Attendance" asp-action="Index" asp-route-eventId="@e.Id"><i class="fa-solid fa-qrcode"></i> Check-in</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
