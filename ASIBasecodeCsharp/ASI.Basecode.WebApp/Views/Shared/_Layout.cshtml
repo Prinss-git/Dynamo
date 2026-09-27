@@ -120,6 +120,7 @@
         }
     </nav>
 
+    @await Component.InvokeAsync("AccountSwitcher")
     @await Html.PartialAsync("_Scripts")
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -16,5 +16,8 @@ namespace ASI.Basecode.Services.Interfaces
         void UpdateUser(UserModel model, string actor);
         void ToggleActive(int id, string actor);
         List<OptionModel> GetUserOptions();
+
+        /// <summary>Active user by primary key (development account switcher).</summary>
+        User GetActiveUser(int id);
     }
 }

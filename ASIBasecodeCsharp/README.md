@@ -1,4 +1,4 @@
-# Student Organization Event Registration and Attendance System
+﻿# Student Organization Event Registration and Attendance System
 _Built on the ASI Bridge/JumpStart C# BaseCode (ASP.NET Core MVC + Razor, .NET 9, PostgreSQL)_
 
 Student organizations publish events, students register (with automatic waitlisting when an event is full),
@@ -33,6 +33,8 @@ Check-ins later than *Late After (minutes)* past the start time are recorded as 
 | `msantos` | `Officer@123` | Officer (President, Computer Science Society) |
 | `jreyes` | `Officer@123` | Officer (Governor, Engineering Student Council) |
 | `student1` … `student6` | `Student@123` | Student |
+
+**Switch account (development only):** while the app runs in the `Development` environment (Visual Studio's default for F5), a "Switch account" button sits at the bottom-right of every page, including the sign-in page. It signs you in as any active user without a password so you can try each role. It does not render, and its endpoint returns 404, in any other environment, so never deploy with `ASPNETCORE_ENVIRONMENT=Development`.
 
 The QR scanner uses the device camera, which browsers only allow on `https://` or `localhost`.
 

@@ -1,0 +1,30 @@
+﻿@model List<UserModel>
+@{
+    var current = ViewBag.CurrentAccountId as string;
+    var currentUser = Model.FirstOrDefault(u => u.Id.ToString() == current);
+}
+<details class="switcher no-print">
+    <summary>
+        <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+        <span>@(currentUser == null ? "Switch account" : currentUser.Name)</span>
+        <span class="switcher-dev">Dev</span>
+    </summary>
+    <form class="switcher-panel" method="post" asp-controller="Account" asp-action="SwitchAccount">
+        <label class="label" for="switch-account">Switch account without signing in</label>
+        <div class="switcher-row">
+            <select id="switch-account" name="id" class="input">
+                @foreach (var group in Model.GroupBy(u => u.Role).OrderBy(g => g.Key))
+                {
+                    <optgroup label="@(group.Key)s">
+                        @foreach (var u in group.OrderBy(u => u.Name))
+                        {
+                            <option value="@u.Id" selected="@(u.Id.ToString() == current)">@u.Name · @u.UserId</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+            <button type="submit" class="btn btn-key">Switch</button>
+        </div>
+        <p class="hint">Development only. This control and its endpoint are switched off in production.</p>
+    </form>
+</details>

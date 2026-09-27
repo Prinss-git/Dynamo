@@ -12,3 +12,9 @@ document.addEventListener("click", function (e) {
         if (!menu.contains(e.target)) menu.removeAttribute("open");
     });
 });
+
+// Close the account switcher when tapping outside it
+document.addEventListener("click", function (e) {
+    var switcher = document.querySelector("details.switcher[open]");
+    if (switcher && !switcher.contains(e.target)) switcher.removeAttribute("open");
+});

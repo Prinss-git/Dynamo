@@ -7,6 +7,8 @@ using ASI.Basecode.WebApp.Models;
 using ASI.Basecode.WebApp.Mvc;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -26,6 +28,7 @@ namespace ASI.Basecode.WebApp.Controllers
         private readonly TokenProviderOptionsFactory _tokenProviderOptionsFactory;
         private readonly IConfiguration _appConfiguration;
         private readonly IUserService _userService;
+        private readonly IWebHostEnvironment _environment;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AccountController"/> class.
@@ -47,7 +50,8 @@ namespace ASI.Basecode.WebApp.Controllers
                             IMapper mapper,
                             IUserService userService,
                             TokenValidationParametersFactory tokenValidationParametersFactory,
-                            TokenProviderOptionsFactory tokenProviderOptionsFactory) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+                            TokenProviderOptionsFactory tokenProviderOptionsFactory,
+                            IWebHostEnvironment environment) : base(httpContextAccessor, loggerFactory, configuration, mapper)
         {
             this._sessionManager = new SessionManager(this._session);
             this._signInManager = signInManager;
@@ -55,6 +59,7 @@ namespace ASI.Basecode.WebApp.Controllers
             this._tokenValidationParametersFactory = tokenValidationParametersFactory;
             this._appConfiguration = configuration;
             this._userService = userService;
+            this._environment = environment;
         }
 
         /// <summary>
@@ -152,6 +157,29 @@ namespace ASI.Basecode.WebApp.Controllers
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        /// <summary>
+        /// Development only: signs in as another account without a password so every role can be
+        /// tried quickly. Returns 404 outside the Development environment.
+        /// </summary>
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SwitchAccount(int id)
+        {
+            if (!_environment.IsDevelopment())
+            {
+                return NotFound();
+            }
+
+            var user = _userService.GetActiveUser(id);
+            await this._signInManager.SignOutAsync();
+            await this._signInManager.SignInAsync(user);
+            this._session.SetString("UserName", user.Name);
+            this._session.SetString("Role", user.Role.ToString());
+            TempData["SuccessMessage"] = $"Signed in as {user.Name} ({user.Role}).";
+            return RedirectToAction("Index", "Home");
         }
 
         /// <summary>

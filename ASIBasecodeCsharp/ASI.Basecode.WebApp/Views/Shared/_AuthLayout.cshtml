@@ -16,6 +16,7 @@
 <body class="id-auth">
     @RenderBody()
     <div class="foot" style="padding-bottom:24px">@Copyright</div>
+    @await Component.InvokeAsync("AccountSwitcher")
     @await Html.PartialAsync("_Scripts")
     @await RenderSectionAsync("Scripts", required: false)
 </body>

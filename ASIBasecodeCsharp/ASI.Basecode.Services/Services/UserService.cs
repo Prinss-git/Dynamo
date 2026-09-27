@@ -149,6 +149,12 @@ namespace ASI.Basecode.Services.Services
                 .ToList();
         }
 
+        public User GetActiveUser(int id)
+        {
+            return _repository.GetUsers().FirstOrDefault(u => u.Id == id && u.IsActive)
+                ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
+        }
+
         private User FindUser(int id)
         {
             return _repository.GetUsers().FirstOrDefault(u => u.Id == id)
