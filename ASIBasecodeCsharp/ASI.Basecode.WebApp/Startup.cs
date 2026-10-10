@@ -134,6 +134,8 @@ namespace ASI.Basecode.WebApp
 
             if (!this._environment.IsDevelopment())
             {
+                // Unexpected failures show a friendly page instead of a raw error
+                this._app.UseExceptionHandler("/Home/Error");
                 this._app.UseHsts();
             }
 
@@ -142,6 +144,8 @@ namespace ASI.Basecode.WebApp
             this._app.UseTokenProvider(_tokenProviderOptions);
 
             this._app.UseHttpsRedirection();
+            // 404 and other empty error responses render the "page not found" screen
+            this._app.UseStatusCodePagesWithReExecute("/Home/Status", "?code={0}");
             this._app.UseStaticFiles();
 
             // Localization

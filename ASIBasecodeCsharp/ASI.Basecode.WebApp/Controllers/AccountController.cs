@@ -110,9 +110,12 @@ namespace ASI.Basecode.WebApp.Controllers
             }
 
             // 認証NG
-            TempData["ErrorMessage"] = loginResult == LoginResult.Inactive
-                ? Resources.Messages.Errors.AccountInactive
-                : Resources.Messages.Errors.InvalidLogin;
+            TempData["ErrorMessage"] = loginResult switch
+            {
+                LoginResult.Pending => Resources.Messages.Errors.AccountPending,
+                LoginResult.Inactive => Resources.Messages.Errors.AccountInactive,
+                _ => Resources.Messages.Errors.InvalidLogin,
+            };
             return View(model);
         }
 
@@ -135,17 +138,17 @@ namespace ASI.Basecode.WebApp.Controllers
             try
             {
                 _userService.AddUser(model);
-                TempData["SuccessMessage"] = Resources.Messages.Common.RegisterAccountSuccess;
+                TempData["SuccessMessage"] = Resources.Messages.Common.RegisterPendingApproval;
                 return RedirectToAction("Login", "Account");
             }
             catch(InvalidDataException ex)
             {
-                TempData["ErrorMessage"] = ex.Message;
+                AddServiceError(ex.Message);
             }
             catch(Exception ex)
             {
                 this.HandleExceptionLog(ex, model.UserId);
-                TempData["ErrorMessage"] = Resources.Messages.Errors.ServerError;
+                ModelState.AddModelError(string.Empty, Resources.Messages.Errors.ServerError);
             }
             return View(model);
         }

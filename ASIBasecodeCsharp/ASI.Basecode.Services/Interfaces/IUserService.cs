@@ -17,6 +17,15 @@ namespace ASI.Basecode.Services.Interfaces
         void ToggleActive(int id, string actor);
         List<OptionModel> GetUserOptions();
 
+        /// <summary>Self-registered accounts waiting for an administrator.</summary>
+        List<UserModel> GetPendingUsers();
+        int CountPendingUsers();
+        /// <summary>Approves the given pending accounts; returns how many were approved.</summary>
+        int ApproveUsers(IEnumerable<int> ids, string actor);
+        int ApproveAllUsers(string actor);
+        /// <summary>Deletes the given pending registration requests; returns how many were removed.</summary>
+        int RejectUsers(IEnumerable<int> ids);
+
         /// <summary>Active user by primary key (development account switcher).</summary>
         User GetActiveUser(int id);
     }

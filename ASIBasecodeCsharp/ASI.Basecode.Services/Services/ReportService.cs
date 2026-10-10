@@ -123,7 +123,6 @@ namespace ASI.Basecode.Services.Services
                 model.UpcomingEvents = _eventRepository.GetEvents()
                     .Where(e => e.Status == EventStatus.Open && e.RegistrationDeadline >= now && e.StartTime > now)
                     .OrderBy(e => e.StartTime)
-                    .Take(5)
                     .Select(EventProjection.ToViewModel(currentUser.AccountId))
                     .ToList();
                 return model;
@@ -133,8 +132,9 @@ namespace ASI.Basecode.Services.Services
             var events = _eventRepository.GetEvents().Where(e => organizationIds.Contains(e.OrganizationId));
 
             model.OrganizationCount = organizationIds.Count;
+            model.PendingApprovals = currentUser.Role == Role.Admin ? _userRepository.GetUsers().Count(u => !u.IsApproved) : 0;
             model.StudentCount = currentUser.Role == Role.Admin
-                ? _userRepository.GetUsers().Count(u => u.Role == Role.Student && u.IsActive)
+                ? _userRepository.GetUsers().Count(u => u.Role == Role.Student && u.IsActive && u.IsApproved)
                 : _organizationRepository.GetMembers().Where(m => organizationIds.Contains(m.OrganizationId))
                                          .Select(m => m.MemberId).Distinct().Count();
             model.ActiveEventCount = events.Count(e => e.Status == EventStatus.Open || e.Status == EventStatus.Closed);
@@ -150,7 +150,6 @@ namespace ASI.Basecode.Services.Services
             model.UpcomingEvents = events
                 .Where(e => e.EndTime >= now && e.Status != EventStatus.Cancelled && e.Status != EventStatus.Completed)
                 .OrderBy(e => e.StartTime)
-                .Take(5)
                 .Select(EventProjection.ToViewModel(currentUser.AccountId))
                 .ToList();
             model.UpcomingEvents.ForEach(e => e.CanManage = true);

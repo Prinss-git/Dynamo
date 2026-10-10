@@ -1,0 +1,119 @@
+﻿@model List<UserModel>
+@{
+    ViewData["Title"] = "Account approvals";
+}
+<a class="back" asp-action="Index"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Users</a>
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Account approvals</h1>
+        <p class="page-sub">New student accounts can't sign in until an administrator approves them. Check each request against the student records before approving.</p>
+    </div>
+    @if (Model.Any())
+    {
+        <div class="page-actions">
+            <form asp-action="ApproveAll" method="post" class="inline-form" data-confirm="Approve all @Model.Count pending @(Model.Count == 1 ? "account" : "accounts")? They will be able to sign in immediately.">
+                <button type="submit" class="btn btn-key"><i class="fa-solid fa-check-double" aria-hidden="true"></i> Approve all (@Model.Count)</button>
+            </form>
+        </div>
+    }
+</div>
+
+<section class="sheet">
+    @if (!Model.Any())
+    {
+        @await Html.PartialAsync("_Empty", ("No accounts waiting", "New student registrations appear here for review."))
+    }
+    else
+    {
+        <form method="post" id="approval-form">
+            <div class="sheet-head approval-bar">
+                <span class="muted" id="selected-count" aria-live="polite">0 selected</span>
+                <div class="row-actions">
+                    <button type="submit" class="btn btn-primary btn-sm" asp-action="Approve" data-needs-selection disabled>
+                        <i class="fa-solid fa-check" aria-hidden="true"></i> Approve selected
+                    </button>
+                    <button type="submit" class="btn btn-danger btn-sm" asp-action="Reject" data-needs-selection disabled
+                            data-confirm-button="Reject the selected requests? The accounts will be deleted.">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i> Reject selected
+                    </button>
+                </div>
+            </div>
+            <div class="ledger-wrap">
+                <table class="ledger ledger--stack ledger--compact ledger--pick" id="approval-table">
+                    <thead>
+                        <tr>
+                            <th class="check-cell">
+                                <label class="sr-only" for="select-all">Select all on this page</label>
+                                <input type="checkbox" id="select-all" class="row-check" />
+                            </th>
+                            <th>Name</th><th>Student no.</th><th>Course / year</th><th>Email</th><th>Username</th><th>Requested</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model)
+                        {
+                            <tr>
+                                <td class="check-cell">
+                                    <label class="sr-only" for="pick-@u.Id">Select @u.Name</label>
+                                    <input type="checkbox" id="pick-@u.Id" name="ids" value="@u.Id" class="row-check" />
+                                </td>
+                                <td>
+                                    <div class="cell-main">@u.Name</div>
+                                    @* phone layout: the other columns fold into this cell *@
+                                    <div class="cell-sub show-sm"><span class="code">@u.StudentNumber</span> · @u.UserId</div>
+                                    <div class="cell-sub show-sm">@u.Course@(u.YearLevel.HasValue ? " · Year " + u.YearLevel : "")</div>
+                                    <div class="cell-sub show-sm">@u.Email · requested @u.CreatedTime.ToString("MMM d")</div>
+                                </td>
+                                <td data-label="Student no." class="hide-sm"><span class="code">@u.StudentNumber</span></td>
+                                <td data-label="Course" class="hide-sm">@u.Course@(u.YearLevel.HasValue ? " · Year " + u.YearLevel : "")</td>
+                                <td data-label="Email" class="hide-sm">@u.Email</td>
+                                <td data-label="Username" class="hide-sm">@u.UserId</td>
+                                <td data-label="Requested" class="num nowrap hide-sm">@u.CreatedTime.ToString("MMM d, h:mm tt")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    }
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var form = document.getElementById("approval-form");
+            if (!form) return;
+            var table = document.getElementById("approval-table");
+            var all = document.getElementById("select-all");
+            var countLabel = document.getElementById("selected-count");
+            var rowChecks = function () { return Array.prototype.slice.call(table.querySelectorAll("tbody input[name=ids]")); };
+            var visibleChecks = function () { return rowChecks().filter(function (c) { return !c.closest("tr").hidden; }); };
+
+            function sync() {
+                var picked = rowChecks().filter(function (c) { return c.checked; }).length;
+                var visible = visibleChecks();
+                var visiblePicked = visible.filter(function (c) { return c.checked; }).length;
+                all.checked = visible.length > 0 && visiblePicked === visible.length;
+                all.indeterminate = visiblePicked > 0 && visiblePicked < visible.length;
+                countLabel.textContent = picked + " selected";
+                form.querySelectorAll("[data-needs-selection]").forEach(function (b) { b.disabled = picked === 0; });
+                rowChecks().forEach(function (c) { c.closest("tr").classList.toggle("is-picked", c.checked); });
+            }
+
+            // "Select all" covers the rows on the current page
+            all.addEventListener("change", function () {
+                visibleChecks().forEach(function (c) { c.checked = all.checked; });
+                sync();
+            });
+            table.addEventListener("change", function (e) { if (e.target.name === "ids") sync(); });
+            table.addEventListener("pager:render", sync);
+
+            form.querySelectorAll("[data-confirm-button]").forEach(function (b) {
+                b.addEventListener("click", function (e) {
+                    if (!window.confirm(b.getAttribute("data-confirm-button"))) e.preventDefault();
+                });
+            });
+            sync();
+        })();
+    </script>
+}

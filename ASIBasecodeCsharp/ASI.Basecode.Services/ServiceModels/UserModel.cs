@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using ASI.Basecode.Resources.Constants;
 using static ASI.Basecode.Resources.Constants.Enums;
 
 namespace ASI.Basecode.Services.ServiceModels
@@ -8,17 +9,31 @@ namespace ASI.Basecode.Services.ServiceModels
     /// <summary>
     /// User record as managed by an administrator
     /// </summary>
-    public class UserModel
+    public class UserModel : IValidatableObject
     {
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Username is required.")]
         [StringLength(50)]
+        [RegularExpression(Const.UsernamePattern, ErrorMessage = Const.UsernameRuleMessage)]
         [Display(Name = "Username")]
         public string UserId { get; set; }
 
-        [Required(ErrorMessage = "Name is required.")]
-        [StringLength(100)]
+        [Required(ErrorMessage = "First name is required.")]
+        [StringLength(50)]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; }
+
+        [StringLength(50)]
+        [Display(Name = "Middle Name")]
+        public string MiddleName { get; set; }
+
+        [Required(ErrorMessage = "Last name is required.")]
+        [StringLength(50)]
+        [Display(Name = "Last Name")]
+        public string LastName { get; set; }
+
+        /// <summary>Full display name (read-only; composed from the three name fields).</summary>
         public string Name { get; set; }
 
         [EmailAddress(ErrorMessage = "Invalid email address.")]
@@ -43,9 +58,20 @@ namespace ASI.Basecode.Services.ServiceModels
         public bool IsActive { get; set; } = true;
 
         /// <summary>Required when creating; leave blank on edit to keep the current password.</summary>
-        [StringLength(50, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters.")]
+        [StringLength(50, ErrorMessage = "Password must be 50 characters or fewer.")]
+        [RegularExpression(Const.PasswordPattern, ErrorMessage = Const.PasswordRuleMessage)]
         public string Password { get; set; }
 
         public DateTime CreatedTime { get; set; }
+
+        public bool IsApproved { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (!string.IsNullOrEmpty(Course) && !Courses.IsValid(Course))
+            {
+                yield return new ValidationResult(Resources.Messages.Errors.InvalidCourse, new[] { nameof(Course) });
+            }
+        }
     }
 }

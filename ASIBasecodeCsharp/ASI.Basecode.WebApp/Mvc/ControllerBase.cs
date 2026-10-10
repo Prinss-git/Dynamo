@@ -97,6 +97,18 @@ namespace ASI.Basecode.WebApp.Mvc
         }
 
         /// <summary>
+        /// Adds a service validation error to the field it concerns (or the form summary).
+        /// </summary>
+        protected void AddServiceError(string message)
+        {
+            var field = message == Resources.Messages.Errors.UserExists ? "UserId"
+                      : message == Resources.Messages.Errors.StudentNumberExists ? "StudentNumber"
+                      : message == Resources.Messages.Errors.InvalidCourse ? "Course"
+                      : string.Empty;
+            ModelState.AddModelError(field, message);
+        }
+
+        /// <summary>
         /// Shows a success toast on the next page.
         /// </summary>
         protected void NotifySuccess(string message)

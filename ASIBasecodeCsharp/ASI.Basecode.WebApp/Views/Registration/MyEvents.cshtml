@@ -24,7 +24,7 @@
 }
 else
 {
-    <div class="rack" style="margin-bottom:28px">
+    <div class="rack">
         @foreach (var r in current)
         {
             <article class="pass @(r.Status == RegistrationStatus.Registered ? "is-held" : "")">
@@ -61,7 +61,7 @@ else
 
 @if (history.Any())
 {
-    <section class="sheet">
+    <section class="sheet" style="margin-top:28px">
         <div class="sheet-head"><h2 class="sheet-title">Attendance history</h2></div>
         <div class="ledger-wrap">
             <table class="ledger ledger--stack">

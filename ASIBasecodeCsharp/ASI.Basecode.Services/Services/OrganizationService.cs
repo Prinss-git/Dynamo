@@ -120,7 +120,7 @@ namespace ASI.Basecode.Services.Services
 
             var memberIds = model.Members.Select(m => m.MemberId).ToList();
             model.AvailableUsers = _userRepository.GetUsers()
-                .Where(u => u.IsActive && !memberIds.Contains(u.Id))
+                .Where(u => u.IsActive && u.IsApproved && !memberIds.Contains(u.Id))
                 .OrderBy(u => u.Name)
                 .Select(u => new OptionModel
                 {

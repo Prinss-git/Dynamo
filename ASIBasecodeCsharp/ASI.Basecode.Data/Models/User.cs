@@ -8,6 +8,10 @@ namespace ASI.Basecode.Data.Models
     {
         public int Id { get; set; }
         public string UserId { get; set; }
+        public string FirstName { get; set; }
+        public string MiddleName { get; set; }
+        public string LastName { get; set; }
+        /// <summary>Full display name, composed from first, middle and last name.</summary>
         public string Name { get; set; }
         public string Email { get; set; }
         public string StudentNumber { get; set; }
@@ -15,6 +19,10 @@ namespace ASI.Basecode.Data.Models
         public int? YearLevel { get; set; }
         public Role Role { get; set; }
         public bool IsActive { get; set; }
+        /// <summary>Self-registered accounts stay unapproved until an admin approves them.</summary>
+        public bool IsApproved { get; set; }
+        public string ApprovedBy { get; set; }
+        public DateTime? ApprovedTime { get; set; }
         public string Password { get; set; }
         public string CreatedBy { get; set; }
         public DateTime CreatedTime { get; set; }

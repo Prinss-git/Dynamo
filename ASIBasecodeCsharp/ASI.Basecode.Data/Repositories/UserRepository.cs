@@ -38,5 +38,17 @@ namespace ASI.Basecode.Data.Repositories
             UnitOfWork.SaveChanges();
         }
 
+        public void UpdateUsers(IEnumerable<User> users)
+        {
+            this.GetDbSet<User>().UpdateRange(users);
+            UnitOfWork.SaveChanges();
+        }
+
+        public void DeleteUsers(IEnumerable<User> users)
+        {
+            this.GetDbSet<User>().RemoveRange(users);
+            UnitOfWork.SaveChanges();
+        }
+
     }
 }

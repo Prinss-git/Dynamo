@@ -147,4 +147,13 @@
   <data name="StatusUpdated" xml:space="preserve">
     <value>Status updated successfully.</value>
   </data>
+  <data name="RegisterPendingApproval" xml:space="preserve">
+    <value>Account created. An administrator will review it, and you can sign in once it's approved.</value>
+  </data>
+  <data name="UsersApproved" xml:space="preserve">
+    <value>{0} account(s) approved. They can sign in now.</value>
+  </data>
+  <data name="UsersRejected" xml:space="preserve">
+    <value>{0} registration request(s) rejected.</value>
+  </data>
 </root>

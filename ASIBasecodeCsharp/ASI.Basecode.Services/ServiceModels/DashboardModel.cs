@@ -16,6 +16,7 @@ namespace ASI.Basecode.Services.ServiceModels
         public int ActiveEventCount { get; set; }
         public int TotalRegistrations { get; set; }
         public decimal OverallAttendanceRate { get; set; }
+        public int PendingApprovals { get; set; }
 
         // Student
         public int MyUpcomingCount { get; set; }

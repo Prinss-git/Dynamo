@@ -14,14 +14,25 @@
         </div>
         <div class="idcard-body">
             <h1 class="auth-title">Create a student account</h1>
-            <p class="auth-sub">Fill it in like your school ID. You'll use it to register for events and get your passes.</p>
-            <form method="post" asp-controller="Account" asp-action="Register">
+            <p class="auth-sub">Fill it in like your school ID. An administrator approves new accounts before you can sign in.</p>
+            <p class="req-legend"><span class="req">*</span> Required. A field glows green once it's filled in correctly.</p>
+            <form method="post" asp-controller="Account" asp-action="Register" data-live-required>
                 <div asp-validation-summary="ModelOnly"></div>
                 <div class="form-grid">
-                    <div class="field span-8">
-                        <label class="label" asp-for="Name">Full name</label>
-                        <input asp-for="Name" class="input" autocomplete="name" placeholder="Juan Dela Cruz" />
-                        <span asp-validation-for="Name" class="text-danger"></span>
+                    <div class="field span-4">
+                        <label class="label" asp-for="FirstName">First name</label>
+                        <input asp-for="FirstName" class="input" autocomplete="given-name" placeholder="Juan" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    <div class="field span-4">
+                        <label class="label" asp-for="MiddleName">Middle name <span class="muted" style="text-transform:none;letter-spacing:0">(optional)</span></label>
+                        <input asp-for="MiddleName" class="input" autocomplete="additional-name" placeholder="Santos" />
+                        <span asp-validation-for="MiddleName" class="text-danger"></span>
+                    </div>
+                    <div class="field span-4">
+                        <label class="label" asp-for="LastName">Last name</label>
+                        <input asp-for="LastName" class="input" autocomplete="family-name" placeholder="Dela Cruz" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
                     </div>
                     <div class="field span-4">
                         <label class="label" asp-for="StudentNumber">Student no.</label>
@@ -30,7 +41,13 @@
                     </div>
                     <div class="field span-8">
                         <label class="label" asp-for="Course">Course</label>
-                        <input asp-for="Course" class="input" placeholder="BS Information Technology" />
+                        <select asp-for="Course" class="input">
+                            <option value="">Select your course</option>
+                            @foreach (var course in ASI.Basecode.Resources.Constants.Courses.All)
+                            {
+                                <option value="@course">@course</option>
+                            }
+                        </select>
                         <span asp-validation-for="Course" class="text-danger"></span>
                     </div>
                     <div class="field span-4">
@@ -44,23 +61,22 @@
                         </select>
                         <span asp-validation-for="YearLevel" class="text-danger"></span>
                     </div>
-                    <div class="field span-6">
+                    <div class="field span-8">
                         <label class="label" asp-for="Email">School email</label>
                         <input asp-for="Email" type="email" class="input" autocomplete="email" placeholder="name@school.edu" />
                         <span asp-validation-for="Email" class="text-danger"></span>
                     </div>
-                    <div class="field span-6">
+                    <div class="field">
                         <label class="label" asp-for="UserId">Username</label>
                         <input asp-for="UserId" class="input" autocomplete="username" autocapitalize="none" spellcheck="false" />
                         <span asp-validation-for="UserId" class="text-danger"></span>
                     </div>
-                    <div class="field span-6">
+                    <div class="field">
                         <label class="label" asp-for="Password">Password</label>
-                        <input asp-for="Password" type="password" class="input" autocomplete="new-password" />
-                        <span class="hint">At least 6 characters.</span>
+                        <input asp-for="Password" type="password" class="input" autocomplete="new-password" data-password-rules />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
-                    <div class="field span-6">
+                    <div class="field">
                         <label class="label" asp-for="ConfirmPassword">Confirm password</label>
                         <input asp-for="ConfirmPassword" type="password" class="input" autocomplete="new-password" />
                         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>

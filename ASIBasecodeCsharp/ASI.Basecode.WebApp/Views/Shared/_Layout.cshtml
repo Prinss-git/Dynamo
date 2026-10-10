@@ -1,5 +1,6 @@
 ﻿@using ASI.Basecode.Resources.Constants
 @using System.Security.Claims
+@inject ASI.Basecode.Services.Interfaces.IUserService UserService
 @using static ASI.Basecode.Resources.Views.Screen
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
@@ -32,10 +33,12 @@
     if (isAdmin)
     {
         nav.Add(("Organizations", "Orgs", "fa-people-group", Url.Action("Index", "Organization"), Is("Organization"), "Administration"));
-        nav.Add(("Users", "Users", "fa-users", Url.Action("Index", "User"), Is("User"), "Administration"));
+        nav.Add(("Users", "Users", "fa-users", Url.Action("Index", "User"), Is("User", "Index", "Create", "Edit"), "Administration"));
+        nav.Add(("Approvals", "Approvals", "fa-user-check", Url.Action("Approvals", "User"), Is("User", "Approvals"), "Administration"));
     }
     // Mobile tab bar: at most five destinations
-    var tabs = isAdmin ? nav.Where(n => n.Short != "Events").ToList() : nav.Take(5).ToList();
+    var tabs = isAdmin ? nav.Where(n => n.Short != "Events" && n.Short != "Approvals").ToList() : nav.Take(5).ToList();
+    var pendingApprovals = isAdmin ? UserService.CountPendingUsers() : 0;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -66,7 +69,7 @@
                 </div>
                 @foreach (var item in nav.Except(tabs))
                 {
-                    <a href="@item.Url"><i class="fa-solid @item.Icon" aria-hidden="true"></i> @item.Label</a>
+                    <a href="@item.Url"><i class="fa-solid @item.Icon" aria-hidden="true"></i> @item.Label@if (item.Short == "Approvals" && pendingApprovals > 0) { <span class="nav-count">@pendingApprovals</span> }</a>
                 }
                 <a asp-controller="Account" asp-action="SignOutUser"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out</a>
             </div>
@@ -90,6 +93,10 @@
                     {
                         <a class="nav-item" href="@item.Url" aria-current="@(item.Active ? "page" : null)">
                             <i class="fa-solid @item.Icon" aria-hidden="true"></i> @item.Label
+                            @if (item.Short == "Approvals" && pendingApprovals > 0)
+                            {
+                                <span class="nav-count" aria-label="@pendingApprovals waiting">@pendingApprovals</span>
+                            }
                         </a>
                     }
                 </div>

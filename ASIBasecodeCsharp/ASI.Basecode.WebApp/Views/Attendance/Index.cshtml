@@ -153,9 +153,12 @@
             if (filter) {
                 filter.addEventListener("input", function () {
                     var term = this.value.trim().toLowerCase();
-                    document.querySelectorAll("#attendee-table tbody tr").forEach(function (row) {
-                        row.style.display = row.dataset.search.indexOf(term) >= 0 ? "" : "none";
+                    var table = document.getElementById("attendee-table");
+                    table.querySelectorAll("tbody tr").forEach(function (row) {
+                        if (row.dataset.search.indexOf(term) >= 0) row.removeAttribute("data-filtered-out");
+                        else row.setAttribute("data-filtered-out", "");
                     });
+                    if (table.pager) table.pager.render();
                 });
             }
 

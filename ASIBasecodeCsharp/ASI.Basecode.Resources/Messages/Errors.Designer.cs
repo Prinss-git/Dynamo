@@ -259,11 +259,38 @@ namespace ASI.Basecode.Resources.Messages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Please choose a course from the list..
+        /// </summary>
+        public static string InvalidCourse {
+            get {
+                return ResourceManager.GetString("InvalidCourse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The event status cannot be changed to the selected value..
         /// </summary>
         public static string InvalidStatusChange {
             get {
                 return ResourceManager.GetString("InvalidStatusChange", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Your account is waiting for administrator approval. You can sign in once it's approved..
+        /// </summary>
+        public static string AccountPending {
+            get {
+                return ResourceManager.GetString("AccountPending", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select at least one account first..
+        /// </summary>
+        public static string NoUsersSelected {
+            get {
+                return ResourceManager.GetString("NoUsersSelected", resourceCulture);
             }
         }
     }

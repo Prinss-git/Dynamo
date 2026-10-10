@@ -183,7 +183,16 @@
   <data name="AttendanceNotAllowed" xml:space="preserve">
     <value>Attendance can only be recorded while the event is Open or Closed.</value>
   </data>
+  <data name="InvalidCourse" xml:space="preserve">
+    <value>Please choose a course from the list.</value>
+  </data>
   <data name="InvalidStatusChange" xml:space="preserve">
     <value>The event status cannot be changed to the selected value.</value>
+  </data>
+  <data name="AccountPending" xml:space="preserve">
+    <value>Your account is waiting for administrator approval. You can sign in once it's approved.</value>
+  </data>
+  <data name="NoUsersSelected" xml:space="preserve">
+    <value>Select at least one account first.</value>
   </data>
 </root>

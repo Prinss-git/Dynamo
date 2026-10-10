@@ -13,10 +13,20 @@
         <input type="hidden" asp-for="Id" />
         <div asp-validation-summary="ModelOnly"></div>
         <div class="form-grid">
-            <div class="field span-6">
-                <label class="label" asp-for="Name">Full name</label>
-                <input asp-for="Name" class="input" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+            <div class="field span-4">
+                <label class="label" asp-for="FirstName">First name</label>
+                <input asp-for="FirstName" class="input" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="field span-4">
+                <label class="label" asp-for="MiddleName">Middle name <span class="muted" style="text-transform:none;letter-spacing:0">(optional)</span></label>
+                <input asp-for="MiddleName" class="input" />
+                <span asp-validation-for="MiddleName" class="text-danger"></span>
+            </div>
+            <div class="field span-4">
+                <label class="label" asp-for="LastName">Last name</label>
+                <input asp-for="LastName" class="input" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
             </div>
             <div class="field span-6">
                 <label class="label" asp-for="Email">Email</label>
@@ -30,7 +40,7 @@
             </div>
             <div class="field span-6">
                 <label class="label" asp-for="Password">Password</label>
-                <input asp-for="Password" type="password" class="input" autocomplete="new-password" placeholder="@(isNew ? "" : "Leave blank to keep the current one")" />
+                <input asp-for="Password" type="password" class="input" autocomplete="new-password" placeholder="@(isNew ? "" : "Leave blank to keep the current one")" data-password-rules data-optional="@(isNew ? null : "true")" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
             <div class="field span-4">
@@ -49,7 +59,13 @@
             </div>
             <div class="field">
                 <label class="label" asp-for="Course">Course</label>
-                <input asp-for="Course" class="input" />
+                <select asp-for="Course" class="input">
+                    <option value="">None (staff or not applicable)</option>
+                    @foreach (var course in ASI.Basecode.Resources.Constants.Courses.All)
+                    {
+                        <option value="@course">@course</option>
+                    }
+                </select>
                 <span asp-validation-for="Course" class="text-danger"></span>
             </div>
             <div class="field">

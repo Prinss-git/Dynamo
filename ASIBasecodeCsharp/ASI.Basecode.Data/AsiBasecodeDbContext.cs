@@ -37,12 +37,16 @@ namespace ASI.Basecode.Data
                 entity.HasIndex(e => e.StudentNumber).IsUnique();
 
                 entity.Property(e => e.UserId).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.MiddleName).HasMaxLength(50);
+                entity.Property(e => e.LastName).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(160);
                 entity.Property(e => e.Email).HasMaxLength(100);
                 entity.Property(e => e.StudentNumber).HasMaxLength(20);
                 entity.Property(e => e.Course).HasMaxLength(100);
                 entity.Property(e => e.Role).IsRequired().HasMaxLength(20).HasConversion<string>();
                 entity.Property(e => e.Password).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.ApprovedBy).HasMaxLength(50);
                 entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.UpdatedBy).IsRequired().HasMaxLength(50);
             });

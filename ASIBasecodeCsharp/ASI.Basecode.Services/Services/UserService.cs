@@ -31,6 +31,7 @@ namespace ASI.Basecode.Services.Services
                                                      x.Password == passwordKey).FirstOrDefault();
 
             if (user == null) return LoginResult.Failed;
+            if (!user.IsApproved) return LoginResult.Pending;
             return user.IsActive ? LoginResult.Success : LoginResult.Inactive;
         }
 
@@ -44,8 +45,10 @@ namespace ASI.Basecode.Services.Services
             EnsureStudentNumberAvailable(model.StudentNumber, 0);
 
             _mapper.Map(model, user);
+            SetName(user, model.FirstName, model.MiddleName, model.LastName);
             user.Role = Role.Student;
             user.IsActive = true;
+            user.IsApproved = false;
             user.Password = PasswordManager.EncryptPassword(model.Password);
             user.CreatedTime = DateTime.Now;
             user.UpdatedTime = DateTime.Now;
@@ -98,6 +101,10 @@ namespace ASI.Basecode.Services.Services
 
             var user = _mapper.Map<User>(model);
             user.Id = 0;
+            SetName(user, model.FirstName, model.MiddleName, model.LastName);
+            user.IsApproved = true;
+            user.ApprovedBy = actor;
+            user.ApprovedTime = DateTime.Now;
             user.Password = PasswordManager.EncryptPassword(model.Password);
             user.CreatedTime = DateTime.Now;
             user.UpdatedTime = DateTime.Now;
@@ -118,6 +125,7 @@ namespace ASI.Basecode.Services.Services
 
             var currentPassword = user.Password;
             _mapper.Map(model, user);
+            SetName(user, model.FirstName, model.MiddleName, model.LastName);
             user.Password = string.IsNullOrWhiteSpace(model.Password)
                 ? currentPassword
                 : PasswordManager.EncryptPassword(model.Password);
@@ -139,7 +147,7 @@ namespace ASI.Basecode.Services.Services
         public List<OptionModel> GetUserOptions()
         {
             return _repository.GetUsers()
-                .Where(u => u.IsActive)
+                .Where(u => u.IsActive && u.IsApproved)
                 .OrderBy(u => u.Name)
                 .Select(u => new OptionModel
                 {
@@ -151,8 +159,84 @@ namespace ASI.Basecode.Services.Services
 
         public User GetActiveUser(int id)
         {
-            return _repository.GetUsers().FirstOrDefault(u => u.Id == id && u.IsActive)
+            return _repository.GetUsers().FirstOrDefault(u => u.Id == id && u.IsActive && u.IsApproved)
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
+        }
+
+        public List<UserModel> GetPendingUsers()
+        {
+            return _repository.GetUsers()
+                .Where(u => !u.IsApproved)
+                .OrderBy(u => u.CreatedTime)
+                .ToList()
+                .Select(u => _mapper.Map<UserModel>(u))
+                .ToList();
+        }
+
+        public int CountPendingUsers()
+        {
+            return _repository.GetUsers().Count(u => !u.IsApproved);
+        }
+
+        public int ApproveUsers(IEnumerable<int> ids, string actor)
+        {
+            var idList = (ids ?? Enumerable.Empty<int>()).Distinct().ToList();
+            if (idList.Count == 0)
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.NoUsersSelected);
+            }
+            return Approve(_repository.GetUsers().Where(u => !u.IsApproved && idList.Contains(u.Id)).ToList(), actor);
+        }
+
+        public int ApproveAllUsers(string actor)
+        {
+            return Approve(_repository.GetUsers().Where(u => !u.IsApproved).ToList(), actor);
+        }
+
+        public int RejectUsers(IEnumerable<int> ids)
+        {
+            var idList = (ids ?? Enumerable.Empty<int>()).Distinct().ToList();
+            if (idList.Count == 0)
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.NoUsersSelected);
+            }
+
+            // Only pending requests can be rejected; approved accounts are never deleted here.
+            var pending = _repository.GetUsers().Where(u => !u.IsApproved && idList.Contains(u.Id)).ToList();
+            if (pending.Count > 0)
+            {
+                _repository.DeleteUsers(pending);
+            }
+            return pending.Count;
+        }
+
+        private int Approve(List<User> users, string actor)
+        {
+            if (users.Count == 0) return 0;
+
+            var now = DateTime.Now;
+            foreach (var user in users)
+            {
+                user.IsApproved = true;
+                user.ApprovedBy = actor;
+                user.ApprovedTime = now;
+                user.UpdatedBy = actor;
+                user.UpdatedTime = now;
+            }
+            _repository.UpdateUsers(users);
+            return users.Count;
+        }
+
+        /// <summary>
+        /// Stores the name parts and the composed "First Middle Last" display name.
+        /// </summary>
+        private static void SetName(User user, string firstName, string middleName, string lastName)
+        {
+            user.FirstName = firstName?.Trim();
+            user.MiddleName = string.IsNullOrWhiteSpace(middleName) ? null : middleName.Trim();
+            user.LastName = lastName?.Trim();
+            user.Name = string.Join(" ", new[] { user.FirstName, user.MiddleName, user.LastName }
+                .Where(part => !string.IsNullOrEmpty(part)));
         }
 
         private User FindUser(int id)

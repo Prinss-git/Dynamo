@@ -38,6 +38,42 @@ namespace ASI.Basecode.WebApp.Controllers
             return View(_userService.GetUsers(search, role));
         }
 
+        /// <summary>
+        /// Self-registered accounts waiting for approval.
+        /// </summary>
+        [HttpGet]
+        public IActionResult Approvals()
+        {
+            return View(_userService.GetPendingUsers());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Approve(int[] ids)
+        {
+            var count = _userService.ApproveUsers(ids, UserId);
+            NotifySuccess(string.Format(Resources.Messages.Common.UsersApproved, count));
+            return RedirectToAction(nameof(Approvals));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ApproveAll()
+        {
+            var count = _userService.ApproveAllUsers(UserId);
+            NotifySuccess(string.Format(Resources.Messages.Common.UsersApproved, count));
+            return RedirectToAction(nameof(Approvals));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Reject(int[] ids)
+        {
+            var count = _userService.RejectUsers(ids);
+            NotifySuccess(string.Format(Resources.Messages.Common.UsersRejected, count));
+            return RedirectToAction(nameof(Approvals));
+        }
+
         [HttpGet]
         public IActionResult Create()
         {
@@ -65,7 +101,7 @@ namespace ASI.Basecode.WebApp.Controllers
             }
             catch (InvalidDataException ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddServiceError(ex.Message);
                 return View("Form", model);
             }
         }
@@ -93,7 +129,7 @@ namespace ASI.Basecode.WebApp.Controllers
             }
             catch (InvalidDataException ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                AddServiceError(ex.Message);
                 return View("Form", model);
             }
         }

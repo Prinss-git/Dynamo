@@ -29,6 +29,10 @@ namespace ASI.Basecode.WebApp
                 CreateMap<UserModel, User>()
                     .ForMember(d => d.Id, o => o.Ignore())
                     .ForMember(d => d.Password, o => o.Ignore())
+                    .ForMember(d => d.Name, o => o.Ignore())
+                    .ForMember(d => d.IsApproved, o => o.Ignore())
+                    .ForMember(d => d.ApprovedBy, o => o.Ignore())
+                    .ForMember(d => d.ApprovedTime, o => o.Ignore())
                     .ForMember(d => d.CreatedTime, o => o.Ignore());
                 CreateMap<User, UserModel>()
                     .ForMember(d => d.Password, o => o.Ignore());

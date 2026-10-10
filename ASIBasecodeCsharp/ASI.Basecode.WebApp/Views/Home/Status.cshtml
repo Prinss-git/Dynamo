@@ -1,0 +1,16 @@
+﻿@{
+    var code = ViewBag.Code as int? ?? 404;
+    var notFound = code == 404;
+    ViewData["Title"] = notFound ? "Page not found" : "Request problem";
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    Layout = signedIn ? "_Layout" : "_AuthLayout";
+}
+<div class="sheet" style="max-width:560px;margin:@(signedIn ? "40px auto" : "80px auto 0");width:calc(100% - 32px)">
+    @await Html.PartialAsync("_Empty", (
+        notFound ? "We can't find that page" : $"Something's wrong with that request ({code})",
+        notFound ? "The link may be old, or the page may have moved. Check the address, or head back and try again."
+                 : "The request couldn't be completed. Go back and try again."))
+    <div style="text-align:center;padding:0 16px 32px">
+        <a class="btn btn-primary" href="@(signedIn ? Url.Action("Index", "Home") : Url.Action("Login", "Account"))">@(signedIn ? "Back to dashboard" : "Back to sign in")</a>
+    </div>
+</div>

@@ -9,6 +9,7 @@
         <p class="page-sub">Accounts and roles. Officers also need to be members of an organization.</p>
     </div>
     <div class="page-actions">
+        <a class="btn btn-outline" asp-action="Approvals"><i class="fa-solid fa-user-check" aria-hidden="true"></i> Account approvals</a>
         <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> New user</a>
     </div>
 </div>
@@ -36,7 +37,7 @@
     else
     {
         <div class="ledger-wrap">
-            <table class="ledger ledger--stack">
+            <table class="ledger ledger--stack ledger--compact">
                 <thead>
                     <tr><th>Name</th><th>Username</th><th>Student no.</th><th>Course / year</th><th>Role</th><th>Status</th><th class="r"><span class="sr-only">Actions</span></th></tr>
                 </thead>
@@ -44,12 +45,22 @@
                     @foreach (var u in Model)
                     {
                         <tr>
-                            <td><div class="cell-main">@u.Name</div><div class="cell-sub">@u.Email</div></td>
-                            <td data-label="Username">@u.UserId</td>
-                            <td data-label="Student no."><span class="code">@u.StudentNumber</span></td>
-                            <td data-label="Course">@u.Course@(u.YearLevel.HasValue ? " · Year " + u.YearLevel : "")</td>
-                            <td data-label="Role">@BadgeHelper.Badge(u.Role)</td>
-                            <td data-label="Status">@BadgeHelper.Badge(u.IsActive ? "Active" : "Inactive")</td>
+                            @{ var statusTag = !u.IsApproved ? BadgeHelper.Badge("Pending approval", "waitlisted") : BadgeHelper.Badge(u.IsActive ? "Active" : "Inactive"); }
+                            <td>
+                                <div class="cell-main">@u.Name</div><div class="cell-sub">@u.Email</div>
+                                @* phone layout: the other columns fold into this cell *@
+                                <div class="cell-sub show-sm">@u.UserId@if (!string.IsNullOrEmpty(u.StudentNumber)) {<text> · </text><span class="code">@u.StudentNumber</span>}</div>
+                                @if (!string.IsNullOrEmpty(u.Course))
+                                {
+                                    <div class="cell-sub show-sm">@u.Course@(u.YearLevel.HasValue ? " · Year " + u.YearLevel : "")</div>
+                                }
+                                <div class="tag-row show-sm">@BadgeHelper.Badge(u.Role) @statusTag</div>
+                            </td>
+                            <td data-label="Username" class="hide-sm">@u.UserId</td>
+                            <td data-label="Student no." class="hide-sm"><span class="code">@u.StudentNumber</span></td>
+                            <td data-label="Course" class="hide-sm">@u.Course@(u.YearLevel.HasValue ? " · Year " + u.YearLevel : "")</td>
+                            <td data-label="Role" class="hide-sm">@BadgeHelper.Badge(u.Role)</td>
+                            <td data-label="Status" class="hide-sm">@statusTag</td>
                             <td class="r">
                                 <div class="row-actions">
                                     <a class="btn btn-outline btn-sm btn-icon" asp-action="Edit" asp-route-id="@u.Id" title="Edit @u.Name" aria-label="Edit @u.Name"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>

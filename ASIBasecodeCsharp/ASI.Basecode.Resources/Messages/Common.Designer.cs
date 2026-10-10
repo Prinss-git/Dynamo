@@ -149,5 +149,32 @@ namespace ASI.Basecode.Resources.Messages {
                 return ResourceManager.GetString("StatusUpdated", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Account created. An administrator will review it, and you can sign in once it's approved..
+        /// </summary>
+        public static string RegisterPendingApproval {
+            get {
+                return ResourceManager.GetString("RegisterPendingApproval", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} account(s) approved. They can sign in now..
+        /// </summary>
+        public static string UsersApproved {
+            get {
+                return ResourceManager.GetString("UsersApproved", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} registration request(s) rejected..
+        /// </summary>
+        public static string UsersRejected {
+            get {
+                return ResourceManager.GetString("UsersRejected", resourceCulture);
+            }
+        }
     }
 }

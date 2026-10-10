@@ -64,7 +64,7 @@
                 else
                 {
                     <div class="ledger-wrap">
-                        <table class="ledger ledger--stack">
+                        <table class="ledger ledger--stack" data-page-size="5">
                             <thead><tr><th>Event</th><th>When</th><th>Standing</th><th class="r"><span class="sr-only">Actions</span></th></tr></thead>
                             <tbody>
                                 @foreach (var r in Model.MyUpcoming)
@@ -94,12 +94,19 @@
             <h2 class="sheet-title">Open for registration</h2>
             <a asp-controller="Event" asp-action="Index">Browse all events</a>
         </div>
-        @{ ViewData["EmptyText"] = "No event is taking registrations right now. Check back soon."; }
+        @{ ViewData["EmptyText"] = "No event is taking registrations right now. Check back soon."; ViewData["PageSize"] = 6; }
         @await Html.PartialAsync("_PassRack", Model.UpcomingEvents)
     </section>
 }
 else
 {
+    if (Model.PendingApprovals > 0)
+    {
+        <div class="notice">
+            <i class="fa-solid fa-user-clock" aria-hidden="true"></i>
+            <div><strong>@Model.PendingApprovals new @(Model.PendingApprovals == 1 ? "account is" : "accounts are") waiting for approval.</strong> They can't sign in until you approve them. <a asp-controller="User" asp-action="Approvals">Review accounts</a></div>
+        </div>
+    }
     var door = Model.UpcomingEvents.FirstOrDefault(e => e.Status == EventStatus.Open || e.Status == EventStatus.Closed);
     if (door != null)
     {
@@ -140,7 +147,7 @@ else
         else
         {
             <div class="ledger-wrap">
-                <table class="ledger ledger--stack">
+                <table class="ledger ledger--stack" data-page-size="5">
                     <thead><tr><th>Event</th><th>When</th><th>Registered</th><th>Status</th><th class="r"><span class="sr-only">Actions</span></th></tr></thead>
                     <tbody>
                         @foreach (var e in Model.UpcomingEvents)

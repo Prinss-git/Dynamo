@@ -28,7 +28,7 @@ namespace ASI.Basecode.WebApp.ViewComponents
                 return Content(string.Empty);
             }
 
-            var users = _userService.GetUsers(null, null).Where(u => u.IsActive).ToList();
+            var users = _userService.GetUsers(null, null).Where(u => u.IsActive && u.IsApproved).ToList();
             ViewBag.CurrentAccountId = UserClaimsPrincipal.FindFirst(Const.ClaimAccountId)?.Value;
             return View(users);
         }
