@@ -1,5 +1,5 @@
 ﻿# Student Organization Event Registration and Attendance System
-_Built on the ASI Bridge/JumpStart C# BaseCode (ASP.NET Core MVC + Razor, .NET 9, PostgreSQL)_
+_Built on the ASI Bridge/JumpStart C# BaseCode (ASP.NET Core MVC + Razor, .NET 9, SQL Server Express)_
 
 Student organizations publish events, students register (with automatic waitlisting when an event is full),
 and officers take attendance by scanning each student's QR ticket.
@@ -16,14 +16,17 @@ Marking an event **Completed** records every registered student who never checke
 Check-ins later than *Late After (minutes)* past the start time are recorded as **Late**.
 
 ## Installation
-1. Requirements: Visual Studio 2022 (or the .NET 9 SDK) and PostgreSQL 13+.
-2. Create the database and load the schema + demo data:
-   ```
-   psql -U postgres -c "CREATE DATABASE student_event_db;"
-   psql -U postgres -d student_event_db -f Database/student_event_db.sql
-   ```
-   (Or run the same two steps from pgAdmin's Query Tool.) Re-running the script resets all tables.
-3. Update `ConnectionStrings:DefaultConnection` in `ASI.Basecode.WebApp/appsettings.json` with your PostgreSQL password.
+1. Requirements: Visual Studio 2022 (17.12+) or 2026 with the **ASP.NET and web development** workload, and
+   **SQL Server Express LocalDB** (installed with that workload; or any SQL Server Express).
+2. Create the database and load the schema + demo data by running `Database/student_event_db.sql` once
+   (it creates `student_event_db` if it doesn't exist):
+   - Visual Studio: *View > SQL Server Object Explorer* > `(localdb)\MSSQLLocalDB` > right-click > *New Query*, paste the file, *Execute*.
+   - or command line: `sqlcmd -S "(localdb)\MSSQLLocalDB" -E -i Database\student_event_db.sql`
+
+   Re-running the script resets all tables to the demo data.
+3. The connection string in `ASI.Basecode.WebApp/appsettings.json` already points at LocalDB with Windows
+   authentication (no password). For a full SQL Server Express install, change `Server=(localdb)\\MSSQLLocalDB` to
+   `Server=.\\SQLEXPRESS` (JSON needs the backslash doubled), and use `-S ".\SQLEXPRESS"` with sqlcmd.
 4. Set `ASI.Basecode.WebApp` as the Startup project, then Clean and Rebuild the solution and run.
 
 ### Demo accounts

@@ -8,7 +8,7 @@ using ASI.Basecode.Data.Models;
 namespace ASI.Basecode.Data
 {
     /// <summary>
-    /// PostgreSQL database context. Table and column names are mapped to snake_case
+    /// SQL Server database context. Table and column names are mapped to snake_case
     /// (see UseSnakeCaseNamingConvention in Startup) and must match Database/student_event_db.sql.
     /// </summary>
     public partial class AsiBasecodeDBContext : DbContext
@@ -130,12 +130,12 @@ namespace ASI.Basecode.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // The app stores local times (DateTime.Now), so map every DateTime to "timestamp without time zone".
+            // The app stores local times (DateTime.Now); every DateTime is a SQL Server datetime2 column.
             foreach (var property in modelBuilder.Model.GetEntityTypes()
                          .SelectMany(t => t.GetProperties())
                          .Where(p => p.ClrType == typeof(DateTime) || p.ClrType == typeof(DateTime?)))
             {
-                property.SetColumnType("timestamp without time zone");
+                property.SetColumnType("datetime2");
             }
 
             OnModelCreatingPartial(modelBuilder);

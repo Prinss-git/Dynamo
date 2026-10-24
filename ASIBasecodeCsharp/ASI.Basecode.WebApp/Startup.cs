@@ -85,9 +85,9 @@ namespace ASI.Basecode.WebApp
             // Register SQL database configuration context as services.
             services.AddDbContext<AsiBasecodeDBContext>(options =>
             {
-                options.UseNpgsql(
+                options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection"),
-                    npgsqlOptions => npgsqlOptions.CommandTimeout(120))
+                    sqlServerOptions => sqlServerOptions.CommandTimeout(120))
                     .UseSnakeCaseNamingConvention();
             });
 
