@@ -199,3 +199,6 @@ node_modules
 */src/*/Scripts/**/*.js.map
 # Generated screenshots of the app (recreate any time; not source)
 Screenshots/
+
+# generated per deployment by Database/build_hosted_script.ps1 (tied to the production key)
+Database/student_event_db.hosted.sql

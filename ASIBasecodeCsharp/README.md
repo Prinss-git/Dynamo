@@ -29,6 +29,32 @@ Check-ins later than *Late After (minutes)* past the start time are recorded as 
    `Server=.\\SQLEXPRESS` (JSON needs the backslash doubled), and use `-S ".\SQLEXPRESS"` with sqlcmd.
 4. Set `ASI.Basecode.WebApp` as the Startup project, then Clean and Rebuild the solution and run.
 
+### Hosted database (deployment)
+LocalDB only runs on your own PC, so a deployed site needs a hosted SQL Server database (for example
+MonsterASP.NET or Azure SQL). Hosts create the database in their control panel and reject `CREATE DATABASE` / `USE`,
+and the production site must not reuse the secret key committed in `appsettings.json` (it signs the login cookie
+and encrypts passwords). The steps:
+
+1. Create an empty SQL Server database in the host's control panel and copy its connection string.
+2. Generate the hosted script (from the `ASIBasecodeCsharp` folder):
+
+   ```
+   powershell -ExecutionPolicy Bypass -File Database\build_hosted_script.ps1
+   ```
+
+   It prints a new random production secret key and writes `Database/student_event_db.hosted.sql` (git-ignored):
+   the same schema and demo data, without `CREATE DATABASE` / `USE`, with the demo passwords re-encrypted for that
+   key. The demo passwords stay `Admin@123`, `Officer@123` and `Student@123`. To reuse a key you already have, pass
+   `-SecretKey "<key>"` (at least 32 characters).
+3. Connect to the hosted database (the host's web SQL tool, SSMS, or Visual Studio's SQL Server Object Explorer) and
+   run `student_event_db.hosted.sql` once.
+4. Set these on the host as app settings / environment variables (not in `appsettings.json`):
+   - `ConnectionStrings__DefaultConnection` = the host's connection string
+   - `TokenAuthentication__SecretKey` = the key printed in step 2
+   - `ASPNETCORE_ENVIRONMENT` = `Production`
+
+   Keep the key private. If it changes later, regenerate and re-run the script, or every existing password stops working.
+
 ### Demo accounts
 | Username | Password | Role |
 |---|---|---|
