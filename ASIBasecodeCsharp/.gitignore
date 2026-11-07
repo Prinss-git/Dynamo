@@ -202,3 +202,5 @@ Screenshots/
 
 # generated per deployment by Database/build_hosted_script.ps1 (tied to the production key)
 Database/student_event_db.hosted.sql
+# production secrets (connection string, key); published to the host, never committed
+ASI.Basecode.WebApp/appsettings.Production.json
