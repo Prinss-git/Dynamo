@@ -12,9 +12,9 @@ var appBuilder = WebApplication.CreateBuilder(new WebApplicationOptions
     ContentRootPath = Directory.GetCurrentDirectory(),
 });
 
-appBuilder.Configuration.AddJsonFile("appsettings.json",
-    optional: true,
-    reloadOnChange: true);
+// CreateBuilder already loads appsettings.json, appsettings.{Environment}.json and then environment
+// variables, in that order. Adding appsettings.json again here would put it last and silently override
+// the host's settings (connection string, secret key).
 
 appBuilder.WebHost.UseIISIntegration();
 
