@@ -14,10 +14,6 @@
         /// </summary>
         public string Audience { get; set; }
         /// <summary>
-        /// Gets or sets the token path.
-        /// </summary>
-        public string TokenPath { get; set; }
-        /// <summary>
         /// Gets or sets the name of the cookie.
         /// </summary>
         public string CookieName { get; set; }

@@ -24,18 +24,6 @@ namespace ASI.Basecode.WebApp.Authentication
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
-        /// Gets or sets the user.
-        /// </summary>
-        public LoginUser user { get; set; }
-
-        /// <summary>
-        /// Initializes a new instance of the SignInManager class.
-        /// </summary>
-        public SignInManager()
-        {
-        }
-
-        /// <summary>
         /// Initializes a new instance of the SignInManager class.
         /// </summary>
         /// <param name="configuration">The configuration.</param>
@@ -46,30 +34,6 @@ namespace ASI.Basecode.WebApp.Authentication
         {
             this._configuration = configuration;
             this._httpContextAccessor = httpContextAccessor;
-            user = new LoginUser();
-        }
-
-        /// <summary>
-        /// Gets the claims identity.
-        /// </summary>
-        /// <param name="username">The username.</param>
-        /// <param name="password">The password.</param>
-        /// <returns>The successfully completed task</returns>
-        public Task<ClaimsIdentity> GetClaimsIdentity(string username, string password)
-        {
-            ClaimsIdentity claimsIdentity = null;
-            User userData = new User();
-
-            user.loginResult = LoginResult.Success;//TODO this._accountService.AuthenticateUser(username, password, ref userData);
-
-            if (user.loginResult == LoginResult.Failed)
-            {
-                return Task.FromResult<ClaimsIdentity>(null);
-            }
-
-            user.userData = userData;
-            claimsIdentity = CreateClaimsIdentity(userData);
-            return Task.FromResult(claimsIdentity);
         }
 
         /// <summary>

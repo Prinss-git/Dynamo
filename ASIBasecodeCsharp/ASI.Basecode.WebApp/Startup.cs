@@ -55,7 +55,6 @@ namespace ASI.Basecode.WebApp
 
             var token = this.Configuration.GetTokenAuthentication();
             this._signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(token.SecretKey));
-            this._tokenProviderOptions = TokenProviderOptionsFactory.Create(token, this._signingKey);
             this._tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
@@ -140,8 +139,6 @@ namespace ASI.Basecode.WebApp
             }
 
             this.ConfigureLogger();
-
-            this._app.UseTokenProvider(_tokenProviderOptions);
 
             this._app.UseHttpsRedirection();
             // 404 and other empty error responses render the "page not found" screen

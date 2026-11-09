@@ -24,9 +24,6 @@ namespace ASI.Basecode.WebApp.Controllers
     {
         private readonly SessionManager _sessionManager;
         private readonly SignInManager _signInManager;
-        private readonly TokenValidationParametersFactory _tokenValidationParametersFactory;
-        private readonly TokenProviderOptionsFactory _tokenProviderOptionsFactory;
-        private readonly IConfiguration _appConfiguration;
         private readonly IUserService _userService;
         private readonly IWebHostEnvironment _environment;
 
@@ -49,15 +46,10 @@ namespace ASI.Basecode.WebApp.Controllers
                             IConfiguration configuration,
                             IMapper mapper,
                             IUserService userService,
-                            TokenValidationParametersFactory tokenValidationParametersFactory,
-                            TokenProviderOptionsFactory tokenProviderOptionsFactory,
                             IWebHostEnvironment environment) : base(httpContextAccessor, loggerFactory, configuration, mapper)
         {
             this._sessionManager = new SessionManager(this._session);
             this._signInManager = signInManager;
-            this._tokenProviderOptionsFactory = tokenProviderOptionsFactory;
-            this._tokenValidationParametersFactory = tokenValidationParametersFactory;
-            this._appConfiguration = configuration;
             this._userService = userService;
             this._environment = environment;
         }

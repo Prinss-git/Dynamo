@@ -25,7 +25,7 @@ A school's hub for student-organization events: publish an event, let students r
 
 ## Capabilities and Constraints
 
-- ASP.NET Core MVC with Razor views (.NET 9), Bootstrap 4.3 and jQuery shipped locally, SQL Server Express (LocalDB in development). Server-rendered pages; no SPA framework.
+- ASP.NET Core MVC with Razor views (.NET 9) and C# services, SQL Server Express (LocalDB in development). Server-rendered pages; no SPA framework. Front end: the custom `pass.css` design system, jQuery and jQuery Validation shipped locally, Font Awesome and toastr from cdnjs.
 - Roles: Admin, Officer (scoped to organizations they belong to), Student.
 - Working product name: "Student Org Events" is descriptive only; no official name has been chosen (open decision).
 

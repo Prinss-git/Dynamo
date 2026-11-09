@@ -20,12 +20,10 @@ namespace ASI.Basecode.WebApp.Authentication
         {
             var options = new TokenProviderOptions
             {
-                Path = token.TokenPath,
                 Audience = token.Audience,
                 Issuer = Const.Issuer,
                 Expiration = TimeSpan.FromMinutes(token.ExpirationMinutes),
                 SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
-                IdentityResolver = new SignInManager(null, null).GetClaimsIdentity,
             };
 
             return options;
