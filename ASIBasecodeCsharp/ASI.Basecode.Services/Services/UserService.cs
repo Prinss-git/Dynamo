@@ -1,5 +1,6 @@
 ﻿using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.Manager;
 using ASI.Basecode.Services.ServiceModels;
@@ -163,19 +164,38 @@ namespace ASI.Basecode.Services.Services
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
         }
 
-        public List<UserModel> GetPendingUsers()
+        public List<UserModel> GetPendingUsers(PendingUserFilter filter)
         {
-            return _repository.GetUsers()
-                .Where(u => !u.IsApproved)
-                .OrderBy(u => u.CreatedTime)
-                .ToList()
-                .Select(u => _mapper.Map<UserModel>(u))
-                .ToList();
+            var query = FilterPending(filter);
+            query = filter != null && filter.NewestFirst
+                ? query.OrderByDescending(u => u.CreatedTime).ThenByDescending(u => u.Id)
+                : query.OrderBy(u => u.CreatedTime).ThenBy(u => u.Id);
+
+            return query.ToList()
+                        .Select(u => _mapper.Map<UserModel>(u))
+                        .ToList();
         }
 
         public int CountPendingUsers()
         {
             return _repository.GetUsers().Count(u => !u.IsApproved);
+        }
+
+        public Dictionary<string, int> CountPendingUsersByDepartment()
+        {
+            var perCourse = _repository.GetUsers()
+                .Where(u => !u.IsApproved)
+                .GroupBy(u => u.Course)
+                .Select(g => new { Course = g.Key, Count = g.Count() })
+                .ToList();
+
+            var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var row in perCourse)
+            {
+                var code = Departments.GetCode(row.Course) ?? Departments.OtherCode;
+                counts[code] = (counts.TryGetValue(code, out var count) ? count : 0) + row.Count;
+            }
+            return counts;
         }
 
         public int ApproveUsers(IEnumerable<int> ids, string actor)
@@ -188,9 +208,9 @@ namespace ASI.Basecode.Services.Services
             return Approve(_repository.GetUsers().Where(u => !u.IsApproved && idList.Contains(u.Id)).ToList(), actor);
         }
 
-        public int ApproveAllUsers(string actor)
+        public int ApproveAllUsers(PendingUserFilter filter, int throughId, string actor)
         {
-            return Approve(_repository.GetUsers().Where(u => !u.IsApproved).ToList(), actor);
+            return Approve(FilterPending(filter).Where(u => u.Id <= throughId).ToList(), actor);
         }
 
         public int RejectUsers(IEnumerable<int> ids)
@@ -208,6 +228,55 @@ namespace ASI.Basecode.Services.Services
                 _repository.DeleteUsers(pending);
             }
             return pending.Count;
+        }
+
+        public int RejectAllUsers(PendingUserFilter filter, int throughId)
+        {
+            var pending = FilterPending(filter).Where(u => u.Id <= throughId).ToList();
+            if (pending.Count > 0)
+            {
+                _repository.DeleteUsers(pending);
+            }
+            return pending.Count;
+        }
+
+        /// <summary>
+        /// Pending (unapproved) accounts narrowed by department, year level and name / student number search.
+        /// </summary>
+        private IQueryable<User> FilterPending(PendingUserFilter filter)
+        {
+            var query = _repository.GetUsers().Where(u => !u.IsApproved);
+            if (filter == null) return query;
+
+            if (!string.IsNullOrWhiteSpace(filter.Department))
+            {
+                if (string.Equals(filter.Department.Trim(), Departments.OtherCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    var listedCourses = Departments.AllCourseNames.ToList();
+                    query = query.Where(u => u.Course == null || !listedCourses.Contains(u.Course));
+                }
+                else
+                {
+                    // an unknown code matches nobody rather than silently showing everyone
+                    var courses = Departments.Find(filter.Department)?.CourseNames.ToList() ?? new List<string>();
+                    query = query.Where(u => courses.Contains(u.Course));
+                }
+            }
+
+            if (filter.YearLevel.HasValue)
+            {
+                var yearLevel = filter.YearLevel.Value;
+                query = query.Where(u => u.YearLevel == yearLevel);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                var term = filter.Search.Trim().ToLower();
+                query = query.Where(u => u.Name.ToLower().Contains(term)
+                                      || (u.StudentNumber != null && u.StudentNumber.ToLower().Contains(term)));
+            }
+
+            return query;
         }
 
         private int Approve(List<User> users, string actor)

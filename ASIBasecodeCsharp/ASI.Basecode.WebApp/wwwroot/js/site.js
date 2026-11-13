@@ -150,9 +150,11 @@ document.addEventListener("click", function (e) {
 
 /* ------------------------------------------------------------------
    Required fields: <form data-live-required>
-   Every [data-val-required] field gets a red "*" on its label, and
-   the field itself glows red until it passes its validation rules,
-   then green.
+   Every [data-val-required] field gets a red "*" on its label.
+   Fields start neutral. A field turns green once its value passes its
+   validation rules, and red only after the user leaves it empty or
+   invalid, or after a submit attempt (which also moves focus to the
+   first invalid field). Optional fields are never marked.
    ------------------------------------------------------------------ */
 function initRequiredMarkers() {
     document.querySelectorAll("form[data-live-required]").forEach(function (form) {
@@ -160,6 +162,8 @@ function initRequiredMarkers() {
         // a validator created first would be kept without the form's rules).
         var validator = window.jQuery ? jQuery(form).data("validator") : null;
         var marks = [];
+        // A page the server sent back with errors (a failed submit) shows every field's state right away.
+        var submitted = !!form.querySelector(".input-validation-error, .field-validation-error");
 
         form.querySelectorAll("[data-val-required]").forEach(function (field) {
             var label = form.querySelector('label[for="' + field.id + '"]');
@@ -168,28 +172,78 @@ function initRequiredMarkers() {
             var mark = document.createElement("span");
             mark.className = "req";
             mark.textContent = "*";
+            mark.title = "Required";
             label.appendChild(mark);
-            marks.push({ field: field, mark: mark });
+            // edited: the user changed the value; left: the user has moved focus out of the field
+            marks.push({ field: field, edited: false, left: false });
         });
+
+        // Runs the field's rules without touching the validator's state. validator.check() would record
+        // the field as "submitted", which makes jquery.validate show error text while the user types.
+        function passesRules(field) {
+            if (!validator || !jQuery.validator) return true;
+            try {
+                var rules = jQuery(field).rules();
+                var value = validator.elementValue(field);
+                for (var method in rules) {
+                    if (!Object.prototype.hasOwnProperty.call(rules, method)) continue;
+                    var test = jQuery.validator.methods[method];
+                    if (typeof test !== "function" || method === "remote") continue;
+                    var result = test.call(validator, value, field, rules[method]);
+                    if (result === "dependency-mismatch" || result === "pending") continue;
+                    if (!result) return false;
+                }
+                return true;
+            } catch (e) {
+                return true; // never block the form because of a client-side check; the server validates too
+            }
+        }
 
         function isMet(field) {
             if (!field.value || !field.value.trim()) return false;
-            if (!validator) return true;
-            try { return validator.check(field) !== false; } catch (e) { return true; }
+            return passesRules(field);
         }
 
         function update() {
             marks.forEach(function (m) {
                 var met = isMet(m.field);
-                m.field.classList.toggle("field-met", met);
-                m.field.classList.toggle("field-unmet", !met);
-                m.mark.title = "Required";
+                m.field.classList.toggle("field-met", met && (m.edited || m.left || submitted));
+                m.field.classList.toggle("field-unmet", !met && (m.left || submitted));
             });
         }
 
-        // re-check all markers on any change so dependent rules (confirm password) stay in sync
-        form.addEventListener("input", update);
-        form.addEventListener("change", update);
+        function markFor(element) {
+            for (var i = 0; i < marks.length; i++) {
+                if (marks[i].field === element) return marks[i];
+            }
+            return null;
+        }
+
+        function onEdit(e) {
+            var m = markFor(e.target);
+            if (m) m.edited = true;
+            // re-check every field so dependent rules (confirm password) stay in sync
+            update();
+        }
+
+        form.addEventListener("input", onEdit);
+        form.addEventListener("change", onEdit);
+        form.addEventListener("focusout", function (e) {
+            var m = markFor(e.target);
+            if (!m) return;
+            m.left = true;
+            update();
+        });
+        // jquery.validate's own submit handler was attached first, so its error classes are already set here.
+        form.addEventListener("submit", function () {
+            submitted = true;
+            update();
+            var first = form.querySelector(".field-unmet, .input-validation-error");
+            if (first) {
+                first.scrollIntoView({ block: "center" });
+                first.focus({ preventScroll: true });
+            }
+        });
         update();
     });
 }
@@ -219,7 +273,9 @@ function initPasswordRules() {
             list.appendChild(li);
             return { rule: rule, li: li, icon: li.querySelector("i") };
         });
-        input.parentNode.insertBefore(list, input.nextSibling);
+        // below the show/hide wrapper when there is one, so the toggle stays inside the field
+        var anchor = input.closest(".pw-wrap") || input;
+        anchor.parentNode.insertBefore(list, anchor.nextSibling);
         function update() {
             var v = input.value || "";
             items.forEach(function (it) {
@@ -235,6 +291,48 @@ function initPasswordRules() {
     });
 }
 
+/* ------------------------------------------------------------------
+   Show/hide password: every <input type="password"> gets an eye
+   button inside the field. It is a real <button> (Tab + Enter/Space),
+   announces its state with aria-pressed, and keeps the keyboard open
+   on phones by not taking focus from the field on a tap or click.
+   ------------------------------------------------------------------ */
+function initPasswordToggles() {
+    document.querySelectorAll('input[type="password"]').forEach(function (input) {
+        if (input.closest(".pw-wrap")) return;
+
+        var wrap = document.createElement("div");
+        wrap.className = "pw-wrap";
+        input.parentNode.insertBefore(wrap, input);
+        wrap.appendChild(input);
+
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "pw-toggle";
+        button.setAttribute("aria-label", "Show password");
+        if (input.id) button.setAttribute("aria-controls", input.id);
+        var icon = document.createElement("i");
+        icon.setAttribute("aria-hidden", "true");
+        button.appendChild(icon);
+        wrap.appendChild(button);
+
+        function render(visible) {
+            button.setAttribute("aria-pressed", visible ? "true" : "false");
+            button.title = visible ? "Hide password" : "Show password";
+            icon.className = "fa-solid " + (visible ? "fa-eye-slash" : "fa-eye");
+        }
+
+        // keep focus (and the phone keyboard) in the field when the button is clicked or tapped
+        button.addEventListener("mousedown", function (e) { e.preventDefault(); });
+        button.addEventListener("click", function () {
+            var show = input.type === "password";
+            input.type = show ? "text" : "password";
+            render(show);
+        });
+        render(false);
+    });
+}
+
 // Run after jquery.validate.unobtrusive has parsed the forms on document ready.
-function initForms() { initPasswordRules(); initRequiredMarkers(); }
+function initForms() { initPasswordToggles(); initPasswordRules(); initRequiredMarkers(); }
 if (window.jQuery) { jQuery(initForms); } else { document.addEventListener("DOMContentLoaded", initForms); }

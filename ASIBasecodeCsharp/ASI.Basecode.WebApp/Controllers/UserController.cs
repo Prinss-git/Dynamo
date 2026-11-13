@@ -39,39 +39,74 @@ namespace ASI.Basecode.WebApp.Controllers
         }
 
         /// <summary>
-        /// Self-registered accounts waiting for approval.
+        /// Self-registered accounts waiting for approval, filterable by department, year level and search.
         /// </summary>
         [HttpGet]
-        public IActionResult Approvals()
+        public IActionResult Approvals(PendingUserFilter filter)
         {
-            return View(_userService.GetPendingUsers());
+            filter ??= new PendingUserFilter();
+            return View(new PendingApprovalsModel
+            {
+                Filter = filter,
+                Users = _userService.GetPendingUsers(filter),
+                TotalPending = _userService.CountPendingUsers(),
+                DepartmentCounts = _userService.CountPendingUsersByDepartment(),
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Approve(int[] ids)
+        public IActionResult Approve(int[] ids, PendingUserFilter filter)
         {
             var count = _userService.ApproveUsers(ids, UserId);
             NotifySuccess(string.Format(Resources.Messages.Common.UsersApproved, count));
-            return RedirectToAction(nameof(Approvals));
+            return BackToApprovals(filter);
         }
 
+        /// <summary>
+        /// Approves every account the filtered list showed (ids up to <paramref name="throughId"/>).
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ApproveAll()
+        public IActionResult ApproveAll(PendingUserFilter filter, int throughId)
         {
-            var count = _userService.ApproveAllUsers(UserId);
+            var count = _userService.ApproveAllUsers(filter, throughId, UserId);
             NotifySuccess(string.Format(Resources.Messages.Common.UsersApproved, count));
-            return RedirectToAction(nameof(Approvals));
+            return BackToApprovals(filter);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Reject(int[] ids)
+        public IActionResult Reject(int[] ids, PendingUserFilter filter)
         {
             var count = _userService.RejectUsers(ids);
             NotifySuccess(string.Format(Resources.Messages.Common.UsersRejected, count));
-            return RedirectToAction(nameof(Approvals));
+            return BackToApprovals(filter);
+        }
+
+        /// <summary>
+        /// Rejects (deletes) every request the filtered list showed (ids up to <paramref name="throughId"/>).
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RejectAll(PendingUserFilter filter, int throughId)
+        {
+            var count = _userService.RejectAllUsers(filter, throughId);
+            NotifySuccess(string.Format(Resources.Messages.Common.UsersRejected, count));
+            return BackToApprovals(filter);
+        }
+
+        /// <summary>Returns to the approvals list with the same filters still applied.</summary>
+        private IActionResult BackToApprovals(PendingUserFilter filter)
+        {
+            filter ??= new PendingUserFilter();
+            return RedirectToAction(nameof(Approvals), new
+            {
+                filter.Department,
+                filter.YearLevel,
+                filter.Search,
+                filter.Sort,
+            });
         }
 
         [HttpGet]
