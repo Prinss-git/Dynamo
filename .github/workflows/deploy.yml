@@ -97,15 +97,35 @@ jobs:
           WD_USER: ${{ secrets.WEBDEPLOY_USERNAME }}
           WD_PASSWORD: ${{ secrets.WEBDEPLOY_PASSWORD }}
         run: |
-          $msdeploy = "C:\Program Files (x86)\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-          if (-not (Test-Path $msdeploy)) { $msdeploy = "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" }
+          # Problems are reported as ::error:: annotations so they show on the run's summary page.
+          # GitHub masks secret values in the output.
+          $missing = @("WD_SITE", "WD_SERVER", "WD_USER", "WD_PASSWORD") | Where-Object { -not [Environment]::GetEnvironmentVariable($_) }
+          if ($missing) { Write-Host "::error::Empty Web Deploy secret(s): $($missing -join ', ')"; exit 1 }
+          if ($env:WD_PASSWORD -ne $env:WD_PASSWORD.Trim() -or $env:WD_SERVER -ne $env:WD_SERVER.Trim()) {
+            Write-Host "::error::WEBDEPLOY_PASSWORD or WEBDEPLOY_SERVER starts or ends with a space or line break. Paste the value again without it."; exit 1
+          }
+
+          $msdeploy = @("C:\Program Files (x86)\IIS\Microsoft Web Deploy V3\msdeploy.exe",
+                        "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $msdeploy) { Write-Host "::error::msdeploy.exe (Web Deploy) is not installed on this runner."; exit 1 }
+
+          $port = Test-NetConnection $env:WD_SERVER -Port 8172 -WarningAction SilentlyContinue
+          if (-not $port.TcpTestSucceeded) { Write-Host "::error::Cannot reach $($env:WD_SERVER) on port 8172 from GitHub (blocked or wrong server name)."; exit 1 }
+
           $source = (Resolve-Path publish).Path
           # the password comes from an environment variable, so characters like # or ! need no escaping
           $dest = "contentPath=$($env:WD_SITE),computerName=https://$($env:WD_SERVER):8172/msdeploy.axd?site=$($env:WD_SITE),userName=$($env:WD_USER),password=$($env:WD_PASSWORD),authType=Basic"
-          & $msdeploy "-verb:sync" "-source:contentPath=$source" "-dest:$dest" `
+          $output = & $msdeploy "-verb:sync" "-source:contentPath=$source" "-dest:$dest" `
             "-allowUntrusted" "-enableRule:AppOffline" "-retryAttempts:3" `
-            "-skip:objectName=dirPath,absolutePath=App_Data"   # keep the server's logs
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            "-skip:objectName=dirPath,absolutePath=App_Data" 2>&1   # keep the server's logs
+          $code = $LASTEXITCODE
+          $output | Select-Object -Last 5 | ForEach-Object { Write-Host $_ }
+          if ($code -ne 0) {
+            $why = ($output | Where-Object { "$_" -match "Error|error|401|403|denied|unauthorized" } | Select-Object -First 4) -join " | "
+            if (-not $why) { $why = ($output | Select-Object -Last 3) -join " | " }
+            Write-Host "::error::Web Deploy failed (exit $code): $why"
+            exit $code
+          }
 
       - name: Check the site answers
         shell: pwsh
