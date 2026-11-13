@@ -114,11 +114,27 @@ jobs:
 
           $source = (Resolve-Path publish).Path
           # the password comes from an environment variable, so characters like # or ! need no escaping
-          $dest = "contentPath=$($env:WD_SITE),computerName=https://$($env:WD_SERVER):8172/msdeploy.axd?site=$($env:WD_SITE),userName=$($env:WD_USER),password=$($env:WD_PASSWORD),authType=Basic"
-          $output = & $msdeploy "-verb:sync" "-source:contentPath=$source" "-dest:$dest" `
-            "-allowUntrusted" "-enableRule:AppOffline" "-retryAttempts:3" `
-            "-skip:objectName=dirPath,absolutePath=App_Data" 2>&1   # keep the server's logs
-          $code = $LASTEXITCODE
+          $conn = "computerName=https://$($env:WD_SERVER):8172/msdeploy.axd?site=$($env:WD_SITE),userName=$($env:WD_USER),password=$($env:WD_PASSWORD),authType=Basic"
+
+          # The running site keeps its DLLs open, so they can't be replaced or deleted
+          # (ERROR_INSUFFICIENT_ACCESS_TO_SITE_FOLDER). Stop its app pool, upload, then always start it again.
+          function Set-AppPool([string]$mode) {
+            $result = & $msdeploy "-verb:sync" "-source:recycleApp" "-dest:recycleApp=$($env:WD_SITE),recycleMode=$mode,$conn" "-allowUntrusted" 2>&1
+            if ($LASTEXITCODE -ne 0) { Write-Host "::warning::$mode failed: $(($result | Select-Object -Last 2) -join ' | ')" } else { Write-Host "$mode done." }
+          }
+
+          Set-AppPool "StopAppPool"
+          Start-Sleep -Seconds 5
+          try {
+            $output = & $msdeploy "-verb:sync" "-source:contentPath=$source" "-dest:contentPath=$($env:WD_SITE),$conn" `
+              "-allowUntrusted" "-retryAttempts:5" "-retryInterval:3000" `
+              "-skip:objectName=dirPath,absolutePath=App_Data" 2>&1   # keep the server's logs
+            $code = $LASTEXITCODE
+          }
+          finally {
+            Set-AppPool "StartAppPool"
+          }
+          $output | Where-Object { "$_" -match "^Total changes" } | ForEach-Object { Write-Host $_ }
           $output | Select-Object -Last 5 | ForEach-Object { Write-Host $_ }
           if ($code -ne 0) {
             $why = ($output | Where-Object { "$_" -match "Error|error|401|403|denied|unauthorized" } | Select-Object -First 4) -join " | "
