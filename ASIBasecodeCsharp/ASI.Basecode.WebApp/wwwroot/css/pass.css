@@ -336,6 +336,19 @@ textarea.input { min-height: 110px; resize: vertical; }
 .check input { width: 20px; height: 20px; accent-color: var(--navy); }
 .form-actions { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 6px; }
 
+/* Show/hide password: the eye button sits inside the right edge of the field (site.js adds it) */
+.pw-wrap { position: relative; }
+.pw-wrap > .input { padding-right: 48px; }
+.pw-wrap > .input::-ms-reveal { display: none; } /* Edge's own eye would duplicate ours */
+.pw-toggle {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0; border: 0; border-radius: 0 8px 8px 0; background: transparent;
+    color: var(--muted); cursor: pointer; touch-action: manipulation;
+}
+.pw-toggle:hover, .pw-toggle[aria-pressed="true"] { color: var(--navy); }
+.pw-toggle:focus-visible { outline: 3px solid var(--gold); outline-offset: -3px; border-radius: 8px; }
+
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .sheet-head > .toolbar { flex: 1 1 auto; }
 .toolbar .input { width: auto; flex: 1 1 220px; max-width: 340px; }
@@ -605,7 +618,7 @@ body.id-auth .switcher { bottom: 20px; }
 /* ---------- Required-field markers ---------- */
 .req { color: var(--bad); font-family: var(--font); font-weight: 700; margin-left: 4px; font-size: 1.6em; line-height: 0; vertical-align: -0.3em; transition: color .2s; }
 .req-legend { color: var(--muted); font-size: .9rem; margin: -10px 0 18px; }
-/* fields glow red until valid, then green */
+/* green once valid; red only after the user leaves a field empty or invalid, or submits (see site.js) */
 .input.field-unmet { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(168, 35, 28, .16); }
 .input.field-met { border-color: var(--ok); box-shadow: 0 0 0 3px rgba(23, 105, 63, .16); }
 .input.field-unmet:focus { border-color: var(--bad); box-shadow: 0 0 0 4px rgba(168, 35, 28, .28); }

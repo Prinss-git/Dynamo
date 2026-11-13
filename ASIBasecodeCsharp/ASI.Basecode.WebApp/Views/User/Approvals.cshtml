@@ -1,6 +1,25 @@
-﻿@model List<UserModel>
+﻿@model PendingApprovalsModel
+@using ASI.Basecode.Resources.Constants
 @{
     ViewData["Title"] = "Account approvals";
+    var f = Model.Filter;
+    var shown = Model.Users.Count;
+    var otherCount = Model.CountFor(Departments.OtherCode);
+    var otherSelected = string.Equals(f.Department, Departments.OtherCode, StringComparison.OrdinalIgnoreCase);
+    var canClear = f.IsFiltered || f.NewestFirst;
+
+    string Accounts(int n) => n == 1 ? "account" : "accounts";
+    string Requests(int n) => n == 1 ? "request" : "requests";
+    var scope = f.IsFiltered ? " in this filtered list" : "";
+
+    // Keeps the current filters on every POST so the page comes back the same way.
+    void FilterFields()
+    {
+        <input type="hidden" name="Department" value="@f.Department" />
+        <input type="hidden" name="YearLevel" value="@f.YearLevel" />
+        <input type="hidden" name="Search" value="@f.Search" />
+        <input type="hidden" name="Sort" value="@f.Sort" />
+    }
 }
 <a class="back" asp-action="Index"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Users</a>
 <div class="page-head">
@@ -8,73 +27,133 @@
         <h1 class="page-title">Account approvals</h1>
         <p class="page-sub">New student accounts can't sign in until an administrator approves them. Check each request against the student records before approving.</p>
     </div>
-    @if (Model.Any())
+    @if (shown > 0)
     {
         <div class="page-actions">
-            <form asp-action="ApproveAll" method="post" class="inline-form" data-confirm="Approve all @Model.Count pending @(Model.Count == 1 ? "account" : "accounts")? They will be able to sign in immediately.">
-                <button type="submit" class="btn btn-key"><i class="fa-solid fa-check-double" aria-hidden="true"></i> Approve all (@Model.Count)</button>
+            <form asp-action="ApproveAll" method="post" class="inline-form"
+                  data-confirm="Approve @shown pending @(Accounts(shown))@(scope)? They will be able to sign in immediately.">
+                @{ FilterFields(); }
+                <input type="hidden" name="throughId" value="@Model.ThroughId" />
+                <button type="submit" class="btn btn-key"><i class="fa-solid fa-check-double" aria-hidden="true"></i> @(f.IsFiltered ? "Approve all shown" : "Approve all") (@shown)</button>
+            </form>
+            <form asp-action="RejectAll" method="post" class="inline-form"
+                  data-confirm="Reject @shown pending @(Requests(shown))@(scope)? The @(Accounts(shown)) will be deleted. This cannot be undone.">
+                @{ FilterFields(); }
+                <input type="hidden" name="throughId" value="@Model.ThroughId" />
+                <button type="submit" class="btn btn-danger"><i class="fa-solid fa-xmark" aria-hidden="true"></i> @(f.IsFiltered ? "Reject all shown" : "Reject all") (@shown)</button>
             </form>
         </div>
     }
 </div>
 
 <section class="sheet">
-    @if (!Model.Any())
+    @if (Model.TotalPending == 0)
     {
         @await Html.PartialAsync("_Empty", ("No accounts waiting", "New student registrations appear here for review."))
     }
     else
     {
-        <form method="post" id="approval-form">
-            <div class="sheet-head approval-bar">
-                <span class="muted" id="selected-count" aria-live="polite">0 selected</span>
-                <div class="row-actions">
-                    <button type="submit" class="btn btn-primary btn-sm" asp-action="Approve" data-needs-selection disabled>
-                        <i class="fa-solid fa-check" aria-hidden="true"></i> Approve selected
-                    </button>
-                    <button type="submit" class="btn btn-danger btn-sm" asp-action="Reject" data-needs-selection disabled
-                            data-confirm-button="Reject the selected requests? The accounts will be deleted.">
-                        <i class="fa-solid fa-xmark" aria-hidden="true"></i> Reject selected
-                    </button>
+        <div class="sheet-head">
+            <form method="get" asp-action="Approvals" class="toolbar" role="search">
+                <label class="sr-only" for="search">Search pending accounts</label>
+                <input id="search" type="search" name="Search" value="@f.Search" class="input" placeholder="Name or student no." />
+
+                <label class="sr-only" for="department">Department</label>
+                <select id="department" name="Department" class="input" onchange="this.form.submit()">
+                    <option value="">All departments (@Model.TotalPending)</option>
+                    @foreach (var d in Departments.All)
+                    {
+                        <option value="@d.Code" title="@d.Name" selected="@(string.Equals(f.Department, d.Code, StringComparison.OrdinalIgnoreCase))">@d.Code (@Model.CountFor(d.Code))</option>
+                    }
+                    @if (otherCount > 0 || otherSelected)
+                    {
+                        <option value="@Departments.OtherCode" title="Courses not listed under a department" selected="@otherSelected">Other (@otherCount)</option>
+                    }
+                </select>
+
+                <label class="sr-only" for="yearLevel">Year level</label>
+                <select id="yearLevel" name="YearLevel" class="input" onchange="this.form.submit()">
+                    <option value="">All years</option>
+                    @for (var y = 1; y <= 6; y++)
+                    {
+                        <option value="@y" selected="@(f.YearLevel == y)">Year @y</option>
+                    }
+                </select>
+
+                <label class="sr-only" for="sort">Sort by date submitted</label>
+                <select id="sort" name="Sort" class="input" onchange="this.form.submit()">
+                    <option value="@PendingUserFilter.SortOldest" selected="@(!f.NewestFirst)">Oldest first</option>
+                    <option value="@PendingUserFilter.SortNewest" selected="@f.NewestFirst">Newest first</option>
+                </select>
+
+                <button type="submit" class="btn btn-outline"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
+                @if (canClear)
+                {
+                    <a class="btn btn-outline" asp-action="Approvals"><i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i> Clear filters</a>
+                }
+            </form>
+        </div>
+
+        @if (shown == 0)
+        {
+            @await Html.PartialAsync("_Empty", ("No matching accounts", "Nothing pending matches these filters. Try another department or year, or clear the filters."))
+        }
+        else
+        {
+            <form method="post" id="approval-form">
+                @{ FilterFields(); }
+                <div class="sheet-head approval-bar">
+                    <span class="muted" id="selected-count" aria-live="polite">0 selected</span>
+                    <div class="row-actions">
+                        <button type="submit" class="btn btn-primary btn-sm" asp-action="Approve" data-needs-selection disabled>
+                            <i class="fa-solid fa-check" aria-hidden="true"></i> Approve selected
+                        </button>
+                        <button type="submit" class="btn btn-danger btn-sm" asp-action="Reject" data-needs-selection disabled
+                                data-confirm-button="Reject the selected requests? The accounts will be deleted.">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i> Reject selected
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="ledger-wrap">
-                <table class="ledger ledger--stack ledger--compact ledger--pick" id="approval-table">
-                    <thead>
-                        <tr>
-                            <th class="check-cell">
-                                <label class="sr-only" for="select-all">Select all on this page</label>
-                                <input type="checkbox" id="select-all" class="row-check" />
-                            </th>
-                            <th>Name</th><th>Student no.</th><th>Course / year</th><th>Email</th><th>Username</th><th>Requested</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var u in Model)
-                        {
+                <div class="ledger-wrap">
+                    <table class="ledger ledger--stack ledger--compact ledger--pick" id="approval-table">
+                        <thead>
                             <tr>
-                                <td class="check-cell">
-                                    <label class="sr-only" for="pick-@u.Id">Select @u.Name</label>
-                                    <input type="checkbox" id="pick-@u.Id" name="ids" value="@u.Id" class="row-check" />
-                                </td>
-                                <td>
-                                    <div class="cell-main">@u.Name</div>
-                                    @* phone layout: the other columns fold into this cell *@
-                                    <div class="cell-sub show-sm"><span class="code">@u.StudentNumber</span> · @u.UserId</div>
-                                    <div class="cell-sub show-sm">@u.Course@(u.YearLevel.HasValue ? " · Year " + u.YearLevel : "")</div>
-                                    <div class="cell-sub show-sm">@u.Email · requested @u.CreatedTime.ToString("MMM d")</div>
-                                </td>
-                                <td data-label="Student no." class="hide-sm"><span class="code">@u.StudentNumber</span></td>
-                                <td data-label="Course" class="hide-sm">@u.Course@(u.YearLevel.HasValue ? " · Year " + u.YearLevel : "")</td>
-                                <td data-label="Email" class="hide-sm">@u.Email</td>
-                                <td data-label="Username" class="hide-sm">@u.UserId</td>
-                                <td data-label="Requested" class="num nowrap hide-sm">@u.CreatedTime.ToString("MMM d, h:mm tt")</td>
+                                <th class="check-cell">
+                                    <label class="sr-only" for="select-all">Select all on this page</label>
+                                    <input type="checkbox" id="select-all" class="row-check" />
+                                </th>
+                                <th>Name</th><th>Student no.</th><th>Course / year</th><th>Email</th><th>Username</th><th>Requested</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </form>
+                        </thead>
+                        <tbody>
+                            @foreach (var u in Model.Users)
+                            {
+                                var department = Departments.GetCode(u.Course);
+                                var courseLine = (department != null ? department + " · " : "") + u.Course + (u.YearLevel.HasValue ? " · Year " + u.YearLevel : "");
+                                <tr>
+                                    <td class="check-cell">
+                                        <label class="sr-only" for="pick-@u.Id">Select @u.Name</label>
+                                        <input type="checkbox" id="pick-@u.Id" name="ids" value="@u.Id" class="row-check" />
+                                    </td>
+                                    <td>
+                                        <div class="cell-main">@u.Name</div>
+                                        @* phone layout: the other columns fold into this cell *@
+                                        <div class="cell-sub show-sm"><span class="code">@u.StudentNumber</span> · @u.UserId</div>
+                                        <div class="cell-sub show-sm">@courseLine</div>
+                                        <div class="cell-sub show-sm">@u.Email · requested @u.CreatedTime.ToString("MMM d")</div>
+                                    </td>
+                                    <td data-label="Student no." class="hide-sm"><span class="code">@u.StudentNumber</span></td>
+                                    <td data-label="Course" class="hide-sm">@courseLine</td>
+                                    <td data-label="Email" class="hide-sm">@u.Email</td>
+                                    <td data-label="Username" class="hide-sm">@u.UserId</td>
+                                    <td data-label="Requested" class="num nowrap hide-sm">@u.CreatedTime.ToString("MMM d, h:mm tt")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        }
     }
 </section>
 
