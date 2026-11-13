@@ -45,7 +45,8 @@ namespace ASI.Basecode.WebApp
                 CreateMap<EventViewModel, Event>()
                     .ForMember(d => d.Id, o => o.Ignore())
                     .ForMember(d => d.Status, o => o.Ignore())
-                    .ForMember(d => d.Organization, o => o.Ignore());
+                    .ForMember(d => d.Organization, o => o.Ignore())
+                    .ForMember(d => d.AllowedCourses, o => o.Ignore());
             }
         }
     }

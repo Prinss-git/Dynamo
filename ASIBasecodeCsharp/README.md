@@ -7,13 +7,24 @@ and officers take attendance by scanning each student's QR ticket.
 ## Features
 | Role | Can do |
 |---|---|
-| **Admin** | Everything below, plus manage organizations, organization members, users and roles |
-| **Officer** | Create / edit / publish / close / complete events **for organizations they are a member of**, take attendance (QR scan, code or student number), check-out, override attendance status, view reports and export CSV |
-| **Student** | Self-register an account, browse events, register / cancel, join waitlists, view QR ticket, see attendance history |
+| **Admin** | Everything below, plus manage organizations, organization members, users and roles; approve new accounts (filter by college with counts, course or year level, search by name or student no., sort oldest/newest, *Approve all shown* / *Reject all shown*, which never touch accounts that arrived after the page loaded); set temporary passwords for "forgot password" requests |
+| **Officer** | Create / edit / publish / close / complete events **for organizations they are a member of**, limit an event to selected courses, take attendance (QR scan, code or student number), check-out, override attendance status, view reports and export CSV |
+| **Student** | Self-register an account, browse events, register / cancel, join waitlists, view QR ticket, see attendance history, request a password reset |
 
 Event lifecycle: `Draft → Open → Closed → Completed` (or `Cancelled`). Students only see non-draft events.
 Marking an event **Completed** records every registered student who never checked in as **Absent**.
 Check-ins later than *Late After (minutes)* past the start time are recorded as **Late**.
+
+**Courses and colleges** follow University of Cebu - Banilad's programs and are defined once in
+`ASI.Basecode.Resources/Constants/Courses.cs` (course dropdowns, filters and event eligibility all read it).
+
+**Who can register:** an event is open to all students, or only to students of selected courses (several courses,
+across colleges). Other students still see it, marked "For …", but the Register button is disabled and the server
+refuses the registration. Students already registered keep their spot if the officer narrows the list later.
+
+**Forgot password:** the student enters their username and student number on the sign-in page. The request appears
+under *Account approvals*; the admin checks the student's ID, sets a temporary password and gives it to them in person.
+After signing in with it, every page sends the student to *Change password* until they choose a new one.
 
 ## Installation
 1. Requirements: Visual Studio 2022 (17.12+) or 2026 with the **ASP.NET and web development** workload, and
@@ -69,8 +80,18 @@ The QR scanner uses the device camera, which browsers only allow on `https://` o
 
 ## Database
 Tables (snake_case, mapped by EF Core's `UseSnakeCaseNamingConvention()`):
-`users`, `organizations`, `organization_members`, `events`, `event_registrations`, `attendances`.
+`users`, `organizations`, `organization_members`, `events`, `event_allowed_courses`, `event_registrations`,
+`attendances`, `password_reset_requests`.
 The schema lives in `Database/student_event_db.sql`; `AsiBasecodeDBContext` must stay in sync with it.
+
+**Updating an existing database** (keeps its data): run the scripts in `Database/migrations/` in date order, connected
+to the app's database, e.g.
+`sqlcmd -S "(localdb)\MSSQLLocalDB" -E -I -d student_event_db -i Database\migrations\2026-11-13_departments_eligibility_password_reset.sql`.
+They are safe to run more than once. A fresh install only needs `student_event_db.sql`.
+
+Demo data highlights: *Hackathon 2026 Orientation* is limited to the College of Computer Studies and BS Computer
+Engineering (sign in as `student5`, BS Criminology, to see the disabled Register button), and `student6` has a pending
+forgot-password request under *Account approvals*.
 Passwords are encrypted with the existing `PasswordManager` using `TokenAuthentication:SecretKey`, so changing
 that key invalidates the seeded passwords.
 

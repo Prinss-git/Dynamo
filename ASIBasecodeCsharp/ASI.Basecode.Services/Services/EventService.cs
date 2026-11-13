@@ -1,5 +1,6 @@
 ﻿using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels;
 using AutoMapper;
@@ -27,15 +28,18 @@ namespace ASI.Basecode.Services.Services
         private readonly IAccessService _accessService;
         private readonly IRegistrationService _registrationService;
         private readonly IAttendanceService _attendanceService;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
         public EventService(IEventRepository repository,
                             IAccessService accessService,
                             IRegistrationService registrationService,
                             IAttendanceService attendanceService,
+                            IUserRepository userRepository,
                             IMapper mapper)
         {
             _repository = repository;
+            _userRepository = userRepository;
             _accessService = accessService;
             _registrationService = registrationService;
             _attendanceService = attendanceService;
@@ -51,12 +55,12 @@ namespace ASI.Basecode.Services.Services
                 query = query.Where(e => e.EndTime >= now && e.Status != EventStatus.Cancelled);
             }
 
-            var events = query.OrderBy(e => e.StartTime).Select(EventProjection.ToViewModel(currentUser.AccountId)).ToList();
+            var events = query.OrderBy(e => e.StartTime).Select(EventProjection.ToViewModel(currentUser.AccountId, ViewerCourse(currentUser))).ToList();
             ApplyCanManage(events, currentUser);
             return events;
         }
 
-        public List<EventViewModel> GetManagedEvents(CurrentUserModel currentUser, string search, EventStatus? status)
+        public List<EventViewModel> GetManagedEvents(CurrentUserModel currentUser, string search, EventStatus? status, int? organizationId = null, string sort = null)
         {
             var organizationIds = _accessService.GetManagedOrganizationIds(currentUser);
             var query = Search(_repository.GetEvents(), search).Where(e => organizationIds.Contains(e.OrganizationId));
@@ -64,15 +68,23 @@ namespace ASI.Basecode.Services.Services
             {
                 query = query.Where(e => e.Status == status.Value);
             }
+            if (organizationId.HasValue)
+            {
+                query = query.Where(e => e.OrganizationId == organizationId.Value);
+            }
 
-            var events = query.OrderByDescending(e => e.StartTime).Select(EventProjection.ToViewModel(currentUser.AccountId)).ToList();
+            // newest (latest start date) first unless the user picks oldest first
+            var ordered = sort == Const.SortOldest
+                ? query.OrderBy(e => e.StartTime).ThenBy(e => e.Id)
+                : query.OrderByDescending(e => e.StartTime).ThenByDescending(e => e.Id);
+            var events = ordered.Select(EventProjection.ToViewModel(currentUser.AccountId)).ToList();
             events.ForEach(e => e.CanManage = true);
             return events;
         }
 
         public EventViewModel GetEvent(int id, CurrentUserModel currentUser)
         {
-            var model = _repository.GetEvents().Where(e => e.Id == id).Select(EventProjection.ToViewModel(currentUser.AccountId)).FirstOrDefault()
+            var model = _repository.GetEvents().Where(e => e.Id == id).Select(EventProjection.ToViewModel(currentUser.AccountId, ViewerCourse(currentUser))).FirstOrDefault()
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
 
             model.CanManage = _accessService.CanManageOrganization(model.OrganizationId, currentUser);
@@ -93,6 +105,10 @@ namespace ASI.Basecode.Services.Services
             entity.UpdatedTime = DateTime.Now;
             entity.CreatedBy = currentUser.UserId;
             entity.UpdatedBy = currentUser.UserId;
+            foreach (var course in AllowedCoursesOf(model))
+            {
+                entity.AllowedCourses.Add(new EventAllowedCourse { Course = course });
+            }
 
             _repository.AddEvent(entity);
             return entity.Id;
@@ -113,6 +129,19 @@ namespace ASI.Basecode.Services.Services
             _mapper.Map(model, entity);
             entity.UpdatedTime = DateTime.Now;
             entity.UpdatedBy = currentUser.UserId;
+
+            // Sync the allowed courses. Students already registered keep their registration even if their
+            // course is no longer allowed; only new registrations are checked.
+            var courses = AllowedCoursesOf(model);
+            foreach (var removed in entity.AllowedCourses.Where(c => !courses.Contains(c.Course)).ToList())
+            {
+                entity.AllowedCourses.Remove(removed);
+            }
+            foreach (var added in courses.Where(c => entity.AllowedCourses.All(a => a.Course != c)))
+            {
+                entity.AllowedCourses.Add(new EventAllowedCourse { Course = added });
+            }
+
             _repository.UpdateEvent(entity);
 
             // Capacity may have been raised: move waitlisted students into the free slots.
@@ -158,8 +187,22 @@ namespace ASI.Basecode.Services.Services
 
         private Event FindEvent(int id)
         {
-            return _repository.GetEvents().Include(e => e.Registrations).FirstOrDefault(e => e.Id == id)
+            return _repository.GetEvents().Include(e => e.Registrations).Include(e => e.AllowedCourses).FirstOrDefault(e => e.Id == id)
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
+        }
+
+        /// <summary>The courses the form allows (none when the event is open to all students).</summary>
+        private static List<string> AllowedCoursesOf(EventViewModel model)
+        {
+            if (!model.RestrictToCourses || model.AllowedCourses == null) return new List<string>();
+            return model.AllowedCourses.Where(Courses.IsValid).Distinct().ToList();
+        }
+
+        /// <summary>The signed-in student's course (null for staff), used to work out event eligibility.</summary>
+        private string ViewerCourse(CurrentUserModel currentUser)
+        {
+            if (currentUser.Role != Role.Student) return null;
+            return _userRepository.GetUsers().Where(u => u.Id == currentUser.AccountId).Select(u => u.Course).FirstOrDefault();
         }
 
         private static IQueryable<Event> Search(IQueryable<Event> query, string search)

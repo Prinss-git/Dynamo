@@ -13,6 +13,9 @@ namespace ASI.Basecode.Services.ServiceModels
         /// <summary>Department code (see Departments.All), Departments.OtherCode, or empty for all departments.</summary>
         public string Department { get; set; }
 
+        /// <summary>One course (see Courses.All); narrows the department filter further.</summary>
+        public string Course { get; set; }
+
         public int? YearLevel { get; set; }
 
         /// <summary>Part of a name or a student number.</summary>
@@ -25,6 +28,7 @@ namespace ASI.Basecode.Services.ServiceModels
 
         /// <summary>True when the list is narrowed by department, year level or search (sorting does not count).</summary>
         public bool IsFiltered => !string.IsNullOrWhiteSpace(Department)
+                               || !string.IsNullOrWhiteSpace(Course)
                                || YearLevel.HasValue
                                || !string.IsNullOrWhiteSpace(Search);
     }

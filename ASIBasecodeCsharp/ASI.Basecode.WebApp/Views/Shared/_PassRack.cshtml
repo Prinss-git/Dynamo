@@ -23,6 +23,10 @@ else
                 </div>
                 <div class="pass-body">
                     <h3 class="pass-title"><a asp-controller="Event" asp-action="Details" asp-route-id="@e.Id">@e.Title</a></h3>
+                    @if (!e.IsOpenToAll)
+                    {
+                        <p class="for-tag"><i class="fa-solid fa-user-graduate" aria-hidden="true"></i> For @e.EligibilityText</p>
+                    }
                     <dl class="pass-fields">
                         <div><dt class="label">Date</dt><dd>@e.StartTime.ToString("ddd, MMM d")</dd></div>
                         <div><dt class="label">Time</dt><dd class="num">@e.StartTime.ToString("h:mm tt")</dd></div>
@@ -51,6 +55,10 @@ else
                     {
                         <span class="label">Your pass</span>
                         @BadgeHelper.Badge(e.MyRegistrationStatus)
+                    }
+                    else if (e.IsRegistrationOpen && !e.IsEligible && User.IsInRole(ASI.Basecode.Resources.Constants.Const.RoleStudent))
+                    {
+                        <span class="label">Not open to your course</span>
                     }
                     else if (e.IsRegistrationOpen)
                     {

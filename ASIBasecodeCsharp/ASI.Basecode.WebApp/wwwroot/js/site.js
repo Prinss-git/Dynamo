@@ -329,10 +329,38 @@ function initPasswordToggles() {
             input.type = show ? "text" : "password";
             render(show);
         });
+        // never submit a readable password (keeps browsers from saving it as plain text)
+        if (input.form) input.form.addEventListener("submit", function () { input.type = "password"; render(false); });
         render(false);
     });
 }
 
+/* ------------------------------------------------------------------
+   Event form, "Who can register": the course checkboxes show only for
+   "Only students of selected courses"; each department's box selects or
+   clears all of its courses and shows a dash when only some are ticked.
+   ------------------------------------------------------------------ */
+function initCoursePicker() {
+    document.querySelectorAll("[data-eligibility]").forEach(function (box) {
+        var picker = box.querySelector("[data-course-picker]");
+        box.querySelectorAll('input[name="RestrictToCourses"]').forEach(function (radio) {
+            radio.addEventListener("change", function () { picker.hidden = radio.value !== "true" || !radio.checked; });
+        });
+        box.querySelectorAll("[data-course-group]").forEach(function (group) {
+            var all = group.querySelector("[data-select-department]");
+            var courses = Array.prototype.slice.call(group.querySelectorAll('input[name="AllowedCourses"]'));
+            function sync() {
+                var ticked = courses.filter(function (c) { return c.checked; }).length;
+                all.checked = ticked === courses.length;
+                all.indeterminate = ticked > 0 && ticked < courses.length;
+            }
+            all.addEventListener("change", function () { courses.forEach(function (c) { c.checked = all.checked; }); sync(); });
+            courses.forEach(function (c) { c.addEventListener("change", sync); });
+            sync();
+        });
+    });
+}
+
 // Run after jquery.validate.unobtrusive has parsed the forms on document ready.
-function initForms() { initPasswordToggles(); initPasswordRules(); initRequiredMarkers(); }
+function initForms() { initPasswordToggles(); initPasswordRules(); initRequiredMarkers(); initCoursePicker(); }
 if (window.jQuery) { jQuery(initForms); } else { document.addEventListener("DOMContentLoaded", initForms); }

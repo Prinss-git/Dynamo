@@ -12,7 +12,9 @@ namespace ASI.Basecode.Services.Services
     /// </summary>
     internal static class EventProjection
     {
-        public static Expression<Func<Event, EventViewModel>> ToViewModel(int accountId)
+        /// <param name="accountId">Signed-in user, for their own registration status</param>
+        /// <param name="viewerCourse">Signed-in student's course, for event eligibility (null for staff)</param>
+        public static Expression<Func<Event, EventViewModel>> ToViewModel(int accountId, string viewerCourse = null)
         {
             return e => new EventViewModel
             {
@@ -33,6 +35,9 @@ namespace ASI.Basecode.Services.Services
                 AttendedCount = e.Registrations.Count(r => r.Attendance != null && r.Attendance.Status != AttendanceStatus.Absent),
                 MyRegistrationId = e.Registrations.Where(r => r.StudentId == accountId).Select(r => (int?)r.Id).FirstOrDefault(),
                 MyRegistrationStatus = e.Registrations.Where(r => r.StudentId == accountId).Select(r => (RegistrationStatus?)r.Status).FirstOrDefault(),
+                AllowedCourses = e.AllowedCourses.OrderBy(c => c.Course).Select(c => c.Course).ToList(),
+                RestrictToCourses = e.AllowedCourses.Any(),
+                ViewerCourseAllowed = viewerCourse != null && e.AllowedCourses.Any(c => c.Course == viewerCourse),
             };
         }
     }

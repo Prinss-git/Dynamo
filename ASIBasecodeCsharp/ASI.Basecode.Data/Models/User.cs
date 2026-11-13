@@ -24,6 +24,9 @@ namespace ASI.Basecode.Data.Models
         public string ApprovedBy { get; set; }
         public DateTime? ApprovedTime { get; set; }
         public string Password { get; set; }
+
+        /// <summary>Set when an admin resets the password; the user must choose a new one after signing in.</summary>
+        public bool MustChangePassword { get; set; }
         public string CreatedBy { get; set; }
         public DateTime CreatedTime { get; set; }
         public string UpdatedBy { get; set; }

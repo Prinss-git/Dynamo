@@ -10,7 +10,7 @@ namespace ASI.Basecode.Services.Interfaces
         List<EventViewModel> GetPublishedEvents(CurrentUserModel currentUser, string search, bool upcomingOnly);
 
         /// <summary>Events of the organizations the user manages</summary>
-        List<EventViewModel> GetManagedEvents(CurrentUserModel currentUser, string search, EventStatus? status);
+        List<EventViewModel> GetManagedEvents(CurrentUserModel currentUser, string search, EventStatus? status, int? organizationId = null, string sort = null);
 
         EventViewModel GetEvent(int id, CurrentUserModel currentUser);
         int CreateEvent(EventViewModel model, CurrentUserModel currentUser);

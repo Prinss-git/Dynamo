@@ -1,0 +1,28 @@
+@model (string Department, string Course)
+@* College and course dropdowns for a GET filter form. The college value is its code (Departments.All);
+   picking a college clears the course. *@
+@{
+    var selected = Departments.Find(Model.Department);
+    var departments = selected == null ? Departments.All : new[] { selected };
+}
+<label class="sr-only" for="department">College</label>
+<select id="department" name="department" class="input" onchange="this.form.elements.course.value = ''; this.form.submit()">
+    <option value="">All colleges</option>
+    @foreach (var d in Departments.All)
+    {
+        <option value="@d.Code" selected="@(selected?.Code == d.Code)">@d.Name</option>
+    }
+</select>
+<label class="sr-only" for="course">Course</label>
+<select id="course" name="course" class="input" onchange="this.form.submit()">
+    <option value="">All courses</option>
+    @foreach (var d in departments)
+    {
+        <optgroup label="@d.Name">
+            @foreach (var c in d.CourseNames)
+            {
+                <option value="@c" selected="@(Model.Course == c)">@c</option>
+            }
+        </optgroup>
+    }
+</select>

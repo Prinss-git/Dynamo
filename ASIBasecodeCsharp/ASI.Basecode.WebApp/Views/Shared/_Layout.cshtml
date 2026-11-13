@@ -38,7 +38,8 @@
     }
     // Mobile tab bar: at most five destinations
     var tabs = isAdmin ? nav.Where(n => n.Short != "Events" && n.Short != "Approvals").ToList() : nav.Take(5).ToList();
-    var pendingApprovals = isAdmin ? UserService.CountPendingUsers() : 0;
+    // accounts waiting for approval plus forgot-password requests
+    var pendingApprovals = isAdmin ? UserService.CountPendingUsers() + UserService.CountPendingResets() : 0;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -71,6 +72,7 @@
                 {
                     <a href="@item.Url"><i class="fa-solid @item.Icon" aria-hidden="true"></i> @item.Label@if (item.Short == "Approvals" && pendingApprovals > 0) { <span class="nav-count">@pendingApprovals</span> }</a>
                 }
+                <a asp-controller="Account" asp-action="ChangePassword"><i class="fa-solid fa-key" aria-hidden="true"></i> Change password</a>
                 <a asp-controller="Account" asp-action="SignOutUser"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out</a>
             </div>
         </details>
@@ -106,6 +108,7 @@
                     <span class="monogram">@BadgeHelper.Initials(name)</span>
                     <div style="min-width:0"><div class="whoami-name">@name</div><div class="whoami-role">@role</div></div>
                 </div>
+                <a class="nav-item" asp-controller="Account" asp-action="ChangePassword"><i class="fa-solid fa-key" aria-hidden="true"></i> Change password</a>
                 <a class="nav-item" asp-controller="Account" asp-action="SignOutUser"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out</a>
             </div>
         </nav>

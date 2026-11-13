@@ -293,5 +293,41 @@ namespace ASI.Basecode.Resources.Messages {
                 return ResourceManager.GetString("NoUsersSelected", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This event is only open to students of selected courses..
+        /// </summary>
+        public static string NotEligibleForEvent {
+            get {
+                return ResourceManager.GetString("NotEligibleForEvent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select at least one course, or open the event to all students..
+        /// </summary>
+        public static string SelectAtLeastOneCourse {
+            get {
+                return ResourceManager.GetString("SelectAtLeastOneCourse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to One of the selected courses isn't in the course list..
+        /// </summary>
+        public static string InvalidEventCourse {
+            get {
+                return ResourceManager.GetString("InvalidEventCourse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This password reset request was already handled..
+        /// </summary>
+        public static string PasswordResetNotPending {
+            get {
+                return ResourceManager.GetString("PasswordResetNotPending", resourceCulture);
+            }
+        }
     }
 }

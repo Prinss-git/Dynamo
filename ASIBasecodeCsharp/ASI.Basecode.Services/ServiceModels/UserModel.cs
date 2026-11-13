@@ -62,6 +62,11 @@ namespace ASI.Basecode.Services.ServiceModels
         [RegularExpression(Const.PasswordPattern, ErrorMessage = Const.PasswordRuleMessage)]
         public string Password { get; set; }
 
+        /// <summary>Must match Password whenever a password is entered (create, or changing it on edit).</summary>
+        [Compare(nameof(Password), ErrorMessage = "Passwords don't match.")]
+        [Display(Name = "Confirm Password")]
+        public string ConfirmPassword { get; set; }
+
         public DateTime CreatedTime { get; set; }
 
         public bool IsApproved { get; set; }

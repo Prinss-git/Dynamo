@@ -195,4 +195,16 @@
   <data name="NoUsersSelected" xml:space="preserve">
     <value>Select at least one account first.</value>
   </data>
+  <data name="NotEligibleForEvent" xml:space="preserve">
+    <value>This event is only open to students of selected courses.</value>
+  </data>
+  <data name="SelectAtLeastOneCourse" xml:space="preserve">
+    <value>Select at least one course, or open the event to all students.</value>
+  </data>
+  <data name="InvalidEventCourse" xml:space="preserve">
+    <value>One of the selected courses isn't in the course list.</value>
+  </data>
+  <data name="PasswordResetNotPending" xml:space="preserve">
+    <value>This password reset request was already handled.</value>
+  </data>
 </root>

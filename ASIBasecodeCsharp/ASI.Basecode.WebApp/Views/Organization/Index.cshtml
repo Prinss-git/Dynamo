@@ -17,6 +17,13 @@
         <form method="get" class="toolbar" role="search">
             <label class="sr-only" for="search">Search organizations</label>
             <input id="search" type="search" name="search" value="@ViewBag.Search" class="input" placeholder="Search name or acronym" />
+            <label class="sr-only" for="status">Status</label>
+            <select id="status" name="status" class="input" onchange="this.form.submit()">
+                <option value="">Active and inactive</option>
+                <option value="active" selected="@(ViewBag.OrgStatus == "active")">Active only</option>
+                <option value="inactive" selected="@(ViewBag.OrgStatus == "inactive")">Inactive only</option>
+            </select>
+            @await Html.PartialAsync("_SortSelect", new SortMenu((string)ViewBag.Sort, ("", "Sort: name A–Z"), (Const.SortNewest, "Newest first"), (Const.SortOldest, "Oldest first")))
             <button type="submit" class="btn btn-outline"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
         </form>
     </div>

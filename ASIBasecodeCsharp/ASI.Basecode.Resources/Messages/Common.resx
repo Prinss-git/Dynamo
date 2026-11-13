@@ -156,4 +156,19 @@
   <data name="UsersRejected" xml:space="preserve">
     <value>{0} registration request(s) rejected.</value>
   </data>
+  <data name="PasswordResetRequested" xml:space="preserve">
+    <value>Request sent. If the username and student number match an account, an administrator will set a temporary password for you. Ask them for it, then sign in.</value>
+  </data>
+  <data name="PasswordResetCompleted" xml:space="preserve">
+    <value>Temporary password set for {0}. Give it to them in person; they'll choose a new password after signing in.</value>
+  </data>
+  <data name="PasswordResetDismissed" xml:space="preserve">
+    <value>Password reset request dismissed.</value>
+  </data>
+  <data name="PasswordChanged" xml:space="preserve">
+    <value>Your password was changed.</value>
+  </data>
+  <data name="MustChangePassword" xml:space="preserve">
+    <value>An administrator reset your password. Choose a new password to continue.</value>
+  </data>
 </root>

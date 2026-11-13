@@ -109,6 +109,8 @@ namespace ASI.Basecode.Services.Services
             {
                 var mine = _registrationRepository.GetRegistrations()
                     .Where(r => r.StudentId == currentUser.AccountId);
+                var viewerCourse = _userRepository.GetUsers()
+                    .Where(u => u.Id == currentUser.AccountId).Select(u => u.Course).FirstOrDefault();
 
                 model.MyUpcoming = mine
                     .Where(r => r.Status != RegistrationStatus.Cancelled && r.Event.EndTime >= now
@@ -123,7 +125,7 @@ namespace ASI.Basecode.Services.Services
                 model.UpcomingEvents = _eventRepository.GetEvents()
                     .Where(e => e.Status == EventStatus.Open && e.RegistrationDeadline >= now && e.StartTime > now)
                     .OrderBy(e => e.StartTime)
-                    .Select(EventProjection.ToViewModel(currentUser.AccountId))
+                    .Select(EventProjection.ToViewModel(currentUser.AccountId, viewerCourse))
                     .ToList();
                 return model;
             }

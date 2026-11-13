@@ -16,6 +16,7 @@
     void FilterFields()
     {
         <input type="hidden" name="Department" value="@f.Department" />
+        <input type="hidden" name="Course" value="@f.Course" />
         <input type="hidden" name="YearLevel" value="@f.YearLevel" />
         <input type="hidden" name="Search" value="@f.Search" />
         <input type="hidden" name="Sort" value="@f.Sort" />
@@ -59,7 +60,7 @@
                 <input id="search" type="search" name="Search" value="@f.Search" class="input" placeholder="Name or student no." />
 
                 <label class="sr-only" for="department">Department</label>
-                <select id="department" name="Department" class="input" onchange="this.form.submit()">
+                <select id="department" name="Department" class="input" onchange="this.form.elements.Course.value = ''; this.form.submit()">
                     <option value="">All departments (@Model.TotalPending)</option>
                     @foreach (var d in Departments.All)
                     {
@@ -68,6 +69,21 @@
                     @if (otherCount > 0 || otherSelected)
                     {
                         <option value="@Departments.OtherCode" title="Courses not listed under a department" selected="@otherSelected">Other (@otherCount)</option>
+                    }
+                </select>
+
+                @{ var courseDepartments = Departments.Find(f.Department) is { } picked ? new[] { picked } : Departments.All; }
+                <label class="sr-only" for="course">Course</label>
+                <select id="course" name="Course" class="input" onchange="this.form.submit()">
+                    <option value="">All courses</option>
+                    @foreach (var d in courseDepartments)
+                    {
+                        <optgroup label="@d.Name">
+                            @foreach (var c in d.CourseNames)
+                            {
+                                <option value="@c" selected="@(f.Course == c)">@c</option>
+                            }
+                        </optgroup>
                     }
                 </select>
 
@@ -154,6 +170,53 @@
                 </div>
             </form>
         }
+    }
+</section>
+
+@{ var resets = Model.ResetRequests; }
+<section class="sheet" aria-labelledby="reset-title">
+    <div class="sheet-head">
+        <h2 class="sheet-title" id="reset-title">Forgot-password requests</h2>
+        @if (resets.Any()) { <span class="nav-count">@resets.Count</span> }
+    </div>
+    @if (!resets.Any())
+    {
+        @await Html.PartialAsync("_Empty", ("No password requests", "When a student uses \"Forgot password?\" on the sign-in page, the request appears here."))
+    }
+    else
+    {
+        <div class="ledger-wrap">
+            <table class="ledger ledger--stack ledger--compact">
+                <thead>
+                    <tr><th>Name</th><th>Student no.</th><th>Course / year</th><th>Username</th><th>Requested</th><th class="r"><span class="sr-only">Actions</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in resets)
+                    {
+                        <tr>
+                            <td>
+                                <div class="cell-main">@r.Name</div>
+                                <div class="cell-sub show-sm"><span class="code">@r.StudentNumber</span> · @r.UserId</div>
+                                <div class="cell-sub show-sm">requested @r.RequestedTime.ToString("MMM d, h:mm tt")</div>
+                            </td>
+                            <td data-label="Student no." class="hide-sm"><span class="code">@r.StudentNumber</span></td>
+                            <td data-label="Course" class="hide-sm">@r.Course@(r.YearLevel.HasValue ? " · Year " + r.YearLevel : "")</td>
+                            <td data-label="Username" class="hide-sm">@r.UserId</td>
+                            <td data-label="Requested" class="num nowrap hide-sm">@r.RequestedTime.ToString("MMM d, h:mm tt")</td>
+                            <td class="r">
+                                <div class="row-actions">
+                                    <a class="btn btn-primary btn-sm" asp-action="ResetPassword" asp-route-id="@r.Id"><i class="fa-solid fa-key" aria-hidden="true"></i> Set password</a>
+                                    <form asp-action="DismissReset" method="post" class="inline-form" data-confirm="Dismiss the request from @r.Name? Their password stays the same.">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="btn btn-outline btn-sm">Dismiss</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
 </section>
 

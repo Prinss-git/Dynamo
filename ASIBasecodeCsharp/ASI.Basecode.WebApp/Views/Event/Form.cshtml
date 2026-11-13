@@ -72,6 +72,25 @@
                 <span class="hint">Check-ins this many minutes after the start are marked Late.</span>
                 <span asp-validation-for="LateAfterMinutes" class="text-danger"></span>
             </div>
+            <fieldset class="field eligibility" data-eligibility>
+                <legend class="label">Who can register</legend>
+                <label class="check"><input type="radio" name="RestrictToCourses" value="false" @(Model.RestrictToCourses ? "" : "checked") /> All students</label>
+                <label class="check"><input type="radio" name="RestrictToCourses" value="true" @(Model.RestrictToCourses ? "checked" : "") /> Only students of selected courses</label>
+                <div class="course-picker" data-course-picker @(Model.RestrictToCourses ? "" : "hidden")>
+                    @foreach (var department in ASI.Basecode.Resources.Constants.Courses.Departments)
+                    {
+                        <div class="course-group" data-course-group>
+                            <label class="check course-group-head"><input type="checkbox" data-select-department aria-label="Select every course in @department.Name" /> @department.Name</label>
+                            @foreach (var course in department.Courses)
+                            {
+                                <label class="check"><input type="checkbox" name="AllowedCourses" value="@course" @(Model.AllowedCourses.Contains(course) ? "checked" : "") /> @course</label>
+                            }
+                        </div>
+                    }
+                </div>
+                <span asp-validation-for="AllowedCourses" class="text-danger"></span>
+                <span class="hint">Students outside these courses still see the event but can't register. Students who already registered keep their spot if you change this later.</span>
+            </fieldset>
         </div>
 
         <div class="form-actions">

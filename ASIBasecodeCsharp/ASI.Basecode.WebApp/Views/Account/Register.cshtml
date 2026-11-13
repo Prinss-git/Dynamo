@@ -42,9 +42,14 @@
                         <label class="label" asp-for="Course">Course</label>
                         <select asp-for="Course" class="input">
                             <option value="">Select your course</option>
-                            @foreach (var course in ASI.Basecode.Resources.Constants.Courses.All)
+                            @foreach (var department in ASI.Basecode.Resources.Constants.Courses.Departments)
                             {
-                                <option value="@course">@course</option>
+                                <optgroup label="@department.Name">
+                                    @foreach (var course in department.Courses)
+                                    {
+                                        <option value="@course">@course</option>
+                                    }
+                                </optgroup>
                             }
                         </select>
                         <span asp-validation-for="Course" class="text-danger"></span>

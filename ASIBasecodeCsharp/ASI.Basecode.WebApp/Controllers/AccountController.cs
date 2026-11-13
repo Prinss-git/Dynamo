@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using ASI.Basecode.Resources.Constants;
 using static ASI.Basecode.Resources.Constants.Enums;
 
 namespace ASI.Basecode.WebApp.Controllers
@@ -93,6 +94,12 @@ namespace ASI.Basecode.WebApp.Controllers
                 this._session.SetString("UserName", user.Name);
                 this._session.SetString("Role", user.Role.ToString());
 
+                if (user.MustChangePassword)
+                {
+                    TempData["WarningMessage"] = Resources.Messages.Common.MustChangePassword;
+                    return RedirectToAction(nameof(ChangePassword));
+                }
+
                 returnUrl ??= TempData["returnUrl"] as string;
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 {
@@ -109,6 +116,58 @@ namespace ASI.Basecode.WebApp.Controllers
                 _ => Resources.Messages.Errors.InvalidLogin,
             };
             return View(model);
+        }
+
+        /// <summary>
+        /// "Forgot password": the user enters their username and student number, and an administrator
+        /// sets a temporary password for them. The same message shows whether or not the account exists.
+        /// </summary>
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public IActionResult ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            _userService.RequestPasswordReset(model.UserId, model.StudentNumber);
+            TempData["SuccessMessage"] = Resources.Messages.Common.PasswordResetRequested;
+            return RedirectToAction(nameof(Login));
+        }
+
+        /// <summary>
+        /// The signed-in user chooses a new password. Required after an admin reset; also reachable from the account menu.
+        /// </summary>
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            ViewBag.Forced = User.HasClaim(c => c.Type == Const.ClaimMustChangePassword);
+            return View(new NewPasswordModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(NewPasswordModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Forced = User.HasClaim(c => c.Type == Const.ClaimMustChangePassword);
+                return View(model);
+            }
+
+            var user = _userService.ChangeOwnPassword(CurrentUser.AccountId, model.Password);
+            await this._signInManager.SignInAsync(user);   // refresh the cookie without the must-change claim
+            NotifySuccess(Resources.Messages.Common.PasswordChanged);
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]

@@ -31,11 +31,16 @@ namespace ASI.Basecode.WebApp.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index(string search, Role? role)
+        public IActionResult Index(string search, Role? role, string department, string course, string status, string sort)
         {
             ViewBag.Search = search;
             ViewBag.Role = role;
-            return View(_userService.GetUsers(search, role));
+            ViewBag.Department = department;
+            ViewBag.Course = course;
+            ViewBag.UserStatus = status;
+            ViewBag.Sort = sort;
+            bool? active = status == "active" ? true : status == "inactive" ? false : null;
+            return View(_userService.GetUsers(search, role, department, course, active, sort));
         }
 
         /// <summary>
@@ -51,7 +56,41 @@ namespace ASI.Basecode.WebApp.Controllers
                 Users = _userService.GetPendingUsers(filter),
                 TotalPending = _userService.CountPendingUsers(),
                 DepartmentCounts = _userService.CountPendingUsersByDepartment(),
+                ResetRequests = _userService.GetPendingResets(),
             });
+        }
+
+        /// <summary>
+        /// Sets a temporary password for a "forgot password" request.
+        /// </summary>
+        [HttpGet]
+        public IActionResult ResetPassword(int id)
+        {
+            return View(_userService.GetPendingReset(id));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ResetPassword(PasswordResetRequestModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var request = _userService.GetPendingReset(model.Id);
+                return View(request);
+            }
+
+            var username = _userService.CompletePasswordReset(model.Id, model.Password, UserId);
+            NotifySuccess(string.Format(Resources.Messages.Common.PasswordResetCompleted, username));
+            return RedirectToAction(nameof(Approvals));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DismissReset(int id)
+        {
+            _userService.DismissPasswordReset(id, UserId);
+            NotifySuccess(Resources.Messages.Common.PasswordResetDismissed);
+            return RedirectToAction(nameof(Approvals));
         }
 
         [HttpPost]
@@ -103,6 +142,7 @@ namespace ASI.Basecode.WebApp.Controllers
             return RedirectToAction(nameof(Approvals), new
             {
                 filter.Department,
+                filter.Course,
                 filter.YearLevel,
                 filter.Search,
                 filter.Sort,

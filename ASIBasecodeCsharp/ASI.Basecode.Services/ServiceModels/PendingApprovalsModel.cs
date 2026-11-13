@@ -19,6 +19,9 @@ namespace ASI.Basecode.Services.ServiceModels
         /// <summary>Pending accounts per department code (Departments.OtherCode for unlisted courses).</summary>
         public Dictionary<string, int> DepartmentCounts { get; set; } = new();
 
+        /// <summary>Pending "forgot password" requests, listed below the accounts.</summary>
+        public List<PasswordResetRequestModel> ResetRequests { get; set; } = new();
+
         /// <summary>Highest account id in <see cref="Users"/>; bulk actions stop there so later sign-ups are not included.</summary>
         public int ThroughId => Users.Count == 0 ? 0 : Users.Max(u => u.Id);
 

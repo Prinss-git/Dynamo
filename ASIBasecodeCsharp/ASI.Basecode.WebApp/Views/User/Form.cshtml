@@ -43,6 +43,11 @@
                 <input asp-for="Password" type="password" class="input" autocomplete="new-password" placeholder="@(isNew ? "" : "Leave blank to keep the current one")" data-password-rules data-optional="@(isNew ? null : "true")" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
+            <div class="field span-6">
+                <label class="label" asp-for="ConfirmPassword">Confirm password</label>
+                <input asp-for="ConfirmPassword" type="password" class="input" autocomplete="new-password" placeholder="@(isNew ? "" : "Retype the new password")" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
             <div class="field span-4">
                 <label class="label" asp-for="Role">Role</label>
                 <select asp-for="Role" asp-items="Html.GetEnumSelectList<Role>()" class="input"></select>
@@ -61,9 +66,14 @@
                 <label class="label" asp-for="Course">Course</label>
                 <select asp-for="Course" class="input">
                     <option value="">None (staff or not applicable)</option>
-                    @foreach (var course in ASI.Basecode.Resources.Constants.Courses.All)
+                    @foreach (var department in ASI.Basecode.Resources.Constants.Courses.Departments)
                     {
-                        <option value="@course">@course</option>
+                        <optgroup label="@department.Name">
+                            @foreach (var course in department.Courses)
+                            {
+                                <option value="@course">@course</option>
+                            }
+                        </optgroup>
                     }
                 </select>
                 <span asp-validation-for="Course" class="text-danger"></span>

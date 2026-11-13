@@ -52,11 +52,14 @@ namespace ASI.Basecode.WebApp.Controllers
 
         [HttpGet]
         [Authorize(Roles = Const.RolesManagers)]
-        public IActionResult Manage(string search, EventStatus? status)
+        public IActionResult Manage(string search, EventStatus? status, int? organizationId, string sort)
         {
             ViewBag.Search = search;
             ViewBag.Status = status;
-            return View(_eventService.GetManagedEvents(CurrentUser, search, status));
+            ViewBag.OrganizationId = organizationId;
+            ViewBag.Sort = sort;
+            ViewBag.OrganizationOptions = _organizationService.GetManagedOrganizationOptions(CurrentUser);
+            return View(_eventService.GetManagedEvents(CurrentUser, search, status, organizationId, sort));
         }
 
         [HttpGet]

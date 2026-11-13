@@ -5,7 +5,7 @@ namespace ASI.Basecode.Services.Interfaces
 {
     public interface IOrganizationService
     {
-        List<OrganizationViewModel> GetOrganizations(string search);
+        List<OrganizationViewModel> GetOrganizations(string search, bool? active = null, string sort = null);
         OrganizationViewModel GetOrganization(int id);
         void CreateOrganization(OrganizationViewModel model, string actor);
         void UpdateOrganization(OrganizationViewModel model, string actor);

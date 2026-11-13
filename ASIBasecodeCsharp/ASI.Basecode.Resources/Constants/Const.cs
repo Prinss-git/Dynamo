@@ -43,6 +43,14 @@
         public const string RoleStudent = "Student";
         public const string RolesManagers = "Admin,Officer";
 
+        /// <summary>Values of the "sort" query parameter on list pages.</summary>
+        /// <summary>Claim present while the user must replace a temporary password set by an admin.</summary>
+        public const string ClaimMustChangePassword = "MustChangePassword";
+
+        public const string SortNewest = "newest";
+        public const string SortOldest = "oldest";
+        public const string SortName = "name";
+
         /// <summary>
         /// Claim that holds the numeric primary key of the signed-in user
         /// </summary>

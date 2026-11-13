@@ -28,6 +28,8 @@ namespace ASI.Basecode.Data
         public virtual DbSet<Event> Events { get; set; }
         public virtual DbSet<EventRegistration> EventRegistrations { get; set; }
         public virtual DbSet<Attendance> Attendances { get; set; }
+        public virtual DbSet<EventAllowedCourse> EventAllowedCourses { get; set; }
+        public virtual DbSet<PasswordResetRequest> PasswordResetRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -127,6 +129,28 @@ namespace ASI.Basecode.Data
                 entity.HasOne(e => e.Registration)
                     .WithOne(r => r.Attendance)
                     .HasForeignKey<Attendance>(e => e.RegistrationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<EventAllowedCourse>(entity =>
+            {
+                entity.HasIndex(e => new { e.EventId, e.Course }).IsUnique();
+                entity.Property(e => e.Course).IsRequired().HasMaxLength(100);
+
+                entity.HasOne(e => e.Event)
+                    .WithMany(ev => ev.AllowedCourses)
+                    .HasForeignKey(e => e.EventId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<PasswordResetRequest>(entity =>
+            {
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasConversion<string>();
+                entity.Property(e => e.HandledBy).HasMaxLength(50);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

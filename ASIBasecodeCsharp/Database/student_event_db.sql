@@ -34,6 +34,8 @@ USE student_event_db;
 GO
 SET NOCOUNT ON;
 
+DROP TABLE IF EXISTS password_reset_requests;
+DROP TABLE IF EXISTS event_allowed_courses;
 DROP TABLE IF EXISTS attendances;
 DROP TABLE IF EXISTS event_registrations;
 DROP TABLE IF EXISTS events;
@@ -62,6 +64,7 @@ CREATE TABLE users (
     approved_by     NVARCHAR(50)  NULL,
     approved_time   DATETIME2     NULL,
     password        NVARCHAR(255) NOT NULL,
+    must_change_password BIT      NOT NULL CONSTRAINT df_users_must_change_password DEFAULT 0,  -- set after an admin resets the password
     created_by      NVARCHAR(50)  NOT NULL,
     created_time    DATETIME2     NOT NULL CONSTRAINT df_users_created DEFAULT SYSDATETIME(),
     updated_by      NVARCHAR(50)  NOT NULL,
@@ -121,6 +124,14 @@ CREATE TABLE events (
 CREATE INDEX ix_events_start_time ON events (start_time);
 CREATE INDEX ix_events_organization_id ON events (organization_id);
 
+-- Courses allowed to register for an event. No rows = open to all students.
+CREATE TABLE event_allowed_courses (
+    id       INT IDENTITY(1,1) PRIMARY KEY,
+    event_id INT           NOT NULL CONSTRAINT fk_allowed_courses_event REFERENCES events (id) ON DELETE CASCADE,
+    course   NVARCHAR(100) NOT NULL,
+    CONSTRAINT uq_event_allowed_courses UNIQUE (event_id, course)
+);
+
 CREATE TABLE event_registrations (
     id                INT IDENTITY(1,1) PRIMARY KEY,
     event_id          INT          NOT NULL CONSTRAINT fk_registrations_event REFERENCES events (id) ON DELETE CASCADE,
@@ -147,6 +158,19 @@ CREATE TABLE attendances (
     CONSTRAINT uq_attendances_registration UNIQUE (registration_id),
     CONSTRAINT ck_attendances_status CHECK (status IN ('Present', 'Late', 'Absent'))
 );
+
+-- "Forgot password" requests; an admin sets a temporary password and completes them
+CREATE TABLE password_reset_requests (
+    id             INT IDENTITY(1,1) PRIMARY KEY,
+    user_id        INT          NOT NULL CONSTRAINT fk_password_resets_user REFERENCES users (id) ON DELETE CASCADE,
+    requested_time DATETIME2    NOT NULL CONSTRAINT df_password_resets_requested DEFAULT SYSDATETIME(),
+    status         NVARCHAR(20) NOT NULL CONSTRAINT df_password_resets_status DEFAULT 'Pending',
+    handled_by     NVARCHAR(50) NULL,
+    handled_time   DATETIME2    NULL,
+    CONSTRAINT ck_password_resets_status CHECK (status IN ('Pending', 'Completed', 'Dismissed'))
+);
+-- at most one open request per user
+CREATE UNIQUE INDEX uq_password_resets_pending ON password_reset_requests (user_id) WHERE status = 'Pending';
 GO
 
 -- ---------------------------------------------------------------------
@@ -163,13 +187,13 @@ DECLARE @hour  DATETIME2 = DATEADD(hour, DATEPART(hour, @now), @today);      -- 
 SET IDENTITY_INSERT users ON;
 INSERT INTO users (id, user_id, first_name, middle_name, last_name, name, email, student_number, course, year_level, role, is_active, password, created_by, updated_by) VALUES
  (1, 'admin',    'System', NULL,       'Administrator', 'System Administrator',     'admin@school.edu',       NULL,         NULL,                        NULL, 'Admin',   1, '0oGwxqqIMRkUY18Gmo8ygw==', 'sys', 'sys'),
- (2, 'msantos',  'Maria',  NULL,       'Santos',        'Maria Santos',             'msantos@school.edu',     '2022-10001', 'BS Computer Science',       4,    'Officer', 1, 'Bzwl+bhyITd9xUcAclUGiQ==', 'sys', 'sys'),
- (3, 'jreyes',   'Jose',   'Mercado',  'Reyes',         'Jose Mercado Reyes',       'jreyes@school.edu',      '2022-10002', 'BS Civil Engineering',      4,    'Officer', 1, 'Bzwl+bhyITd9xUcAclUGiQ==', 'sys', 'sys'),
- (4, 'student1', 'Ana',    NULL,       'Cruz',          'Ana Cruz',                 'acruz@school.edu',       '2024-20001', 'BS Computer Science',       2,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys'),
+ (2, 'msantos',  'Maria',  NULL,       'Santos',        'Maria Santos',             'msantos@school.edu',     '2022-10001', 'BS Computer Science (AI-Focused Elective)',       4,    'Officer', 1, 'Bzwl+bhyITd9xUcAclUGiQ==', 'sys', 'sys'),
+ (3, 'jreyes',   'Jose',   'Mercado',  'Reyes',         'Jose Mercado Reyes',       'jreyes@school.edu',      '2022-10002', 'BS Computer Engineering',      4,    'Officer', 1, 'Bzwl+bhyITd9xUcAclUGiQ==', 'sys', 'sys'),
+ (4, 'student1', 'Ana',    NULL,       'Cruz',          'Ana Cruz',                 'acruz@school.edu',       '2024-20001', 'BS Computer Science (AI-Focused Elective)',       2,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys'),
  (5, 'student2', 'Mark',   NULL,       'Villanueva',    'Mark Villanueva',          'mvillanueva@school.edu', '2024-20002', 'BS Information Technology', 2,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys'),
- (6, 'student3', 'Liza',   'Villareal','Garcia',        'Liza Villareal Garcia',    'lgarcia@school.edu',     '2023-20003', 'BS Civil Engineering',      3,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys'),
- (7, 'student4', 'Paolo',  NULL,       'Mendoza',       'Paolo Mendoza',            'pmendoza@school.edu',    '2025-20004', 'BS Computer Science',       1,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys'),
- (8, 'student5', 'Grace',  'Lim',      'Tan',           'Grace Lim Tan',            'gtan@school.edu',        '2023-20005', 'AB Communication',          3,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys'),
+ (6, 'student3', 'Liza',   'Villareal','Garcia',        'Liza Villareal Garcia',    'lgarcia@school.edu',     '2023-20003', 'BS Computer Engineering',      3,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys'),
+ (7, 'student4', 'Paolo',  NULL,       'Mendoza',       'Paolo Mendoza',            'pmendoza@school.edu',    '2025-20004', 'BS Computer Science (AI-Focused Elective)',       1,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys'),
+ (8, 'student5', 'Grace',  'Lim',      'Tan',           'Grace Lim Tan',            'gtan@school.edu',        '2023-20005', 'BS Criminology',          3,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys'),
  (9, 'student6', 'Carlo',  NULL,       'Ramos',         'Carlo Ramos',              'cramos@school.edu',      '2024-20006', 'BS Information Technology', 2,    'Student', 1, 'yCu8wa23pxcND4LfRFKf4A==', 'sys', 'sys');
 
 -- Everyone above is an approved account
@@ -231,6 +255,15 @@ INSERT INTO events (id, organization_id, title, description, venue, start_time, 
      0, 30, 'Completed', 'admin', 'admin');
 SET IDENTITY_INSERT events OFF;
 
+-- Course restrictions: the Hackathon is for CCS and Computer Engineering students (multi-select across
+-- colleges), the Engineering summit for Computer Engineering only. Every other event is open to all.
+INSERT INTO event_allowed_courses (event_id, course) VALUES
+ (3, 'BS Computer Science (AI-Focused Elective)'),
+ (3, 'BS Information Technology'),
+ (3, 'BS Information Technology - Software Engineering'),
+ (3, 'BS Computer Engineering'),
+ (4, 'BS Computer Engineering');
+
 SET IDENTITY_INSERT event_registrations ON;
 INSERT INTO event_registrations (id, event_id, student_id, registration_code, status, registered_time) VALUES
  -- Tech Talk (today)
@@ -274,8 +307,8 @@ s AS (
                   'Miguel','Nicole','Oscar','Patricia','Rafael','Sofia','Tristan','Uma','Vince','Wendy','Xavier','Yna') AS f,
         CHOOSE(n, 'Bautista','Castillo','Domingo','Enriquez','Fernandez','Gonzales','Hernandez','Ignacio','Javier','Lopez','Marquez','Navarro',
                   'Ocampo','Pascual','Quinto','Rivera','Salazar','Torres','Uy','Valdez','Wong','Yap','Zamora','Agustin') AS l,
-        CHOOSE(1 + (n % 8), 'BS Computer Science','BS Information Technology','BS Civil Engineering','BS Accountancy',
-                            'BS Nursing','AB Communication','BS Psychology','BS Business Administration') AS c
+        CHOOSE(1 + (n % 8), 'BS Computer Science (AI-Focused Elective)','BS Information Technology','BS Computer Engineering','BS Accountancy',
+                            'BS Nursing','BS Criminology','BS Psychology','BS Business Administration - Marketing Management') AS c
     FROM n)
 INSERT INTO users (user_id, first_name, last_name, name, email, student_number, course, year_level, role, is_active, is_approved, approved_by, approved_time, password, created_by, updated_by)
 SELECT 'demo' + RIGHT('00' + CAST(n AS VARCHAR(10)), 2), f, l, f + ' ' + l,
@@ -290,8 +323,8 @@ s AS (
     SELECT n,
         CHOOSE(n, 'Abby','Bryan','Carla','Dave','Ella','Finn','Gia','Hugo','Iris') AS f,
         CHOOSE(n, 'Mercado','Soriano','Villar','Tolentino','Magno','Robles','Santos','Lim','Velasco') AS l,
-        CHOOSE(n, 'BS Nursing','BS Accountancy','BS Information Systems','BS Tourism Management','BS Psychology',
-                  'BS Computer Engineering','AB Political Science','BS Hospitality Management','BS Electrical Engineering') AS c
+        CHOOSE(n, 'BS Nursing','BS Accountancy','BS Information Technology - Software Engineering','BS Tourism Management','BS Psychology',
+                  'BS Computer Engineering','BS Medical Technology','BS Hospitality Management','BS Computer Engineering') AS c
     FROM n)
 INSERT INTO users (user_id, first_name, last_name, name, email, student_number, course, year_level, role, is_active, is_approved, password, created_by, updated_by, created_time, updated_time)
 SELECT 'applicant' + CAST(n AS VARCHAR(10)), f, l, f + ' ' + l, LOWER(f) + '.' + LOWER(l) + '@school.edu',
@@ -408,7 +441,13 @@ FROM events e
 JOIN users u ON u.user_id = 'student1'
 WHERE e.status = 'Open'
   AND (e.capacity = 0 OR e.capacity > 3)   -- skip the full Hackathon
-  AND NOT EXISTS (SELECT 1 FROM event_registrations r WHERE r.event_id = e.id AND r.student_id = u.id);
+  AND NOT EXISTS (SELECT 1 FROM event_registrations r WHERE r.event_id = e.id AND r.student_id = u.id)
+  AND (NOT EXISTS (SELECT 1 FROM event_allowed_courses c WHERE c.event_id = e.id)
+       OR EXISTS (SELECT 1 FROM event_allowed_courses c WHERE c.event_id = e.id AND c.course = u.course));
+
+-- A forgot-password request waiting for an admin (Carlo, student6)
+INSERT INTO password_reset_requests (user_id, requested_time, status)
+SELECT id, DATEADD(hour, -2, @now), 'Pending' FROM users WHERE user_id = 'student6';
 
 COMMIT TRANSACTION;
 PRINT 'student_event_db is ready.';

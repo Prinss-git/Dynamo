@@ -25,6 +25,7 @@
                     <label class="label" asp-for="Password">Password</label>
                     <input asp-for="Password" type="password" class="input" autocomplete="current-password" />
                     <span asp-validation-for="Password" class="text-danger"></span>
+                    <a class="field-link" asp-controller="Account" asp-action="ForgotPassword">Forgot password?</a>
                 </div>
                 <button class="btn btn-primary btn-block" type="submit">Sign in</button>
             </form>

@@ -162,6 +162,17 @@ namespace ASI.Basecode.WebApp.Mvc
         /// <param name="context">context</param>
         public override void OnActionExecuting(ActionExecutingContext context)
         {
+            // After an admin password reset, every page sends the user to Change Password until they pick a new one.
+            if (User.HasClaim(c => c.Type == Const.ClaimMustChangePassword))
+            {
+                var controller = context.RouteData.Values["controller"]?.ToString();
+                var action = context.RouteData.Values["action"]?.ToString();
+                var allowed = controller == "Account" && (action == "ChangePassword" || action == "SignOutUser" || action == "Login");
+                if (!allowed)
+                {
+                    context.Result = new RedirectToActionResult("ChangePassword", "Account", null);
+                }
+            }
         }
 
         /// <summary>

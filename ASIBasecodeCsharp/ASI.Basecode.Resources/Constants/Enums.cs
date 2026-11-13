@@ -67,5 +67,15 @@
             Late,
             Absent,
         }
+
+        /// <summary>
+        /// Forgot-password request status
+        /// </summary>
+        public enum PasswordResetStatus
+        {
+            Pending,
+            Completed,
+            Dismissed,
+        }
     }
 }

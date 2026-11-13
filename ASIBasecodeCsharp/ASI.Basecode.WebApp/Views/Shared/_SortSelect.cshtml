@@ -1,0 +1,9 @@
+@model SortMenu
+@* Sort order dropdown for a GET filter form. The first option is the page's default order. *@
+<label class="sr-only" for="sort">Sort by</label>
+<select id="sort" name="sort" class="input" onchange="this.form.submit()">
+    @foreach (var option in Model.Options)
+    {
+        <option value="@option.Value" selected="@(Model.Selected == option.Value)">@option.Text</option>
+    }
+</select>

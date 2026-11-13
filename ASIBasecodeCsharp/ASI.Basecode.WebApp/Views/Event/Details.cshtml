@@ -23,6 +23,8 @@
                 <dd>@Model.EndTime.ToString("dddd, MMMM d, yyyy · h:mm tt")</dd>
                 <dt class="label">Venue</dt>
                 <dd>@Model.Venue</dd>
+                <dt class="label">Open to</dt>
+                <dd>@Model.EligibilityText</dd>
                 <dt class="label">Register by</dt>
                 <dd>@Model.RegistrationDeadline.ToString("MMMM d, yyyy · h:mm tt")</dd>
                 <dt class="label">Seats</dt>
@@ -82,6 +84,11 @@
                                 </form>
                             }
                         </div>
+                    }
+                    else if (Model.IsRegistrationOpen && !Model.IsEligible)
+                    {
+                        <p>This event is only open to students of: <strong>@Model.EligibilityText</strong>. Your course isn't on the list, so you can't register.</p>
+                        <button type="button" class="btn btn-key btn-block" disabled aria-disabled="true">Register for this event</button>
                     }
                     else if (Model.IsRegistrationOpen)
                     {

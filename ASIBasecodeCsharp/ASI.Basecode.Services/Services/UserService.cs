@@ -16,12 +16,14 @@ namespace ASI.Basecode.Services.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _repository;
+        private readonly IPasswordResetRepository _resetRepository;
         private readonly IMapper _mapper;
 
-        public UserService(IUserRepository repository, IMapper mapper)
+        public UserService(IUserRepository repository, IPasswordResetRepository resetRepository, IMapper mapper)
         {
             _mapper = mapper;
             _repository = repository;
+            _resetRepository = resetRepository;
         }
 
         public LoginResult AuthenticateUser(string userId, string password, ref User user)
@@ -59,7 +61,7 @@ namespace ASI.Basecode.Services.Services
             _repository.AddUser(user);
         }
 
-        public List<UserModel> GetUsers(string search, Role? role)
+        public List<UserModel> GetUsers(string search, Role? role, string department = null, string course = null, bool? active = null, string sort = null)
         {
             var query = _repository.GetUsers();
             if (!string.IsNullOrWhiteSpace(search))
@@ -73,9 +75,19 @@ namespace ASI.Basecode.Services.Services
             {
                 query = query.Where(u => u.Role == role.Value);
             }
+            if (active.HasValue)
+            {
+                query = query.Where(u => u.IsActive == active.Value);
+            }
+            query = FilterByCourse(query, department, course);
 
-            return query.OrderBy(u => u.Role).ThenBy(u => u.Name)
-                        .ToList()
+            var ordered = sort switch
+            {
+                Const.SortNewest => query.OrderByDescending(u => u.CreatedTime).ThenByDescending(u => u.Id),
+                Const.SortOldest => query.OrderBy(u => u.CreatedTime).ThenBy(u => u.Id),
+                _ => query.OrderBy(u => u.Role).ThenBy(u => u.Name),
+            };
+            return ordered.ToList()
                         .Select(u => _mapper.Map<UserModel>(u))
                         .ToList();
         }
@@ -263,6 +275,12 @@ namespace ASI.Basecode.Services.Services
                 }
             }
 
+            if (Courses.IsValid(filter.Course))
+            {
+                var course = filter.Course;
+                query = query.Where(u => u.Course == course);
+            }
+
             if (filter.YearLevel.HasValue)
             {
                 var yearLevel = filter.YearLevel.Value;
@@ -306,6 +324,116 @@ namespace ASI.Basecode.Services.Services
             user.LastName = lastName?.Trim();
             user.Name = string.Join(" ", new[] { user.FirstName, user.MiddleName, user.LastName }
                 .Where(part => !string.IsNullOrEmpty(part)));
+        }
+
+        public void RequestPasswordReset(string userId, string studentNumber)
+        {
+            var username = (userId ?? string.Empty).Trim();
+            var number = (studentNumber ?? string.Empty).Trim();
+            var user = _repository.GetUsers().FirstOrDefault(u => u.UserId == username && u.StudentNumber == number
+                                                                && u.IsActive && u.IsApproved);
+            if (user == null) return;
+            if (_resetRepository.GetRequests().Any(r => r.UserId == user.Id && r.Status == PasswordResetStatus.Pending)) return;
+
+            _resetRepository.AddRequest(new PasswordResetRequest
+            {
+                UserId = user.Id,
+                RequestedTime = DateTime.Now,
+                Status = PasswordResetStatus.Pending,
+            });
+        }
+
+        public List<PasswordResetRequestModel> GetPendingResets()
+        {
+            return PendingResetQuery().OrderBy(r => r.RequestedTime).ToList();
+        }
+
+        public int CountPendingResets()
+        {
+            return _resetRepository.GetRequests().Count(r => r.Status == PasswordResetStatus.Pending);
+        }
+
+        public PasswordResetRequestModel GetPendingReset(int requestId)
+        {
+            return PendingResetQuery().FirstOrDefault(r => r.Id == requestId)
+                ?? throw new InvalidDataException(Resources.Messages.Errors.PasswordResetNotPending);
+        }
+
+        public string CompletePasswordReset(int requestId, string temporaryPassword, string actor)
+        {
+            var request = FindPendingReset(requestId);
+            var user = FindUser(request.UserId);
+
+            var now = DateTime.Now;
+            user.Password = PasswordManager.EncryptPassword(temporaryPassword);
+            user.MustChangePassword = true;
+            user.UpdatedBy = actor;
+            user.UpdatedTime = now;
+            _repository.UpdateUser(user);
+
+            request.Status = PasswordResetStatus.Completed;
+            request.HandledBy = actor;
+            request.HandledTime = now;
+            _resetRepository.UpdateRequest(request);
+            return user.UserId;
+        }
+
+        public void DismissPasswordReset(int requestId, string actor)
+        {
+            var request = FindPendingReset(requestId);
+            request.Status = PasswordResetStatus.Dismissed;
+            request.HandledBy = actor;
+            request.HandledTime = DateTime.Now;
+            _resetRepository.UpdateRequest(request);
+        }
+
+        public User ChangeOwnPassword(int accountId, string newPassword)
+        {
+            var user = FindUser(accountId);
+            user.Password = PasswordManager.EncryptPassword(newPassword);
+            user.MustChangePassword = false;
+            user.UpdatedBy = user.UserId;
+            user.UpdatedTime = DateTime.Now;
+            _repository.UpdateUser(user);
+            return user;
+        }
+
+        private IQueryable<PasswordResetRequestModel> PendingResetQuery()
+        {
+            return _resetRepository.GetRequests()
+                .Where(r => r.Status == PasswordResetStatus.Pending)
+                .Select(r => new PasswordResetRequestModel
+                {
+                    Id = r.Id,
+                    AccountId = r.UserId,
+                    UserId = r.User.UserId,
+                    Name = r.User.Name,
+                    StudentNumber = r.User.StudentNumber,
+                    Course = r.User.Course,
+                    YearLevel = r.User.YearLevel,
+                    Email = r.User.Email,
+                    RequestedTime = r.RequestedTime,
+                });
+        }
+
+        private PasswordResetRequest FindPendingReset(int requestId)
+        {
+            return _resetRepository.GetRequests().FirstOrDefault(r => r.Id == requestId && r.Status == PasswordResetStatus.Pending)
+                ?? throw new InvalidDataException(Resources.Messages.Errors.PasswordResetNotPending);
+        }
+
+        /// <summary>
+        /// Keeps users of one course, or of every course in a department code (see Departments.All); a course wins
+        /// over a department.
+        /// </summary>
+        private static IQueryable<User> FilterByCourse(IQueryable<User> query, string department, string course)
+        {
+            if (Courses.IsValid(course))
+            {
+                return query.Where(u => u.Course == course);
+            }
+            var courses = Departments.Find(department)?.CourseNames.ToList();
+            return courses != null ? query.Where(u => courses.Contains(u.Course)) : query;
         }
 
         private User FindUser(int id)

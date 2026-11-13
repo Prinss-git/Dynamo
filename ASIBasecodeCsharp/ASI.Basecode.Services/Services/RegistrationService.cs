@@ -21,14 +21,17 @@ namespace ASI.Basecode.Services.Services
         private readonly IEventRegistrationRepository _repository;
         private readonly IEventRepository _eventRepository;
         private readonly IAccessService _accessService;
+        private readonly IUserRepository _userRepository;
 
         public RegistrationService(IEventRegistrationRepository repository,
                                    IEventRepository eventRepository,
-                                   IAccessService accessService)
+                                   IAccessService accessService,
+                                   IUserRepository userRepository)
         {
             _repository = repository;
             _eventRepository = eventRepository;
             _accessService = accessService;
+            _userRepository = userRepository;
         }
 
         public RegistrationStatus Register(int eventId, CurrentUserModel currentUser)
@@ -56,7 +59,13 @@ namespace ASI.Basecode.Services.Services
                 {
                     throw new InvalidDataException(Resources.Messages.Errors.AlreadyRegistered);
                 }
+            }
 
+            // Course restriction: a new registration (or re-registering after a cancellation) needs an allowed course.
+            EnsureCourseAllowed(eventId, currentUser);
+
+            if (existing != null)
+            {
                 // Re-registering after a cancellation reuses the row (one row per student per event).
                 existing.Status = status;
                 existing.RegisteredTime = now;
@@ -153,6 +162,21 @@ namespace ASI.Basecode.Services.Services
             {
                 registration.Status = RegistrationStatus.Registered;
                 _repository.UpdateRegistration(registration);
+            }
+        }
+
+        private void EnsureCourseAllowed(int eventId, CurrentUserModel currentUser)
+        {
+            var allowed = _eventRepository.GetEvents()
+                .Where(e => e.Id == eventId)
+                .SelectMany(e => e.AllowedCourses.Select(c => c.Course))
+                .ToList();
+            if (allowed.Count == 0) return;   // open to all students
+
+            var course = _userRepository.GetUsers().Where(u => u.Id == currentUser.AccountId).Select(u => u.Course).FirstOrDefault();
+            if (course == null || !allowed.Contains(course))
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.NotEligibleForEvent);
             }
         }
 

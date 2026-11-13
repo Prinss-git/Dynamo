@@ -176,5 +176,50 @@ namespace ASI.Basecode.Resources.Messages {
                 return ResourceManager.GetString("UsersRejected", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Request sent. If the username and student number match an account, an administrator will set a temporary password for you. Ask them for it, then sign in..
+        /// </summary>
+        public static string PasswordResetRequested {
+            get {
+                return ResourceManager.GetString("PasswordResetRequested", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Temporary password set for {0}. Give it to them in person; they'll choose a new password after signing in..
+        /// </summary>
+        public static string PasswordResetCompleted {
+            get {
+                return ResourceManager.GetString("PasswordResetCompleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Password reset request dismissed..
+        /// </summary>
+        public static string PasswordResetDismissed {
+            get {
+                return ResourceManager.GetString("PasswordResetDismissed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your password was changed..
+        /// </summary>
+        public static string PasswordChanged {
+            get {
+                return ResourceManager.GetString("PasswordChanged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An administrator reset your password. Choose a new password to continue..
+        /// </summary>
+        public static string MustChangePassword {
+            get {
+                return ResourceManager.GetString("MustChangePassword", resourceCulture);
+            }
+        }
     }
 }

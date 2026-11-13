@@ -30,10 +30,13 @@ namespace ASI.Basecode.WebApp.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index(string search)
+        public IActionResult Index(string search, string status, string sort)
         {
             ViewBag.Search = search;
-            return View(_organizationService.GetOrganizations(search));
+            ViewBag.OrgStatus = status;
+            ViewBag.Sort = sort;
+            bool? active = status == "active" ? true : status == "inactive" ? false : null;
+            return View(_organizationService.GetOrganizations(search, active, sort));
         }
 
         [HttpGet]

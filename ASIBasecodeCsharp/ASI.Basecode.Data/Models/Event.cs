@@ -24,5 +24,8 @@ namespace ASI.Basecode.Data.Models
 
         public virtual Organization Organization { get; set; }
         public virtual ICollection<EventRegistration> Registrations { get; set; } = new List<EventRegistration>();
+
+        /// <summary>Courses allowed to register; empty means open to all students.</summary>
+        public virtual ICollection<EventAllowedCourse> AllowedCourses { get; set; } = new List<EventAllowedCourse>();
     }
 }

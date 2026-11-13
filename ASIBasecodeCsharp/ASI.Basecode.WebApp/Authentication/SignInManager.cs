@@ -56,6 +56,11 @@ namespace ASI.Basecode.WebApp.Authentication
                 new Claim("UserName", user.Name, ClaimValueTypes.String, Const.Issuer),
                 new Claim(Const.ClaimAccountId, user.Id.ToString(), ClaimValueTypes.Integer32, Const.Issuer),
             };
+            if (user.MustChangePassword)
+            {
+                // an admin reset the password: every page sends the user to Change Password until it's done
+                claims.Add(new Claim(Const.ClaimMustChangePassword, "true", ClaimValueTypes.String, Const.Issuer));
+            }
             return new ClaimsIdentity(claims, Const.AuthenticationScheme);
         }
 

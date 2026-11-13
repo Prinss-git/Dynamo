@@ -26,6 +26,19 @@
                     <option value="@s" selected="@(selectedStatus == s)">@s</option>
                 }
             </select>
+            @{ var organizationOptions = ViewBag.OrganizationOptions as List<OptionModel> ?? new List<OptionModel>(); }
+            @if (organizationOptions.Count > 1)
+            {
+                <label class="sr-only" for="organizationId">Organization</label>
+                <select id="organizationId" name="organizationId" class="input" onchange="this.form.submit()">
+                    <option value="">All organizations</option>
+                    @foreach (var o in organizationOptions)
+                    {
+                        <option value="@o.Id" selected="@(ViewBag.OrganizationId == o.Id)">@o.Text</option>
+                    }
+                </select>
+            }
+            @await Html.PartialAsync("_SortSelect", new SortMenu((string)ViewBag.Sort, ("", "Latest date first"), (Const.SortOldest, "Earliest date first")))
             <button type="submit" class="btn btn-outline"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
         </form>
     </div>

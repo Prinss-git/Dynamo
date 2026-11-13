@@ -305,6 +305,13 @@ body.id-auth .foot { width: 100%; }
 .btn-sm { min-height: 36px; padding: 0 12px; font-size: .9rem; border-radius: 7px; }
 .btn-icon { min-width: 36px; padding: 0; }
 .btn-block { width: 100%; }
+/* Disabled buttons stay still: no hover colour, glow, movement or transition */
+.btn:disabled, .btn[aria-disabled="true"], .pager-btn:disabled, button:disabled { transition: none; animation: none; transform: none; }
+a.btn[aria-disabled="true"] { pointer-events: none; }
+.btn-primary:is(:disabled, [aria-disabled="true"]):is(:hover, :focus, :active) { background: var(--navy); border-color: var(--navy); color: #fff; }
+.btn-key:is(:disabled, [aria-disabled="true"]):is(:hover, :focus, :active) { background: var(--gold); border-color: var(--gold); color: var(--navy); box-shadow: none; }
+.btn-outline:is(:disabled, [aria-disabled="true"]):is(:hover, :focus, :active) { background: var(--card); border-color: var(--rule-strong); color: var(--navy); }
+.btn-danger:is(:disabled, [aria-disabled="true"]):is(:hover, :focus, :active) { background: var(--card); border-color: #e3b3af; color: var(--bad); }
 .inline-form { display: inline; margin: 0; }
 
 /* ---------- Forms ---------- */
@@ -333,7 +340,7 @@ textarea.input { min-height: 110px; resize: vertical; }
     .form-grid > .span-4 { grid-column: span 4; }
 }
 .check { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-weight: 500; }
-.check input { width: 20px; height: 20px; accent-color: var(--navy); }
+.check input { width: 20px; height: 20px; flex: none; accent-color: var(--navy); }
 .form-actions { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 6px; }
 
 /* Show/hide password: the eye button sits inside the right edge of the field (site.js adds it) */
@@ -627,6 +634,20 @@ body.id-auth .switcher { bottom: 20px; }
 .pw-rules li { display: flex; align-items: center; gap: 6px; }
 .pw-rules li.is-met { color: var(--ok); }
 .req-legend .req { margin: 0 2px 0 0; }
+/* event form: who can register */
+.eligibility { border: 0; padding: 0; margin: 0 0 18px; min-width: 0; }
+.eligibility > legend { padding: 0; margin-bottom: 4px; }
+.eligibility > label.check { display: flex; margin: 0; min-height: 40px; }
+.course-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin: 8px 0 4px; }
+.course-picker[hidden] { display: none; }
+.course-group { border: 1px solid var(--rule); border-radius: 10px; padding: 8px 14px 10px; background: var(--card); }
+.course-group .check { min-height: 36px; font-size: .94rem; }
+.course-group-head { font-weight: 700; color: var(--navy); border-bottom: 1px solid var(--rule); margin-bottom: 4px; }
+/* who an event is for (cards and event page) */
+.for-tag { display: inline-flex; align-items: center; gap: 6px; font-size: .86rem; color: var(--navy); background: var(--gold-wash); border-radius: 999px; padding: 3px 10px; font-weight: 600; }
+
+.field-link { display: inline-block; margin-top: 8px; font-size: .92rem; font-weight: 600; }
+
 
 /* ---------- Approvals ---------- */
 .nav-count {

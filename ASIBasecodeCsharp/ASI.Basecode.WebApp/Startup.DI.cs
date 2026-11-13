@@ -48,6 +48,7 @@ namespace ASI.Basecode.WebApp
             this._services.AddScoped<IEventRepository, EventRepository>();
             this._services.AddScoped<IEventRegistrationRepository, EventRegistrationRepository>();
             this._services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+            this._services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
 
             // Manager Class
             this._services.AddScoped<SignInManager>();

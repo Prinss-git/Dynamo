@@ -28,7 +28,7 @@ namespace ASI.Basecode.Services.Services
             _mapper = mapper;
         }
 
-        public List<OrganizationViewModel> GetOrganizations(string search)
+        public List<OrganizationViewModel> GetOrganizations(string search, bool? active = null, string sort = null)
         {
             var query = _repository.GetOrganizations();
             if (!string.IsNullOrWhiteSpace(search))
@@ -38,7 +38,18 @@ namespace ASI.Basecode.Services.Services
                                       || (o.Acronym != null && o.Acronym.ToLower().Contains(term)));
             }
 
-            return query.OrderBy(o => o.Name)
+            if (active.HasValue)
+            {
+                query = query.Where(o => o.IsActive == active.Value);
+            }
+
+            var ordered = sort switch
+            {
+                Resources.Constants.Const.SortNewest => query.OrderByDescending(o => o.CreatedTime).ThenByDescending(o => o.Id),
+                Resources.Constants.Const.SortOldest => query.OrderBy(o => o.CreatedTime).ThenBy(o => o.Id),
+                _ => query.OrderBy(o => o.Name),
+            };
+            return ordered
                 .Select(o => new OrganizationViewModel
                 {
                     Id = o.Id,

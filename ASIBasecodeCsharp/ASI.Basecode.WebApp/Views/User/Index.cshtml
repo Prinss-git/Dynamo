@@ -27,6 +27,14 @@
                     <option value="@r" selected="@(selectedRole == r)">@r</option>
                 }
             </select>
+            <label class="sr-only" for="status">Status</label>
+            <select id="status" name="status" class="input" onchange="this.form.submit()">
+                <option value="">Active and inactive</option>
+                <option value="active" selected="@(ViewBag.UserStatus == "active")">Active only</option>
+                <option value="inactive" selected="@(ViewBag.UserStatus == "inactive")">Inactive only</option>
+            </select>
+            @await Html.PartialAsync("_CourseFilter", ((string)ViewBag.Department, (string)ViewBag.Course))
+            @await Html.PartialAsync("_SortSelect", new SortMenu((string)ViewBag.Sort, ("", "Sort: role, then name"), (Const.SortNewest, "Newest first"), (Const.SortOldest, "Oldest first")))
             <button type="submit" class="btn btn-outline"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
         </form>
     </div>
