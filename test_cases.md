@@ -4,6 +4,8 @@ ASP.NET Core 9 MVC. Test cases are derived from the business rules in `UserServi
 
 **Status legend:** `Pending` (not yet run), `Pass`, `Fail`. Update the Status column during the walkthrough.
 
+**New in PR #1** (`feature/approvals-filters-password-toggle`): AUTH-11 to AUTH-14, STU-36 to STU-42, ADM-36 to ADM-48 and the updated ADM-03. Run them on that branch until it is merged into `main`.
+
 ## Contents
 
 1. [Authentication and Access Control](#1-authentication-and-access-control)
@@ -20,6 +22,9 @@ ASP.NET Core 9 MVC. Test cases are derived from the business rules in `UserServi
 |---|---|
 | Roles | Admin, Officer (scoped to organizations they are a member of), Student |
 | Self-registration | Always creates an **active, unapproved Student**. The account cannot log in until an Admin approves it. |
+| Departments | Worked out from the student's course (list in `ASI.Basecode.Resources/Constants/Departments.cs`). Courses not listed fall under **Other**. Nothing extra is stored in the database. |
+| Bulk approve/reject | "Approve all" and "Reject all" act only on the accounts listed under the current filters when the page loaded. Later sign-ups are not included. |
+| Register form colours | Fields start neutral, turn green once valid, and turn red only after the user leaves them empty or invalid, or submits with errors. |
 | Event lifecycle | Draft → Open → Closed → Completed, or Cancelled. Allowed: Draft→Open/Cancelled; Open→Closed/Completed/Cancelled; Closed→Open/Completed/Cancelled. Completed and Cancelled are final. |
 | Registration | Open events only, before the registration deadline and before the start time. If capacity > 0 and registered count ≥ capacity, the student is **Waitlisted**. Capacity 0 means unlimited. |
 | Registration code | 10 characters, no `0/O/1/I`, unique. The QR pass is shown only for `Registered` status. |
@@ -44,6 +49,10 @@ ASP.NET Core 9 MVC. Test cases are derived from the business rules in `UserServi
 | AUTH-08 | Student cannot reach manager or admin pages | Logged in as Student | Open `/User`, `/Organization`, `/Report`, `/Event/Manage`. | Access Denied page each time. | Pending |
 | AUTH-09 | Officer cannot reach admin-only pages | Logged in as Officer | Open `/User` and `/Organization`. | Access Denied. | Pending |
 | AUTH-10 | Dev account switch disabled outside Development | App run in Production environment | POST `/Account/SwitchAccount`. | Returns 404. (Skip if only Development is available.) | Pending |
+| AUTH-11 | Show/hide password on Login | — | 1. Open Login and type a password.<br>2. Click the eye icon inside the Password field.<br>3. Click it again. | Step 2: the password becomes readable and the icon changes to an eye with a slash. Step 3: it is hidden again and the icon changes back. Only one eye icon appears (Edge's built-in one is hidden). | Pending |
+| AUTH-12 | Eye icon on every password field | Admin logged in (for the user form) | Check Register (Password and Confirm password) and Users → Create / Edit (Password). | Each password field has its own eye icon that shows and hides only that field. On Register, the password checklist stays below the field. | Pending |
+| AUTH-13 | Password toggle with the keyboard | — | 1. Click in a password field and type.<br>2. Press Tab.<br>3. Press Enter, then Space. | Tab moves focus to the eye button (gold focus outline). Enter shows the password; Space hides it. A screen reader announces a "Show password" toggle button that is pressed or not pressed. | Pending |
+| AUTH-14 | Password toggle on a phone | Phone browser | 1. Tap a password field and type.<br>2. Tap the eye icon. | The password shows and hides, the field keeps focus and the on-screen keyboard stays open. | Pending |
 
 ---
 
@@ -104,6 +113,20 @@ ASP.NET Core 9 MVC. Test cases are derived from the business rules in `UserServi
 | STU-34 | Ticket is printable | Registered student | Use browser Print on the Ticket page. | Print layout is clean and the QR remains scannable. | Pending |
 | STU-35 | Attendance status visible to Student | Student was checked in (Present or Late) | Open My Events. | Standing (Registered, Waitlisted, Present, Late, Absent) shows correctly. | Pending |
 
+### 2.5 Register Form Validation Styling
+
+Required fields have a red * on their label. Middle name is the only optional field.
+
+| ID | Scenario | Setup | Steps | Expected Result | Status |
+|---|---|---|---|---|---|
+| STU-36 | Fields are neutral on page load | — | Open Register. | No field has a red or green border. Required fields only show the red * on their label. | Pending |
+| STU-37 | Valid value turns green while typing | — | Type `Juan` in First name. | The field turns green as soon as the value is valid. No error message appears. | Pending |
+| STU-38 | No error while still typing | — | Type `juan@` in School email and keep the cursor in the field. | No red border and no error message while typing. | Pending |
+| STU-39 | Error appears after leaving the field | — | 1. Type `juan@` in School email and press Tab.<br>2. Click Last name, then click another field without typing.<br>3. Go back to School email and finish the address (`juan@school.edu`). | Step 1: School email turns red with "Enter a valid email address, e.g. name@school.edu." Step 2: Last name turns red. Step 3: School email turns green and the message disappears. | Pending |
+| STU-40 | Submit with errors marks every invalid field | Only First name and School email filled in correctly | Click Create account. | Every empty or invalid required field turns red with its message at the same time. The page scrolls to and focuses the first invalid field (Last name). Valid fields stay green. No account is created. | Pending |
+| STU-41 | Optional field never shows an error | — | 1. Click Middle name, leave it empty and press Tab.<br>2. Submit the form with errors. | Middle name stays neutral: no red border and no message. | Pending |
+| STU-42 | Confirm password follows the password | — | 1. Type the same valid password in Password and Confirm password.<br>2. Click Password and change it. | Step 1: both fields turn green. Step 2: Confirm password turns red, and "Passwords don't match." appears once you leave Password. | Pending |
+
 ---
 
 ## 3. Admin Flow
@@ -114,7 +137,7 @@ ASP.NET Core 9 MVC. Test cases are derived from the business rules in `UserServi
 |---|---|---|---|---|---|
 | ADM-01 | Pending approvals list | Several unapproved sign-ups | 1. Log in as Admin.<br>2. Open Approvals. | Pending users listed oldest first; pending count badge matches. | Pending |
 | ADM-02 | Approve selected accounts | Pending users exist | 1. Tick some users.<br>2. Click Approve. | Selected users approved, with approver and time recorded. Others stay pending. | Pending |
-| ADM-03 | Approve all | Several pending users | Click Approve All. | All pending users approved and the count is shown. | Pending |
+| ADM-03 | Approve all (no filters) | Several pending users; no filter applied | 1. Click "Approve all (N)".<br>2. Read the confirmation, then click OK. | Confirmation: "Approve N pending accounts? They will be able to sign in immediately." All N listed accounts are approved and the count is shown. (With a filter applied, see ADM-44.) | Pending |
 | ADM-04 | Approve with nothing selected | — | Click Approve with no selection. | Error: "Select at least one account first." | Pending |
 | ADM-05 | Reject pending sign-ups | Pending users exist | 1. Tick users.<br>2. Click Reject. | Selected pending requests are deleted. The user can no longer log in. | Pending |
 | ADM-06 | Reject never deletes approved accounts | An approved user's id is submitted to Reject | Submit Reject with an approved user's id. | Approved account untouched (0 rejected). | Pending |
@@ -162,6 +185,26 @@ ASP.NET Core 9 MVC. Test cases are derived from the business rules in `UserServi
 | ADM-33 | Filter report by organization | Multiple organizations | Select an organization filter. | Only that organization's events appear. | Pending |
 | ADM-34 | Export summary CSV (Admin) | Report has data | Click Export Summary. | `event_summary_yyyyMMdd_HHmm.csv` downloads with Event, Organization, Date, Status, Registered, Present, Late, Absent, AttendanceRatePercent. | Pending |
 | ADM-35 | Admin can run attendance on any event | Event from any organization | Open Attendance for the event and check in a student. | Allowed, since Admin can manage every organization. | Pending |
+
+### 3.5 Account Approvals: Filters and Bulk Actions
+
+Departments come from each student's course. Fresh demo data has 12 pending accounts: CAS 3, CBA 2, CCS 2, COE 2, CHTM 2, CON 1, CTE 0. Joy Flores is the only Year 2 applicant. Run these before ADM-02 to ADM-05 (or reload the demo data) so the counts match.
+
+| ID | Scenario | Setup | Steps | Expected Result | Status |
+|---|---|---|---|---|---|
+| ADM-36 | Filter by department | Fresh demo data | Choose "CCS (2)" in the Department filter. | Only the CCS students are listed (Ken Aquino and Carla Villar). Each row shows the department before the course, e.g. "CCS · BS Information Technology · Year 1". | Pending |
+| ADM-37 | Department counts | Fresh demo data | Open the Department filter. | "All departments (12)", then CAS (3), CBA (2), CCS (2), COE (2), CHTM (2), CON (1), CTE (0). The counts always cover all pending accounts, even while the year or search filter is applied. | Pending |
+| ADM-38 | "Other" department | A pending account whose course is not listed under any department (older data only; skip if none) | Open the Department filter and choose "Other". | "Other (n)" appears only when such accounts exist, and selecting it lists only them. | Pending |
+| ADM-39 | Filter by year level | Fresh demo data | Choose "Year 2" in the year filter. | Only Joy Flores is listed. "All years" shows everyone again. | Pending |
+| ADM-40 | Search by name or student number | Fresh demo data | 1. Search `flores`.<br>2. Search `2026-6000`.<br>3. Choose CAS, then search `santos`. | Step 1: Joy Flores. Step 2: the nine applicants whose student numbers start with 2026-6000. Step 3: only Gia Santos (filters combine). Search ignores letter case. | Pending |
+| ADM-41 | Sort by date submitted | Fresh demo data | 1. Choose "Newest first".<br>2. Choose "Oldest first". | Step 1: Joy Flores (submitted 3 hours ago) is first. Step 2: Bea Cruz Santiago (submitted 2 days ago) is first. Oldest first is the default. | Pending |
+| ADM-42 | Clear filters | A filter or "Newest first" applied | Click "Clear filters". | All pending accounts are listed again, oldest first, and the "Clear filters" button disappears. It only appears while a filter or "Newest first" is applied. | Pending |
+| ADM-43 | No matching accounts | Fresh demo data | Choose "CTE (0)". | "No matching accounts" message with a hint to clear the filters. The Approve all and Reject all buttons are hidden. | Pending |
+| ADM-44 | Approve all shown (filtered list) | Fresh demo data | 1. Choose CCS.<br>2. Click "Approve all shown (2)".<br>3. Read the confirmation, then click OK. | Confirmation: "Approve 2 pending accounts in this filtered list? They will be able to sign in immediately." Only the 2 CCS students are approved; every other account stays pending. The page returns with CCS still selected. | Pending |
+| ADM-45 | Reject all shown (filtered list) | Fresh demo data | 1. Choose CON.<br>2. Click "Reject all shown (1)".<br>3. Click Cancel in the confirmation.<br>4. Click "Reject all shown (1)" again and click OK. | Confirmation: "Reject 1 pending request in this filtered list? The account will be deleted. This cannot be undone." Step 3: nothing changes. Step 4: only Abby Mercado is deleted and can no longer log in. | Pending |
+| ADM-46 | Filters kept after approve or reject | Any filter applied | 1. Tick one account.<br>2. Click "Approve selected" (or "Reject selected"). | The success message shows the count, and the page returns with the same department, year, search and sort still applied. | Pending |
+| ADM-47 | Later sign-ups are not included in "all" | Approvals page open with N accounts listed, no filter | 1. In another browser, register a new student.<br>2. Back on the open page, click "Approve all (N)" and confirm.<br>3. Reload the page. | Exactly N accounts are approved. The new student is still pending and appears after the reload. | Pending |
+| ADM-48 | Pagination and "Select all" | More than 10 pending accounts (fresh demo data has 12) | 1. Open Approvals.<br>2. Tick the "Select all" box in the table header.<br>3. Go to page 2. | 10 rows per page, with page buttons and a rows-per-page menu (10, 25, 50). "Select all" ticks only the 10 rows on the current page ("10 selected"). "Approve all (12)" still covers all 12 accounts. | Pending |
 
 ---
 
@@ -263,12 +306,12 @@ Use an event with `StartTime = T` and `LateAfterMinutes = L`. The Late threshold
 
 | Area | Test IDs | Count |
 |---|---|---|
-| Authentication and access | AUTH-01 to AUTH-10 | 10 |
-| Student flow | STU-01 to STU-35 | 35 |
-| Admin flow | ADM-01 to ADM-35 | 35 |
+| Authentication and access | AUTH-01 to AUTH-14 | 14 |
+| Student flow | STU-01 to STU-42 | 42 |
+| Admin flow | ADM-01 to ADM-48 | 48 |
 | Officer flow | OFF-01 to OFF-55 | 55 |
 | Cross-cutting | X-01 to X-06 | 6 |
-| **Total** | | **141** |
+| **Total** | | **165** |
 
 ## Defense Walkthrough
 
