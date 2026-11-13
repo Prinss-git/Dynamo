@@ -1,0 +1,121 @@
+# Publishes the web app to MonsterASP (dynamo.runasp.net) whenever app code reaches main.
+#
+# Repository secrets (Settings > Secrets and variables > Actions):
+#   WEBDEPLOY_SITE           site name from MonsterASP's "Visual Studio access" card, e.g. site105613
+#   WEBDEPLOY_SERVER         server name from the same card, e.g. site105613.siteasp.net
+#   WEBDEPLOY_USERNAME       login from the same card
+#   WEBDEPLOY_PASSWORD       Web Deploy password from the same card
+#   APPSETTINGS_PRODUCTION   full contents of ASI.Basecode.WebApp/appsettings.Production.json
+#                            (connection string + secret key; the file itself is never committed)
+#
+# Database changes are NOT applied automatically. When a push adds or changes a script in
+# ASIBasecodeCsharp/Database/migrations/, this workflow stops before deploying. Run the migration on the live
+# database first, then start the workflow by hand (Actions > Deploy to MonsterASP > Run workflow) and tick
+# "The live database is already migrated".
+name: Deploy to MonsterASP
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ASIBasecodeCsharp/**"
+  workflow_dispatch:
+    inputs:
+      migrations_applied:
+        description: "The live database is already migrated (required when a migration changed)"
+        type: boolean
+        default: false
+
+# one deployment at a time; a newer push waits for the running one instead of uploading over it
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  SITE_URL: http://dynamo.runasp.net
+  PROJECT: ASIBasecodeCsharp/ASI.Basecode.WebApp/ASI.Basecode.WebApp.csproj
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Stop if a database migration has not been applied
+        shell: pwsh
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          EVENT: ${{ github.event_name }}
+          APPLIED: ${{ inputs.migrations_applied }}
+        run: |
+          if ($env:EVENT -eq "workflow_dispatch") {
+            Write-Host "Manual run: migrations_applied = $env:APPLIED"
+            exit 0
+          }
+          # push: look at the files this push changed (a new branch or forced history checks the last commit only)
+          $range = if ($env:BEFORE -and $env:BEFORE -notmatch '^0+$') { "$($env:BEFORE)..$($env:AFTER)" } else { "$($env:AFTER)~1..$($env:AFTER)" }
+          $changed = git diff --name-only $range -- "ASIBasecodeCsharp/Database/migrations/"
+          if ($changed) {
+            Write-Host "::error::This push changes database migrations:"
+            $changed | ForEach-Object { Write-Host "  $_" }
+            Write-Host "::error::Run them on the live database, then re-run this workflow by hand with 'The live database is already migrated' ticked."
+            exit 1
+          }
+          Write-Host "No migration changes in $range."
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Write production settings
+        shell: pwsh
+        env:
+          APPSETTINGS_PRODUCTION: ${{ secrets.APPSETTINGS_PRODUCTION }}
+        run: |
+          if (-not $env:APPSETTINGS_PRODUCTION) { Write-Host "::error::Secret APPSETTINGS_PRODUCTION is not set."; exit 1 }
+          $path = "ASIBasecodeCsharp/ASI.Basecode.WebApp/appsettings.Production.json"
+          [IO.File]::WriteAllText($path, $env:APPSETTINGS_PRODUCTION, (New-Object Text.UTF8Encoding($false)))
+          # fail early on a broken paste instead of after the site is replaced
+          $null = Get-Content $path -Raw | ConvertFrom-Json
+          Write-Host "appsettings.Production.json written."
+
+      - name: Publish
+        run: dotnet publish ${{ env.PROJECT }} -c Release -o publish -p:RollForward=LatestMajor --nologo
+
+      - name: Upload with Web Deploy
+        shell: pwsh
+        env:
+          WD_SITE: ${{ secrets.WEBDEPLOY_SITE }}
+          WD_SERVER: ${{ secrets.WEBDEPLOY_SERVER }}
+          WD_USER: ${{ secrets.WEBDEPLOY_USERNAME }}
+          WD_PASSWORD: ${{ secrets.WEBDEPLOY_PASSWORD }}
+        run: |
+          $msdeploy = "C:\Program Files (x86)\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          if (-not (Test-Path $msdeploy)) { $msdeploy = "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" }
+          $source = (Resolve-Path publish).Path
+          # the password comes from an environment variable, so characters like # or ! need no escaping
+          $dest = "contentPath=$($env:WD_SITE),computerName=https://$($env:WD_SERVER):8172/msdeploy.axd?site=$($env:WD_SITE),userName=$($env:WD_USER),password=$($env:WD_PASSWORD),authType=Basic"
+          & $msdeploy "-verb:sync" "-source:contentPath=$source" "-dest:$dest" `
+            "-allowUntrusted" "-enableRule:AppOffline" "-retryAttempts:3" `
+            "-skip:objectName=dirPath,absolutePath=App_Data"   # keep the server's logs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check the site answers
+        shell: pwsh
+        run: |
+          for ($i = 1; $i -le 10; $i++) {
+            try {
+              $r = Invoke-WebRequest "$($env:SITE_URL)/Account/Login" -UseBasicParsing -TimeoutSec 30
+              if ($r.StatusCode -eq 200 -and $r.Content -match "Sign in") { Write-Host "Site is up ($($r.StatusCode))."; exit 0 }
+            } catch { Write-Host "Attempt $($i): $($_.Exception.Message)" }
+            Start-Sleep -Seconds 6
+          }
+          Write-Host "::error::The site did not return the sign-in page after deploying."
+          exit 1

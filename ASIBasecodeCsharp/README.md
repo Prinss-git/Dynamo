@@ -66,6 +66,22 @@ and encrypts passwords). The steps:
 
    Keep the key private. If it changes later, regenerate and re-run the script, or every existing password stops working.
 
+### Automatic deployment (GitHub Actions)
+`.github/workflows/deploy.yml` publishes the site to MonsterASP (http://dynamo.runasp.net) whenever a change under
+`ASIBasecodeCsharp/` reaches `main`, and can also be started by hand (GitHub > *Actions* > *Deploy to MonsterASP* >
+*Run workflow*). It builds on GitHub, uploads with Web Deploy (the server's `App_Data` logs are kept), then checks
+that the sign-in page loads.
+
+It needs these repository secrets (GitHub > *Settings* > *Secrets and variables* > *Actions*), all from
+MonsterASP's *Visual Studio access* card except the last:
+`WEBDEPLOY_SITE`, `WEBDEPLOY_SERVER`, `WEBDEPLOY_USERNAME`, `WEBDEPLOY_PASSWORD`, and `APPSETTINGS_PRODUCTION`
+(the full contents of `ASI.Basecode.WebApp/appsettings.Production.json`: connection string and secret key).
+Update a secret whenever that password or setting changes.
+
+**Database changes are never applied automatically.** When a push adds or changes a script in
+`Database/migrations/`, the workflow stops before deploying. Run the migration on the live database, then start the
+workflow by hand with *The live database is already migrated* ticked.
+
 ### Demo accounts
 | Username | Password | Role |
 |---|---|---|
