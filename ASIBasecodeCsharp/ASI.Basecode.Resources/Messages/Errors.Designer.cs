@@ -241,6 +241,24 @@ namespace ASI.Basecode.Resources.Messages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You are already registered for "{0}", which runs at the same time..
+        /// </summary>
+        public static string EventTimeConflict {
+            get {
+                return ResourceManager.GetString("EventTimeConflict", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This student is still checked in at "{0}", which runs at the same time. Check them out there first..
+        /// </summary>
+        public static string StillCheckedInElsewhere {
+            get {
+                return ResourceManager.GetString("StillCheckedInElsewhere", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Attendee has not checked in yet..
         /// </summary>
         public static string NotCheckedIn {

@@ -195,4 +195,10 @@
   <data name="NoUsersSelected" xml:space="preserve">
     <value>Select at least one account first.</value>
   </data>
+  <data name="EventTimeConflict" xml:space="preserve">
+    <value>You are already registered for "{0}", which runs at the same time.</value>
+  </data>
+  <data name="StillCheckedInElsewhere" xml:space="preserve">
+    <value>This student is still checked in at "{0}", which runs at the same time. Check them out there first.</value>
+  </data>
 </root>

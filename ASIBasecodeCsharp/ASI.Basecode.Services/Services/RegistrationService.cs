@@ -50,13 +50,20 @@ namespace ASI.Basecode.Services.Services
 
             var existing = _repository.GetRegistrations()
                 .FirstOrDefault(r => r.EventId == eventId && r.StudentId == currentUser.AccountId);
+            if (existing != null && existing.Status != RegistrationStatus.Cancelled)
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.AlreadyRegistered);
+            }
+
+            // A confirmed spot cannot overlap another confirmed spot. A waitlist place is not a commitment,
+            // so a student may still join a waitlist for an event that overlaps.
+            if (status == RegistrationStatus.Registered)
+            {
+                EnsureNoTimeConflict(ev, currentUser.AccountId);
+            }
+
             if (existing != null)
             {
-                if (existing.Status != RegistrationStatus.Cancelled)
-                {
-                    throw new InvalidDataException(Resources.Messages.Errors.AlreadyRegistered);
-                }
-
                 // Re-registering after a cancellation reuses the row (one row per student per event).
                 existing.Status = status;
                 existing.RegisteredTime = now;
@@ -153,6 +160,28 @@ namespace ASI.Basecode.Services.Services
             {
                 registration.Status = RegistrationStatus.Registered;
                 _repository.UpdateRegistration(registration);
+            }
+        }
+
+        /// <summary>
+        /// Refuses a confirmed registration when the student already has a confirmed spot at another
+        /// (non-cancelled) event whose time overlaps this one. Back-to-back events do not overlap.
+        /// </summary>
+        private void EnsureNoTimeConflict(Event ev, int studentId)
+        {
+            var conflictTitle = _repository.GetRegistrations()
+                .Where(r => r.StudentId == studentId
+                         && r.Status == RegistrationStatus.Registered
+                         && r.EventId != ev.Id
+                         && r.Event.Status != EventStatus.Cancelled
+                         && r.Event.StartTime < ev.EndTime
+                         && r.Event.EndTime > ev.StartTime)
+                .Select(r => r.Event.Title)
+                .FirstOrDefault();
+
+            if (conflictTitle != null)
+            {
+                throw new InvalidDataException(string.Format(Resources.Messages.Errors.EventTimeConflict, conflictTitle));
             }
         }
 

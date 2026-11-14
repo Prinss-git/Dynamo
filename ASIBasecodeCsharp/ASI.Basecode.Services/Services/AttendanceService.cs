@@ -99,6 +99,25 @@ namespace ASI.Basecode.Services.Services
                 return result;
             }
 
+            // A student cannot be present at two events at once: refuse while they are still checked in
+            // (not checked out) at another running event whose time overlaps this one.
+            var checkedInElsewhere = _registrationRepository.GetRegistrations()
+                .Where(r => r.StudentId == registration.StudentId
+                         && r.EventId != eventId
+                         && r.Attendance != null
+                         && r.Attendance.CheckInTime != null
+                         && r.Attendance.CheckOutTime == null
+                         && (r.Event.Status == EventStatus.Open || r.Event.Status == EventStatus.Closed)
+                         && r.Event.StartTime < ev.EndTime
+                         && r.Event.EndTime > ev.StartTime)
+                .Select(r => r.Event.Title)
+                .FirstOrDefault();
+            if (checkedInElsewhere != null)
+            {
+                result.Message = string.Format(Resources.Messages.Errors.StillCheckedInElsewhere, checkedInElsewhere);
+                return result;
+            }
+
             var now = DateTime.Now;
             var status = now > ev.StartTime.AddMinutes(ev.LateAfterMinutes) ? AttendanceStatus.Late : AttendanceStatus.Present;
             var attendance = registration.Attendance;
