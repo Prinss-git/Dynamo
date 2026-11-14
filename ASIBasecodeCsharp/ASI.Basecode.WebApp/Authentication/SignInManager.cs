@@ -56,6 +56,7 @@ namespace ASI.Basecode.WebApp.Authentication
                 new Claim("UserName", user.Name, ClaimValueTypes.String, Const.Issuer),
                 new Claim(Const.ClaimAccountId, user.Id.ToString(), ClaimValueTypes.Integer32, Const.Issuer),
             };
+            claims.Add(new Claim(Const.ClaimPasswordStamp, ASI.Basecode.Services.Manager.PasswordManager.Stamp(user.Password), ClaimValueTypes.String, Const.Issuer));
             if (user.MustChangePassword)
             {
                 // an admin reset the password: every page sends the user to Change Password until it's done

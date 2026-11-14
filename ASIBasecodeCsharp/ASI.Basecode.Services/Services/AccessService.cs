@@ -22,8 +22,9 @@ namespace ASI.Basecode.Services.Services
             if (currentUser.Role == Role.Admin) return true;
             if (currentUser.Role != Role.Officer) return false;
 
+            // officers lose management rights while their organization is deactivated (admins keep them)
             return _organizationRepository.GetMembers()
-                .Any(m => m.OrganizationId == organizationId && m.MemberId == currentUser.AccountId);
+                .Any(m => m.OrganizationId == organizationId && m.MemberId == currentUser.AccountId && m.Organization.IsActive);
         }
 
         public void EnsureCanManageOrganization(int organizationId, CurrentUserModel currentUser)
@@ -46,7 +47,7 @@ namespace ASI.Basecode.Services.Services
             }
 
             return _organizationRepository.GetMembers()
-                .Where(m => m.MemberId == currentUser.AccountId)
+                .Where(m => m.MemberId == currentUser.AccountId && m.Organization.IsActive)
                 .Select(m => m.OrganizationId)
                 .ToList();
         }

@@ -2,7 +2,6 @@
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels;
 using ASI.Basecode.WebApp.Mvc;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,8 +23,7 @@ namespace ASI.Basecode.WebApp.Controllers
         public UserController(IHttpContextAccessor httpContextAccessor,
                               ILoggerFactory loggerFactory,
                               IConfiguration configuration,
-                              IUserService userService,
-                              IMapper mapper = null) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+                              IUserService userService) : base(httpContextAccessor, loggerFactory, configuration)
         {
             _userService = userService;
         }
@@ -191,6 +189,11 @@ namespace ASI.Basecode.WebApp.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(UserModel model)
         {
+            // an admin can't deactivate their own account or change their own role (that could lock everyone out)
+            if (model.Id == CurrentUser.AccountId && (!model.IsActive || model.Role != CurrentUser.Role))
+            {
+                ModelState.AddModelError(string.Empty, Resources.Messages.Errors.SelfAccountChange);
+            }
             if (!ModelState.IsValid)
             {
                 return View("Form", model);

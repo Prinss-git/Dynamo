@@ -38,6 +38,9 @@ namespace ASI.Basecode.Services.Services
                 AllowedCourses = e.AllowedCourses.OrderBy(c => c.Course).Select(c => c.Course).ToList(),
                 RestrictToCourses = e.AllowedCourses.Any(),
                 ViewerCourseAllowed = viewerCourse != null && e.AllowedCourses.Any(c => c.Course == viewerCourse),
+                // any registration at all, cancelled ones included: those rows block deleting the event
+                HasRegistrations = e.Registrations.Any(),
+                OrganizationIsActive = e.Organization.IsActive,
             };
         }
     }

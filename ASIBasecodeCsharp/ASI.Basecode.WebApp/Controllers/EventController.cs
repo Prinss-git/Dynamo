@@ -2,7 +2,6 @@
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels;
 using ASI.Basecode.WebApp.Mvc;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,8 +26,7 @@ namespace ASI.Basecode.WebApp.Controllers
                                ILoggerFactory loggerFactory,
                                IConfiguration configuration,
                                IEventService eventService,
-                               IOrganizationService organizationService,
-                               IMapper mapper = null) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+                               IOrganizationService organizationService) : base(httpContextAccessor, loggerFactory, configuration)
         {
             _eventService = eventService;
             _organizationService = organizationService;
@@ -81,7 +79,17 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("Form", model);
             }
 
-            var id = _eventService.CreateEvent(model, CurrentUser);
+            int id;
+            try
+            {
+                id = _eventService.CreateEvent(model, CurrentUser);
+            }
+            catch (InvalidDataException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                LoadOrganizations();
+                return View("Form", model);
+            }
             NotifySuccess(Resources.Messages.Common.SaveSuccess);
             return RedirectToAction(nameof(Details), new { id });
         }

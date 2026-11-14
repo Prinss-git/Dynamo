@@ -18,5 +18,12 @@ namespace ASI.Basecode.Services.Interfaces
         void DeleteEvent(int id, CurrentUserModel currentUser);
         void ChangeStatus(int id, EventStatus status, CurrentUserModel currentUser);
         List<EventStatus> GetAllowedStatusChanges(EventStatus current);
+
+        /// <summary>
+        /// Automatic status changes (run by a background job): Open events that have started become Closed, and
+        /// Open/Closed events that ended more than a day ago become Completed with absentees marked.
+        /// Returns how many events changed.
+        /// </summary>
+        int AdvanceEventStatuses();
     }
 }

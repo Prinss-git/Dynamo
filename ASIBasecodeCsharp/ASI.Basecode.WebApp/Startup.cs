@@ -102,9 +102,6 @@ namespace ASI.Basecode.WebApp
                 options.Cookie.Name = Const.Issuer;
             });
 
-            // DI Services AutoMapper(Add Profile)
-            this.ConfigureAutoMapper();
-
             // DI Services
             this.ConfigureOtherServices();
 

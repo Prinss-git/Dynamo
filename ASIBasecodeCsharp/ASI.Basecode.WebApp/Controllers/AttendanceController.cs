@@ -1,7 +1,6 @@
 ﻿using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.WebApp.Mvc;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,8 +21,7 @@ namespace ASI.Basecode.WebApp.Controllers
         public AttendanceController(IHttpContextAccessor httpContextAccessor,
                                     ILoggerFactory loggerFactory,
                                     IConfiguration configuration,
-                                    IAttendanceService attendanceService,
-                                    IMapper mapper = null) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+                                    IAttendanceService attendanceService) : base(httpContextAccessor, loggerFactory, configuration)
         {
             _attendanceService = attendanceService;
         }

@@ -3,7 +3,6 @@ using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels;
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -29,29 +28,31 @@ namespace ASI.Basecode.Services.Services
         private readonly IRegistrationService _registrationService;
         private readonly IAttendanceService _attendanceService;
         private readonly IUserRepository _userRepository;
-        private readonly IMapper _mapper;
 
         public EventService(IEventRepository repository,
                             IAccessService accessService,
                             IRegistrationService registrationService,
                             IAttendanceService attendanceService,
-                            IUserRepository userRepository,
-                            IMapper mapper)
+                            IUserRepository userRepository)
         {
             _repository = repository;
             _userRepository = userRepository;
             _accessService = accessService;
             _registrationService = registrationService;
             _attendanceService = attendanceService;
-            _mapper = mapper;
         }
 
         public List<EventViewModel> GetPublishedEvents(CurrentUserModel currentUser, string search, bool upcomingOnly)
         {
             var query = Search(_repository.GetEvents(), search).Where(e => e.Status != EventStatus.Draft);
+            if (currentUser.Role == Role.Student)
+            {
+                // a deactivated organization's events are hidden from students
+                query = query.Where(e => e.Organization.IsActive);
+            }
             if (upcomingOnly)
             {
-                var now = DateTime.Now;
+                var now = AppClock.Now;
                 query = query.Where(e => e.EndTime >= now && e.Status != EventStatus.Cancelled);
             }
 
@@ -88,7 +89,7 @@ namespace ASI.Basecode.Services.Services
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
 
             model.CanManage = _accessService.CanManageOrganization(model.OrganizationId, currentUser);
-            if (model.Status == EventStatus.Draft && !model.CanManage)
+            if ((model.Status == EventStatus.Draft || !model.OrganizationIsActive) && !model.CanManage)
             {
                 throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
             }
@@ -98,11 +99,21 @@ namespace ASI.Basecode.Services.Services
         public int CreateEvent(EventViewModel model, CurrentUserModel currentUser)
         {
             _accessService.EnsureCanManageOrganization(model.OrganizationId, currentUser);
+            var now = AppClock.Now;
+            if (model.StartTime <= now)
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.EventMustStartInFuture);
+            }
+            if (model.RegistrationDeadline <= now)
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.DeadlineMustBeInFuture);
+            }
 
-            var entity = _mapper.Map<Event>(model);
+            var entity = new Event();
+            model.ApplyTo(entity);
             entity.Status = EventStatus.Draft;
-            entity.CreatedTime = DateTime.Now;
-            entity.UpdatedTime = DateTime.Now;
+            entity.CreatedTime = AppClock.Now;
+            entity.UpdatedTime = AppClock.Now;
             entity.CreatedBy = currentUser.UserId;
             entity.UpdatedBy = currentUser.UserId;
             foreach (var course in AllowedCoursesOf(model))
@@ -119,6 +130,20 @@ namespace ASI.Basecode.Services.Services
             var entity = FindEvent(model.Id);
             _accessService.EnsureCanManageOrganization(entity.OrganizationId, currentUser);
             _accessService.EnsureCanManageOrganization(model.OrganizationId, currentUser);
+            if (entity.Status == EventStatus.Completed || entity.Status == EventStatus.Cancelled)
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.EventFinalized);
+            }
+            // moving the start or the deadline is only allowed to a time that hasn't passed
+            var now = AppClock.Now;
+            if (model.StartTime != entity.StartTime && model.StartTime <= now)
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.EventMustStartInFuture);
+            }
+            if (model.RegistrationDeadline != entity.RegistrationDeadline && model.RegistrationDeadline <= now)
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.DeadlineMustBeInFuture);
+            }
 
             var registeredCount = entity.Registrations.Count(r => r.Status == RegistrationStatus.Registered);
             if (model.Capacity > 0 && model.Capacity < registeredCount)
@@ -126,8 +151,8 @@ namespace ASI.Basecode.Services.Services
                 throw new InvalidDataException(Resources.Messages.Errors.CapacityBelowRegistered);
             }
 
-            _mapper.Map(model, entity);
-            entity.UpdatedTime = DateTime.Now;
+            model.ApplyTo(entity);
+            entity.UpdatedTime = AppClock.Now;
             entity.UpdatedBy = currentUser.UserId;
 
             // Sync the allowed courses. Students already registered keep their registration even if their
@@ -170,7 +195,7 @@ namespace ASI.Basecode.Services.Services
             }
 
             entity.Status = status;
-            entity.UpdatedTime = DateTime.Now;
+            entity.UpdatedTime = AppClock.Now;
             entity.UpdatedBy = currentUser.UserId;
             _repository.UpdateEvent(entity);
 
@@ -178,6 +203,47 @@ namespace ASI.Basecode.Services.Services
             {
                 _attendanceService.MarkAbsentees(id, currentUser.UserId);
             }
+        }
+
+        /// <summary>Officers get this long after an event ends to finish attendance before it completes on its own.</summary>
+        public static readonly TimeSpan AutoCompleteAfterEnd = TimeSpan.FromHours(24);
+
+        /// <summary>Who the automatic changes are recorded as (UpdatedBy / RecordedBy).</summary>
+        public const string SystemActor = "system";
+
+        public int AdvanceEventStatuses()
+        {
+            var now = AppClock.Now;
+            var completeBefore = now - AutoCompleteAfterEnd;
+            var changed = 0;
+
+            var toComplete = _repository.GetEvents()
+                .Where(e => (e.Status == EventStatus.Open || e.Status == EventStatus.Closed) && e.EndTime <= completeBefore)
+                .ToList();
+            foreach (var entity in toComplete)
+            {
+                entity.Status = EventStatus.Completed;
+                entity.UpdatedTime = now;
+                entity.UpdatedBy = SystemActor;
+                _repository.UpdateEvent(entity);
+                _attendanceService.MarkAbsentees(entity.Id, SystemActor);
+                changed++;
+            }
+
+            // registration can't happen after the start anyway; Closed says so on every list
+            var toClose = _repository.GetEvents()
+                .Where(e => e.Status == EventStatus.Open && e.StartTime <= now)
+                .ToList();
+            foreach (var entity in toClose)
+            {
+                entity.Status = EventStatus.Closed;
+                entity.UpdatedTime = now;
+                entity.UpdatedBy = SystemActor;
+                _repository.UpdateEvent(entity);
+                changed++;
+            }
+
+            return changed;
         }
 
         public List<EventStatus> GetAllowedStatusChanges(EventStatus current)

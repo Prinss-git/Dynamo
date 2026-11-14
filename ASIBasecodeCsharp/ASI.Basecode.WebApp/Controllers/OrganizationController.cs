@@ -2,7 +2,6 @@
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels;
 using ASI.Basecode.WebApp.Mvc;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,8 +22,7 @@ namespace ASI.Basecode.WebApp.Controllers
         public OrganizationController(IHttpContextAccessor httpContextAccessor,
                                       ILoggerFactory loggerFactory,
                                       IConfiguration configuration,
-                                      IOrganizationService organizationService,
-                                      IMapper mapper = null) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+                                      IOrganizationService organizationService) : base(httpContextAccessor, loggerFactory, configuration)
         {
             _organizationService = organizationService;
         }

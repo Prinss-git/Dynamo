@@ -1,8 +1,8 @@
 ﻿using ASI.Basecode.Data.Interfaces;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels;
-using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,17 +15,14 @@ namespace ASI.Basecode.Services.Services
         private readonly IOrganizationRepository _repository;
         private readonly IUserRepository _userRepository;
         private readonly IAccessService _accessService;
-        private readonly IMapper _mapper;
 
         public OrganizationService(IOrganizationRepository repository,
                                    IUserRepository userRepository,
-                                   IAccessService accessService,
-                                   IMapper mapper)
+                                   IAccessService accessService)
         {
             _repository = repository;
             _userRepository = userRepository;
             _accessService = accessService;
-            _mapper = mapper;
         }
 
         public List<OrganizationViewModel> GetOrganizations(string search, bool? active = null, string sort = null)
@@ -66,17 +63,18 @@ namespace ASI.Basecode.Services.Services
 
         public OrganizationViewModel GetOrganization(int id)
         {
-            return _mapper.Map<OrganizationViewModel>(FindOrganization(id));
+            return FindOrganization(id).ToModel();
         }
 
         public void CreateOrganization(OrganizationViewModel model, string actor)
         {
             EnsureNameAvailable(model.Name, 0);
 
-            var organization = _mapper.Map<Organization>(model);
+            var organization = new Organization();
+            model.ApplyTo(organization);
             organization.Id = 0;
-            organization.CreatedTime = DateTime.Now;
-            organization.UpdatedTime = DateTime.Now;
+            organization.CreatedTime = AppClock.Now;
+            organization.UpdatedTime = AppClock.Now;
             organization.CreatedBy = actor;
             organization.UpdatedBy = actor;
 
@@ -88,8 +86,8 @@ namespace ASI.Basecode.Services.Services
             var organization = FindOrganization(model.Id);
             EnsureNameAvailable(model.Name, model.Id);
 
-            _mapper.Map(model, organization);
-            organization.UpdatedTime = DateTime.Now;
+            model.ApplyTo(organization);
+            organization.UpdatedTime = AppClock.Now;
             organization.UpdatedBy = actor;
 
             _repository.UpdateOrganization(organization);
@@ -160,7 +158,7 @@ namespace ASI.Basecode.Services.Services
                 OrganizationId = organizationId,
                 MemberId = memberId,
                 Position = string.IsNullOrWhiteSpace(position) ? "Member" : position.Trim(),
-                JoinedTime = DateTime.Now,
+                JoinedTime = AppClock.Now,
             });
         }
 

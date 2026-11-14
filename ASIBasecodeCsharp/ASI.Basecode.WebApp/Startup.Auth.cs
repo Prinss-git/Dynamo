@@ -44,6 +44,11 @@ namespace ASI.Basecode.WebApp
                 options.AccessDeniedPath = new PathString("/Account/AccessDenied");
                 options.ReturnUrlParameter = "ReturnUrl";
                 options.TicketDataFormat = new CustomJwtDataFormat(SecurityAlgorithms.HmacSha256, _tokenValidationParameters, Configuration, tokenProviderOptionsFactory);
+                // re-check the account on every request (deactivated, role or password changed -> signed out)
+                options.Events = new Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationEvents
+                {
+                    OnValidatePrincipal = SessionValidator.ValidateAsync,
+                };
             });
 
             this._services.AddAuthorization(options =>

@@ -44,7 +44,7 @@ namespace ASI.Basecode.Services.Interfaces
         /// "Forgot password": queues a request for an admin when the username and student number match an
         /// active account. Does nothing otherwise, so the form never reveals which accounts exist.
         /// </summary>
-        void RequestPasswordReset(string userId, string studentNumber);
+        void RequestPasswordReset(string userId, string studentNumberOrEmail);
         List<PasswordResetRequestModel> GetPendingResets();
         int CountPendingResets();
         PasswordResetRequestModel GetPendingReset(int requestId);
@@ -52,6 +52,8 @@ namespace ASI.Basecode.Services.Interfaces
         string CompletePasswordReset(int requestId, string temporaryPassword, string actor);
         void DismissPasswordReset(int requestId, string actor);
         /// <summary>The signed-in user's own new password; clears the must-change flag. Returns the updated user.</summary>
-        User ChangeOwnPassword(int accountId, string newPassword);
+        User ChangeOwnPassword(int accountId, string currentPassword, string newPassword);
+        /// <summary>The account behind a sign-in cookie, read fresh from the database on each request (no tracking).</summary>
+        User GetSessionUser(int accountId);
     }
 }

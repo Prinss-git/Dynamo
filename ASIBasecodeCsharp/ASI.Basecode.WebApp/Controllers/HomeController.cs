@@ -1,6 +1,5 @@
 ﻿using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.WebApp.Mvc;
-using AutoMapper;
 using ASI.Basecode.WebApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
@@ -25,12 +24,10 @@ namespace ASI.Basecode.WebApp.Controllers
         /// <param name="loggerFactory"></param>
         /// <param name="configuration"></param>
         /// <param name="reportService"></param>
-        /// <param name="mapper"></param>
         public HomeController(IHttpContextAccessor httpContextAccessor,
                               ILoggerFactory loggerFactory,
                               IConfiguration configuration,
-                              IReportService reportService,
-                              IMapper mapper = null) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+                              IReportService reportService) : base(httpContextAccessor, loggerFactory, configuration)
         {
             _reportService = reportService;
         }

@@ -1,4 +1,5 @@
 ﻿using ASI.Basecode.Data.Interfaces;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.Manager;
@@ -7,7 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Data;
 using System.Security.Cryptography;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using static ASI.Basecode.Resources.Constants.Enums;
 
 namespace ASI.Basecode.Services.Services
@@ -22,24 +26,61 @@ namespace ASI.Basecode.Services.Services
         private readonly IEventRepository _eventRepository;
         private readonly IAccessService _accessService;
         private readonly IUserRepository _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public RegistrationService(IEventRegistrationRepository repository,
                                    IEventRepository eventRepository,
                                    IAccessService accessService,
-                                   IUserRepository userRepository)
+                                   IUserRepository userRepository,
+                                   IUnitOfWork unitOfWork)
         {
+            _unitOfWork = unitOfWork;
             _repository = repository;
             _eventRepository = eventRepository;
             _accessService = accessService;
             _userRepository = userRepository;
         }
 
+        /// <summary>
+        /// Registers the student, or waitlists them when the event is full. Runs in a transaction that first locks the
+        /// event row, so two students taking the last slot at the same moment are handled one after the other
+        /// (the second one is waitlisted) instead of both being registered past the capacity.
+        /// </summary>
         public RegistrationStatus Register(int eventId, CurrentUserModel currentUser)
+        {
+            var database = _unitOfWork.Database.Database;
+            if (!database.IsRelational())
+            {
+                return RegisterLocked(eventId, currentUser);
+            }
+
+            try
+            {
+                using var transaction = database.BeginTransaction(IsolationLevel.ReadCommitted);
+                // UPDLOCK + HOLDLOCK: other registrations for this event wait here until this one commits
+                database.ExecuteSqlInterpolated($"SELECT id FROM events WITH (UPDLOCK, HOLDLOCK) WHERE id = {eventId}");
+                var status = RegisterLocked(eventId, currentUser);
+                transaction.Commit();
+                return status;
+            }
+            catch (Exception ex) when (ex is DbUpdateException || ex is SqlException || ex is InvalidOperationException && ex.InnerException is SqlException)
+            {
+                // deadlock victim, lock timeout or a duplicate row from a double click
+                _unitOfWork.Database.ChangeTracker.Clear();
+                throw new InvalidDataException(Resources.Messages.Errors.RegistrationBusy);
+            }
+        }
+
+        private RegistrationStatus RegisterLocked(int eventId, CurrentUserModel currentUser)
         {
             var ev = _eventRepository.GetEvents().FirstOrDefault(e => e.Id == eventId && e.Status != EventStatus.Draft)
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
+            if (!_eventRepository.GetEvents().Any(e => e.Id == eventId && e.Organization.IsActive))
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.OrganizationInactive);
+            }
 
-            var now = DateTime.Now;
+            var now = AppClock.Now;
             if (ev.Status != EventStatus.Open || now > ev.RegistrationDeadline || now >= ev.StartTime)
             {
                 throw new InvalidDataException(Resources.Messages.Errors.RegistrationClosed);
@@ -102,7 +143,7 @@ namespace ASI.Basecode.Services.Services
             var entity = _repository.GetRegistrations().First(r => r.Id == registrationId);
             var wasRegistered = entity.Status == RegistrationStatus.Registered;
             entity.Status = RegistrationStatus.Cancelled;
-            entity.CancelledTime = DateTime.Now;
+            entity.CancelledTime = AppClock.Now;
             _repository.UpdateRegistration(entity);
 
             if (wasRegistered)
@@ -129,7 +170,9 @@ namespace ASI.Basecode.Services.Services
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
 
             EnsureOwnerOrManager(registration, currentUser);
-            if (registration.Status == RegistrationStatus.Registered)
+            // a QR code only while it can still be scanned: registered, and the event is open or closed (not cancelled/completed)
+            if (registration.Status == RegistrationStatus.Registered
+                && (registration.EventStatus == EventStatus.Open || registration.EventStatus == EventStatus.Closed))
             {
                 registration.QrCodeSvg = QrCodeManager.GenerateSvg(registration.RegistrationCode);
             }

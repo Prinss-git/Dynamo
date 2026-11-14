@@ -47,6 +47,9 @@
         /// <summary>Claim present while the user must replace a temporary password set by an admin.</summary>
         public const string ClaimMustChangePassword = "MustChangePassword";
 
+        /// <summary>Fingerprint of the stored password; a password change or reset ends other sessions.</summary>
+        public const string ClaimPasswordStamp = "PasswordStamp";
+
         public const string SortNewest = "newest";
         public const string SortOldest = "oldest";
         public const string SortName = "name";

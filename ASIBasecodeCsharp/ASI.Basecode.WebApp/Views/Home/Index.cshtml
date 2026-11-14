@@ -7,7 +7,7 @@
 <div class="page-head">
     <div>
         <h1 class="page-title">Hi, @firstName</h1>
-        <p class="page-sub">@DateTime.Now.ToString("dddd, MMMM d")</p>
+        <p class="page-sub">@AppClock.Now.ToString("dddd, MMMM d")</p>
     </div>
     @if (Model.Role != Role.Student)
     {
@@ -115,7 +115,7 @@ else
             <div class="door-body">
                 <h2 class="door-title" id="door-title"><a asp-controller="Event" asp-action="Details" asp-route-id="@door.Id">@door.Title</a></h2>
                 <dl class="door-counts">
-                    <div><dt class="label">Doors open</dt><dd>@door.StartTime.ToString(door.StartTime.Date == DateTime.Today ? "h:mm tt" : "MMM d")</dd></div>
+                    <div><dt class="label">Doors open</dt><dd>@door.StartTime.ToString(door.StartTime.Date == AppClock.Today ? "h:mm tt" : "MMM d")</dd></div>
                     <div><dt class="label">Registered</dt><dd>@door.RegisteredCount@(door.IsUnlimited ? "" : "/" + door.Capacity)</dd></div>
                     <div><dt class="label">Checked in</dt><dd>@door.AttendedCount</dd></div>
                     <div><dt class="label">Not yet in</dt><dd>@Math.Max(door.RegisteredCount - door.AttendedCount, 0)</dd></div>
@@ -125,7 +125,7 @@ else
                 <a class="btn btn-key btn-block" asp-controller="Attendance" asp-action="Index" asp-route-eventId="@door.Id"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Open the check-in desk</a>
                 <a class="btn btn-outline btn-block" asp-controller="Event" asp-action="Details" asp-route-id="@door.Id">Event details</a>
             </div>
-            <div class="pass-foot"><span class="label">@(door.StartTime.Date == DateTime.Today ? "Today's door" : "Next door")</span><span class="label">@door.Venue</span></div>
+            <div class="pass-foot"><span class="label">@(door.StartTime.Date == AppClock.Today ? "Today's door" : "Next door")</span><span class="label">@door.Venue</span></div>
         </section>
     }
     else

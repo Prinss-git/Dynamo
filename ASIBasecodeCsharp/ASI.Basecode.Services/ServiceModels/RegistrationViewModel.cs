@@ -1,4 +1,5 @@
 ﻿using System;
+using ASI.Basecode.Resources.Constants;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using static ASI.Basecode.Resources.Constants.Enums;
@@ -37,6 +38,6 @@ namespace ASI.Basecode.Services.ServiceModels
         public bool CanCancel => Status != RegistrationStatus.Cancelled
                                  && AttendanceStatus == null
                                  && (EventStatus == EventStatus.Open || EventStatus == EventStatus.Closed)
-                                 && DateTime.Now < StartTime;
+                                 && AppClock.Now < StartTime;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using ASI.Basecode.Data.Interfaces;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels;
 using CsvHelper;
@@ -65,20 +66,20 @@ namespace ASI.Basecode.Services.Services
         public byte[] ExportEventCsv(int eventId, CurrentUserModel currentUser, out string fileName)
         {
             var sheet = _attendanceService.GetAttendanceSheet(eventId, currentUser);
-            fileName = $"attendance_{eventId}_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+            fileName = $"attendance_{eventId}_{AppClock.Now:yyyyMMdd_HHmm}.csv";
 
             var rows = sheet.Attendees.Select(a => new
             {
-                StudentNumber = a.StudentNumber,
-                Name = a.StudentName,
-                Course = a.Course,
+                StudentNumber = CsvSafe(a.StudentNumber),
+                Name = CsvSafe(a.StudentName),
+                Course = CsvSafe(a.Course),
                 YearLevel = a.YearLevel,
-                RegistrationCode = a.RegistrationCode,
+                RegistrationCode = CsvSafe(a.RegistrationCode),
                 RegisteredTime = a.RegisteredTime.ToString("yyyy-MM-dd HH:mm"),
                 Attendance = a.AttendanceStatus?.ToString() ?? "Not yet recorded",
                 CheckIn = a.CheckInTime?.ToString("yyyy-MM-dd HH:mm") ?? string.Empty,
                 CheckOut = a.CheckOutTime?.ToString("yyyy-MM-dd HH:mm") ?? string.Empty,
-                Remarks = a.Remarks,
+                Remarks = CsvSafe(a.Remarks),
             });
             return WriteCsv(rows);
         }
@@ -87,8 +88,8 @@ namespace ASI.Basecode.Services.Services
         {
             var rows = GetEventSummaries(currentUser, organizationId).Select(s => new
             {
-                Event = s.Title,
-                Organization = s.OrganizationName,
+                Event = CsvSafe(s.Title),
+                Organization = CsvSafe(s.OrganizationName),
                 Date = s.StartTime.ToString("yyyy-MM-dd HH:mm"),
                 Status = s.Status.ToString(),
                 s.Registered,
@@ -102,7 +103,7 @@ namespace ASI.Basecode.Services.Services
 
         public DashboardModel GetDashboard(CurrentUserModel currentUser, string name)
         {
-            var now = DateTime.Now;
+            var now = AppClock.Now;
             var model = new DashboardModel { Name = name, Role = currentUser.Role };
 
             if (currentUser.Role == Role.Student)
@@ -120,10 +121,13 @@ namespace ASI.Basecode.Services.Services
                     .ToList();
                 model.MyUpcomingCount = model.MyUpcoming.Count;
                 model.MyAttendedCount = mine.Count(r => r.Attendance != null && r.Attendance.Status != AttendanceStatus.Absent);
-                model.OpenEventCount = _eventRepository.GetEvents()
-                    .Count(e => e.Status == EventStatus.Open && e.RegistrationDeadline >= now && e.StartTime > now);
-                model.UpcomingEvents = _eventRepository.GetEvents()
-                    .Where(e => e.Status == EventStatus.Open && e.RegistrationDeadline >= now && e.StartTime > now)
+                // events this student can still register for: open, active organization, and their course allowed
+                var openForMe = _eventRepository.GetEvents()
+                    .Where(e => e.Status == EventStatus.Open && e.RegistrationDeadline >= now && e.StartTime > now
+                             && e.Organization.IsActive
+                             && (!e.AllowedCourses.Any() || e.AllowedCourses.Any(c => c.Course == viewerCourse)));
+                model.OpenEventCount = openForMe.Count();
+                model.UpcomingEvents = openForMe
                     .OrderBy(e => e.StartTime)
                     .Select(EventProjection.ToViewModel(currentUser.AccountId, viewerCourse))
                     .ToList();
@@ -156,6 +160,16 @@ namespace ASI.Basecode.Services.Services
                 .ToList();
             model.UpcomingEvents.ForEach(e => e.CanManage = true);
             return model;
+        }
+
+        /// <summary>
+        /// Stops CSV/formula injection: Excel runs a cell that starts with = + - @ (or a tab / carriage return) as a
+        /// formula, so such text (e.g. a remark typed by an officer) is prefixed with an apostrophe.
+        /// </summary>
+        private static string CsvSafe(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            return "=+-@\t\r".IndexOf(value[0]) >= 0 ? "'" + value : value;
         }
 
         private static byte[] WriteCsv<T>(IEnumerable<T> rows)

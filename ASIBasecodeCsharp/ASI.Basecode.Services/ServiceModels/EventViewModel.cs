@@ -1,4 +1,5 @@
 ﻿using ASI.Basecode.Resources.Constants;
+using ASI.Basecode.Resources.Constants;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -29,15 +30,15 @@ namespace ASI.Basecode.Services.ServiceModels
 
         [Required]
         [Display(Name = "Starts")]
-        public DateTime StartTime { get; set; } = DateTime.Today.AddDays(7).AddHours(9);
+        public DateTime StartTime { get; set; } = AppClock.Today.AddDays(7).AddHours(9);
 
         [Required]
         [Display(Name = "Ends")]
-        public DateTime EndTime { get; set; } = DateTime.Today.AddDays(7).AddHours(12);
+        public DateTime EndTime { get; set; } = AppClock.Today.AddDays(7).AddHours(12);
 
         [Required]
         [Display(Name = "Registration Deadline")]
-        public DateTime RegistrationDeadline { get; set; } = DateTime.Today.AddDays(6).AddHours(17);
+        public DateTime RegistrationDeadline { get; set; } = AppClock.Today.AddDays(6).AddHours(17);
 
         /// <summary>0 means unlimited</summary>
         [Range(0, 100000, ErrorMessage = "Capacity must be 0 (unlimited) or more.")]
@@ -64,6 +65,12 @@ namespace ASI.Basecode.Services.ServiceModels
         public int WaitlistedCount { get; set; }
         public int AttendedCount { get; set; }
 
+        /// <summary>True when any registration row exists (cancelled ones too); such an event can't be deleted.</summary>
+        public bool HasRegistrations { get; set; }
+
+        /// <summary>False when the organizing organization was deactivated.</summary>
+        public bool OrganizationIsActive { get; set; } = true;
+
         /// <summary>Registration of the signed-in student, if any</summary>
         public int? MyRegistrationId { get; set; }
         public RegistrationStatus? MyRegistrationStatus { get; set; }
@@ -73,7 +80,7 @@ namespace ASI.Basecode.Services.ServiceModels
 
         public bool IsUnlimited => Capacity == 0;
         public int? SlotsLeft => IsUnlimited ? null : Math.Max(Capacity - RegisteredCount, 0);
-        public bool IsRegistrationOpen => Status == EventStatus.Open && DateTime.Now <= RegistrationDeadline && DateTime.Now < StartTime;
+        public bool IsRegistrationOpen => Status == EventStatus.Open && AppClock.Now <= RegistrationDeadline && AppClock.Now < StartTime;
         public bool IsOpenToAll => AllowedCourses == null || AllowedCourses.Count == 0;
         /// <summary>The signed-in student may register (open to all, or their course is allowed)</summary>
         public bool IsEligible => IsOpenToAll || ViewerCourseAllowed;

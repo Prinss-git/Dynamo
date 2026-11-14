@@ -1,7 +1,7 @@
 ﻿@model List<RegistrationViewModel>
 @{
     ViewData["Title"] = "My passes";
-    var now = DateTime.Now;
+    var now = AppClock.Now;
     var current = Model.Where(r => r.Status != RegistrationStatus.Cancelled && r.EndTime >= now && r.EventStatus != EventStatus.Cancelled)
                        .OrderBy(r => r.StartTime).ToList();
     var history = Model.Except(current).ToList();

@@ -75,7 +75,7 @@
                             {
                                 <a class="btn btn-key btn-block" asp-controller="Registration" asp-action="Ticket" asp-route-id="@Model.MyRegistrationId"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Show my pass</a>
                             }
-                            @if (running && DateTime.Now < Model.StartTime)
+                            @if (running && AppClock.Now < Model.StartTime)
                             {
                                 <form asp-controller="Registration" asp-action="Cancel" method="post" data-confirm="Give up your spot for this event?">
                                     <input type="hidden" name="id" value="@Model.MyRegistrationId" />

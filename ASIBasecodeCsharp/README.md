@@ -78,9 +78,10 @@ MonsterASP's *Visual Studio access* card except the last:
 (the full contents of `ASI.Basecode.WebApp/appsettings.Production.json`: connection string and secret key).
 Update a secret whenever that password or setting changes.
 
-**Database changes are never applied automatically.** When a push adds or changes a script in
-`Database/migrations/`, the workflow stops before deploying. Run the migration on the live database, then start the
-workflow by hand with *The live database is already migrated* ticked.
+**Database changes are never applied automatically.** When a script in `Database/migrations/` was added or changed
+since the last successful deployment, the workflow stops before deploying, and keeps stopping on later pushes until
+a deployment succeeds. Run the migration on the live database, then start the workflow by hand with *The live
+database is already migrated* ticked (a manual run without the tick is refused too).
 
 ### Demo accounts
 | Username | Password | Role |
@@ -108,8 +109,22 @@ They are safe to run more than once. A fresh install only needs `student_event_d
 Demo data highlights: *Hackathon 2026 Orientation* is limited to the College of Computer Studies and BS Computer
 Engineering (sign in as `student5`, BS Criminology, to see the disabled Register button), and `student6` has a pending
 forgot-password request under *Account approvals*.
-Passwords are encrypted with the existing `PasswordManager` using `TokenAuthentication:SecretKey`, so changing
-that key invalidates the seeded passwords.
+Passwords are stored as salted one-way hashes (ASP.NET Core Identity's `PasswordHasher`, PBKDF2). The seed scripts
+still ship the demo passwords in the older AES-encrypted form, which uses `TokenAuthentication:SecretKey`: such a
+password is checked with that key at its first sign-in and replaced by a hash right away. So changing the key before
+the demo accounts have signed in invalidates their seeded passwords.
+
+Other rules worth knowing:
+
+- All times are Philippine time (UTC+8, `AppClock`), whatever time zone the server runs in.
+- Five wrong passwords for one username lock it for 15 minutes.
+- A session ends on the next page load when the account is deactivated, its role or password changes, or an
+  administrator resets its password.
+- A background job (`EventStatusUpdater`, every 5 minutes) closes Open events once they start and completes
+  Open/Closed events 24 hours after they end, marking unrecorded attendees Absent.
+- Check-in opens 2 hours before an event starts.
+- Events of a deactivated organization are hidden from students and can't be joined; its officers can't manage it
+  until an administrator reactivates it.
 
 ## Code Structure
 

@@ -8,10 +8,10 @@
 #   APPSETTINGS_PRODUCTION   full contents of ASI.Basecode.WebApp/appsettings.Production.json
 #                            (connection string + secret key; the file itself is never committed)
 #
-# Database changes are NOT applied automatically. When a push adds or changes a script in
-# ASIBasecodeCsharp/Database/migrations/, this workflow stops before deploying. Run the migration on the live
-# database first, then start the workflow by hand (Actions > Deploy to MonsterASP > Run workflow) and tick
-# "The live database is already migrated".
+# Database changes are NOT applied automatically. When a script in ASIBasecodeCsharp/Database/migrations/ was
+# added or changed since the last successful deployment, this workflow stops before deploying (also on later
+# pushes, until a deployment succeeds). Run the migration on the live database first, then start the workflow by
+# hand (Actions > Deploy to MonsterASP > Run workflow) and tick "The live database is already migrated".
 name: Deploy to MonsterASP
 
 on:
@@ -33,6 +33,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read   # to look up the last successful deployment
 
 env:
   SITE_URL: http://dynamo.runasp.net
@@ -50,25 +51,34 @@ jobs:
       - name: Stop if a database migration has not been applied
         shell: pwsh
         env:
-          BEFORE: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
           AFTER: ${{ github.sha }}
           EVENT: ${{ github.event_name }}
           APPLIED: ${{ inputs.migrations_applied }}
         run: |
-          if ($env:EVENT -eq "workflow_dispatch") {
-            Write-Host "Manual run: migrations_applied = $env:APPLIED"
+          # Compare with the commit of the last SUCCESSFUL deployment, not just this push: a push that failed here
+          # must keep failing on later pushes until someone confirms the migration was run.
+          $last = gh run list --repo "$env:GITHUB_REPOSITORY" --workflow deploy.yml --status success --limit 1 --json headSha --jq '.[0].headSha'
+          if ($last -and (git cat-file -t $last 2>$null) -eq 'commit') {
+            $range = "$last..$($env:AFTER)"
+          } else {
+            # no earlier successful deployment (or its commit is gone): check every migration in the repository
+            $range = $null
+          }
+          $changed = if ($range) { git diff --name-only $range -- "ASIBasecodeCsharp/Database/migrations/" } else { git ls-files "ASIBasecodeCsharp/Database/migrations/" }
+          if (-not $changed) {
+            Write-Host "No migration changes since the last deployment ($range)."
             exit 0
           }
-          # push: look at the files this push changed (a new branch or forced history checks the last commit only)
-          $range = if ($env:BEFORE -and $env:BEFORE -notmatch '^0+$') { "$($env:BEFORE)..$($env:AFTER)" } else { "$($env:AFTER)~1..$($env:AFTER)" }
-          $changed = git diff --name-only $range -- "ASIBasecodeCsharp/Database/migrations/"
-          if ($changed) {
-            Write-Host "::error::This push changes database migrations:"
-            $changed | ForEach-Object { Write-Host "  $_" }
-            Write-Host "::error::Run them on the live database, then re-run this workflow by hand with 'The live database is already migrated' ticked."
-            exit 1
+
+          Write-Host "Migrations changed since the last deployment ($range):"
+          $changed | ForEach-Object { Write-Host "  $_" }
+          if ($env:EVENT -eq "workflow_dispatch" -and $env:APPLIED -eq "true") {
+            Write-Host "Confirmed by hand: the live database is already migrated."
+            exit 0
           }
-          Write-Host "No migration changes in $range."
+          Write-Host "::error::Database migrations changed since the last deployment. Run them on the live database, then run this workflow by hand with 'The live database is already migrated' ticked."
+          exit 1
 
       - uses: actions/setup-dotnet@v4
         with:

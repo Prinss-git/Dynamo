@@ -4,7 +4,7 @@ using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.Manager;
 using ASI.Basecode.Services.ServiceModels;
-using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,23 +17,29 @@ namespace ASI.Basecode.Services.Services
     {
         private readonly IUserRepository _repository;
         private readonly IPasswordResetRepository _resetRepository;
-        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository repository, IPasswordResetRepository resetRepository, IMapper mapper)
+        public UserService(IUserRepository repository, IPasswordResetRepository resetRepository)
         {
-            _mapper = mapper;
             _repository = repository;
             _resetRepository = resetRepository;
         }
 
         public LoginResult AuthenticateUser(string userId, string password, ref User user)
         {
-            user = new User();
-            var passwordKey = PasswordManager.EncryptPassword(password);
-            user = _repository.GetUsers().Where(x => x.UserId == userId &&
-                                                     x.Password == passwordKey).FirstOrDefault();
+            user = _repository.GetUsers().FirstOrDefault(x => x.UserId == userId);
+            if (user == null || !PasswordManager.VerifyPassword(user.Password, password, out var needsUpgrade))
+            {
+                user = null;
+                return LoginResult.Failed;
+            }
 
-            if (user == null) return LoginResult.Failed;
+            // old template/demo passwords (reversible encryption) become a one-way hash at the first sign-in
+            if (needsUpgrade)
+            {
+                user.Password = PasswordManager.HashPassword(password);
+                _repository.UpdateUser(user);
+            }
+
             if (!user.IsApproved) return LoginResult.Pending;
             return user.IsActive ? LoginResult.Success : LoginResult.Inactive;
         }
@@ -47,14 +53,14 @@ namespace ASI.Basecode.Services.Services
             }
             EnsureStudentNumberAvailable(model.StudentNumber, 0);
 
-            _mapper.Map(model, user);
+            model.ApplyTo(user);
             SetName(user, model.FirstName, model.MiddleName, model.LastName);
             user.Role = Role.Student;
             user.IsActive = true;
             user.IsApproved = false;
-            user.Password = PasswordManager.EncryptPassword(model.Password);
-            user.CreatedTime = DateTime.Now;
-            user.UpdatedTime = DateTime.Now;
+            user.Password = PasswordManager.HashPassword(model.Password);
+            user.CreatedTime = AppClock.Now;
+            user.UpdatedTime = AppClock.Now;
             user.CreatedBy = model.UserId;
             user.UpdatedBy = model.UserId;
 
@@ -88,14 +94,14 @@ namespace ASI.Basecode.Services.Services
                 _ => query.OrderBy(u => u.Role).ThenBy(u => u.Name),
             };
             return ordered.ToList()
-                        .Select(u => _mapper.Map<UserModel>(u))
+                        .Select(u => u.ToModel())
                         .ToList();
         }
 
         public UserModel GetUser(int id)
         {
             var user = FindUser(id);
-            var model = _mapper.Map<UserModel>(user);
+            var model = user.ToModel();
             model.Password = null;
             return model;
         }
@@ -112,15 +118,16 @@ namespace ASI.Basecode.Services.Services
             }
             EnsureStudentNumberAvailable(model.StudentNumber, 0);
 
-            var user = _mapper.Map<User>(model);
+            var user = new User();
+            model.ApplyTo(user);
             user.Id = 0;
             SetName(user, model.FirstName, model.MiddleName, model.LastName);
             user.IsApproved = true;
             user.ApprovedBy = actor;
-            user.ApprovedTime = DateTime.Now;
-            user.Password = PasswordManager.EncryptPassword(model.Password);
-            user.CreatedTime = DateTime.Now;
-            user.UpdatedTime = DateTime.Now;
+            user.ApprovedTime = AppClock.Now;
+            user.Password = PasswordManager.HashPassword(model.Password);
+            user.CreatedTime = AppClock.Now;
+            user.UpdatedTime = AppClock.Now;
             user.CreatedBy = actor;
             user.UpdatedBy = actor;
 
@@ -137,12 +144,12 @@ namespace ASI.Basecode.Services.Services
             EnsureStudentNumberAvailable(model.StudentNumber, model.Id);
 
             var currentPassword = user.Password;
-            _mapper.Map(model, user);
+            model.ApplyTo(user);
             SetName(user, model.FirstName, model.MiddleName, model.LastName);
             user.Password = string.IsNullOrWhiteSpace(model.Password)
                 ? currentPassword
-                : PasswordManager.EncryptPassword(model.Password);
-            user.UpdatedTime = DateTime.Now;
+                : PasswordManager.HashPassword(model.Password);
+            user.UpdatedTime = AppClock.Now;
             user.UpdatedBy = actor;
 
             _repository.UpdateUser(user);
@@ -152,7 +159,7 @@ namespace ASI.Basecode.Services.Services
         {
             var user = FindUser(id);
             user.IsActive = !user.IsActive;
-            user.UpdatedTime = DateTime.Now;
+            user.UpdatedTime = AppClock.Now;
             user.UpdatedBy = actor;
             _repository.UpdateUser(user);
         }
@@ -184,7 +191,7 @@ namespace ASI.Basecode.Services.Services
                 : query.OrderBy(u => u.CreatedTime).ThenBy(u => u.Id);
 
             return query.ToList()
-                        .Select(u => _mapper.Map<UserModel>(u))
+                        .Select(u => u.ToModel())
                         .ToList();
         }
 
@@ -301,7 +308,7 @@ namespace ASI.Basecode.Services.Services
         {
             if (users.Count == 0) return 0;
 
-            var now = DateTime.Now;
+            var now = AppClock.Now;
             foreach (var user in users)
             {
                 user.IsApproved = true;
@@ -326,19 +333,23 @@ namespace ASI.Basecode.Services.Services
                 .Where(part => !string.IsNullOrEmpty(part)));
         }
 
-        public void RequestPasswordReset(string userId, string studentNumber)
+        public void RequestPasswordReset(string userId, string studentNumberOrEmail)
         {
             var username = (userId ?? string.Empty).Trim();
-            var number = (studentNumber ?? string.Empty).Trim();
-            var user = _repository.GetUsers().FirstOrDefault(u => u.UserId == username && u.StudentNumber == number
-                                                                && u.IsActive && u.IsApproved);
+            var proof = (studentNumberOrEmail ?? string.Empty).Trim();
+            if (username.Length == 0 || proof.Length == 0) return;
+            var proofLower = proof.ToLower();
+            // students prove it with their student number; officers and admins (usually no student number) with their email
+            var user = _repository.GetUsers().FirstOrDefault(u => u.UserId == username && u.IsActive && u.IsApproved
+                                                                && (u.StudentNumber == proof
+                                                                    || (u.Email != null && u.Email.ToLower() == proofLower)));
             if (user == null) return;
             if (_resetRepository.GetRequests().Any(r => r.UserId == user.Id && r.Status == PasswordResetStatus.Pending)) return;
 
             _resetRepository.AddRequest(new PasswordResetRequest
             {
                 UserId = user.Id,
-                RequestedTime = DateTime.Now,
+                RequestedTime = AppClock.Now,
                 Status = PasswordResetStatus.Pending,
             });
         }
@@ -364,8 +375,8 @@ namespace ASI.Basecode.Services.Services
             var request = FindPendingReset(requestId);
             var user = FindUser(request.UserId);
 
-            var now = DateTime.Now;
-            user.Password = PasswordManager.EncryptPassword(temporaryPassword);
+            var now = AppClock.Now;
+            user.Password = PasswordManager.HashPassword(temporaryPassword);
             user.MustChangePassword = true;
             user.UpdatedBy = actor;
             user.UpdatedTime = now;
@@ -383,19 +394,34 @@ namespace ASI.Basecode.Services.Services
             var request = FindPendingReset(requestId);
             request.Status = PasswordResetStatus.Dismissed;
             request.HandledBy = actor;
-            request.HandledTime = DateTime.Now;
+            request.HandledTime = AppClock.Now;
             _resetRepository.UpdateRequest(request);
         }
 
-        public User ChangeOwnPassword(int accountId, string newPassword)
+        public User ChangeOwnPassword(int accountId, string currentPassword, string newPassword)
         {
             var user = FindUser(accountId);
-            user.Password = PasswordManager.EncryptPassword(newPassword);
+            if (!PasswordManager.VerifyPassword(user.Password, currentPassword))
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.CurrentPasswordIncorrect);
+            }
+            if (PasswordManager.VerifyPassword(user.Password, newPassword))
+            {
+                // also stops a student from keeping the temporary password an admin gave them
+                throw new InvalidDataException(Resources.Messages.Errors.PasswordSameAsCurrent);
+            }
+
+            user.Password = PasswordManager.HashPassword(newPassword);
             user.MustChangePassword = false;
             user.UpdatedBy = user.UserId;
-            user.UpdatedTime = DateTime.Now;
+            user.UpdatedTime = AppClock.Now;
             _repository.UpdateUser(user);
             return user;
+        }
+
+        public User GetSessionUser(int accountId)
+        {
+            return _repository.GetUsers().AsNoTracking().FirstOrDefault(u => u.Id == accountId);
         }
 
         private IQueryable<PasswordResetRequestModel> PendingResetQuery()
@@ -432,8 +458,19 @@ namespace ASI.Basecode.Services.Services
             {
                 return query.Where(u => u.Course == course);
             }
-            var courses = Departments.Find(department)?.CourseNames.ToList();
-            return courses != null ? query.Where(u => courses.Contains(u.Course)) : query;
+            if (string.IsNullOrWhiteSpace(department))
+            {
+                return query;
+            }
+            if (string.Equals(department.Trim(), Departments.OtherCode, StringComparison.OrdinalIgnoreCase))
+            {
+                // courses no department lists (or none at all)
+                var listed = Departments.AllCourseNames.ToList();
+                return query.Where(u => u.Course == null || !listed.Contains(u.Course));
+            }
+            // an unknown department code matches nobody instead of silently showing everyone
+            var courses = Departments.Find(department)?.CourseNames.ToList() ?? new List<string>();
+            return query.Where(u => courses.Contains(u.Course));
         }
 
         private User FindUser(int id)

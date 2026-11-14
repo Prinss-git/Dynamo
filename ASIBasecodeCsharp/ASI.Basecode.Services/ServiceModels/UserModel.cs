@@ -77,6 +77,16 @@ namespace ASI.Basecode.Services.ServiceModels
             {
                 yield return new ValidationResult(Resources.Messages.Errors.InvalidCourse, new[] { nameof(Course) });
             }
+            // a student account needs the details that registration, eligibility and check-in rely on
+            if (Role == Role.Student)
+            {
+                if (string.IsNullOrWhiteSpace(StudentNumber))
+                    yield return new ValidationResult(Resources.Messages.Errors.StudentDetailsRequired, new[] { nameof(StudentNumber) });
+                if (string.IsNullOrWhiteSpace(Course))
+                    yield return new ValidationResult(Resources.Messages.Errors.StudentDetailsRequired, new[] { nameof(Course) });
+                if (!YearLevel.HasValue)
+                    yield return new ValidationResult(Resources.Messages.Errors.StudentDetailsRequired, new[] { nameof(YearLevel) });
+            }
         }
     }
 }

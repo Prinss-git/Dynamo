@@ -1,7 +1,7 @@
 ﻿using ASI.Basecode.Resources.Constants;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.WebApp.Mvc;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,8 +27,7 @@ namespace ASI.Basecode.WebApp.Controllers
                                 IConfiguration configuration,
                                 IReportService reportService,
                                 IAttendanceService attendanceService,
-                                IOrganizationService organizationService,
-                                IMapper mapper = null) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+                                IOrganizationService organizationService) : base(httpContextAccessor, loggerFactory, configuration)
         {
             _reportService = reportService;
             _attendanceService = attendanceService;
@@ -60,7 +59,7 @@ namespace ASI.Basecode.WebApp.Controllers
         public IActionResult ExportSummary(int? organizationId)
         {
             var content = _reportService.ExportSummaryCsv(CurrentUser, organizationId);
-            return File(content, "text/csv", $"event_summary_{DateTime.Now:yyyyMMdd_HHmm}.csv");
+            return File(content, "text/csv", $"event_summary_{AppClock.Now:yyyyMMdd_HHmm}.csv");
         }
     }
 }

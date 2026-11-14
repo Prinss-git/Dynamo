@@ -99,7 +99,7 @@
                                                     }
                                                 </select>
                                                 <label class="sr-only" for="remarks-@a.Id">Remarks for @a.StudentName</label>
-                                                <input type="text" name="remarks" id="remarks-@a.Id" value="@a.Remarks" class="input" placeholder="Remarks" style="min-height:36px;width:120px;padding:4px 8px" />
+                                                <input type="text" name="remarks" id="remarks-@a.Id" value="@a.Remarks" maxlength="250" class="input" placeholder="Remarks" style="min-height:36px;width:120px;padding:4px 8px" />
                                                 <button type="submit" class="btn btn-outline btn-sm">Save</button>
                                             </form>
                                             @if (canCheckIn && a.CheckInTime.HasValue && !a.CheckOutTime.HasValue)

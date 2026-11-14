@@ -37,7 +37,14 @@
                 {
                     <div class="notice" style="margin:0;text-align:left">
                         <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-                        <div>This pass is @Model.Status.ToString().ToLower(), so it has no check-in code yet.</div>
+                        @if (Model.EventStatus == EventStatus.Cancelled || Model.EventStatus == EventStatus.Completed)
+                        {
+                            <div>This event is @Model.EventStatus.ToString().ToLower(), so the pass has no check-in code.</div>
+                        }
+                        else
+                        {
+                            <div>This pass is @Model.Status.ToString().ToLower(), so it has no check-in code yet.</div>
+                        }
                     </div>
                 }
             </div>

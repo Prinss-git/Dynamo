@@ -5,7 +5,6 @@ using ASI.Basecode.Services.ServiceModels;
 using ASI.Basecode.WebApp.Authentication;
 using ASI.Basecode.WebApp.Models;
 using ASI.Basecode.WebApp.Mvc;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
@@ -27,6 +26,7 @@ namespace ASI.Basecode.WebApp.Controllers
         private readonly SignInManager _signInManager;
         private readonly IUserService _userService;
         private readonly IWebHostEnvironment _environment;
+        private readonly LoginThrottle _loginThrottle;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AccountController"/> class.
@@ -37,7 +37,6 @@ namespace ASI.Basecode.WebApp.Controllers
         /// <param name="httpContextAccessor">The HTTP context accessor.</param>
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="configuration">The configuration.</param>
-        /// <param name="mapper">The mapper.</param>
         /// <param name="tokenValidationParametersFactory">The token validation parameters factory.</param>
         /// <param name="tokenProviderOptionsFactory">The token provider options factory.</param>
         public AccountController(
@@ -45,10 +44,11 @@ namespace ASI.Basecode.WebApp.Controllers
                             IHttpContextAccessor httpContextAccessor,
                             ILoggerFactory loggerFactory,
                             IConfiguration configuration,
-                            IMapper mapper,
                             IUserService userService,
-                            IWebHostEnvironment environment) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+                            IWebHostEnvironment environment,
+                            LoginThrottle loginThrottle) : base(httpContextAccessor, loggerFactory, configuration)
         {
+            this._loginThrottle = loginThrottle;
             this._sessionManager = new SessionManager(this._session);
             this._signInManager = signInManager;
             this._userService = userService;
@@ -85,8 +85,24 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(model);
             }
 
+            // too many wrong passwords for this username: refuse without checking the password at all
+            if (_loginThrottle.IsLocked(model.UserId, out var minutesLeft))
+            {
+                TempData["ErrorMessage"] = string.Format(Resources.Messages.Errors.TooManyLoginAttempts, minutesLeft);
+                return View(model);
+            }
+
             User user = null;
             var loginResult = _userService.AuthenticateUser(model.UserId, model.Password, ref user);
+            if (loginResult == LoginResult.Failed)
+            {
+                _loginThrottle.RecordFailure(model.UserId);
+            }
+            else
+            {
+                _loginThrottle.Reset(model.UserId);
+            }
+
             if (loginResult == LoginResult.Success)
             {
                 // 認証OK
@@ -139,7 +155,7 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(model);
             }
 
-            _userService.RequestPasswordReset(model.UserId, model.StudentNumber);
+            _userService.RequestPasswordReset(model.UserId, model.StudentNumberOrEmail);
             TempData["SuccessMessage"] = Resources.Messages.Common.PasswordResetRequested;
             return RedirectToAction(nameof(Login));
         }
@@ -151,20 +167,30 @@ namespace ASI.Basecode.WebApp.Controllers
         public IActionResult ChangePassword()
         {
             ViewBag.Forced = User.HasClaim(c => c.Type == Const.ClaimMustChangePassword);
-            return View(new NewPasswordModel());
+            return View(new ChangePasswordModel());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword(NewPasswordModel model)
+        public async Task<IActionResult> ChangePassword(ChangePasswordModel model)
         {
+            ViewBag.Forced = User.HasClaim(c => c.Type == Const.ClaimMustChangePassword);
             if (!ModelState.IsValid)
             {
-                ViewBag.Forced = User.HasClaim(c => c.Type == Const.ClaimMustChangePassword);
                 return View(model);
             }
 
-            var user = _userService.ChangeOwnPassword(CurrentUser.AccountId, model.Password);
+            User user;
+            try
+            {
+                user = _userService.ChangeOwnPassword(CurrentUser.AccountId, model.CurrentPassword, model.Password);
+            }
+            catch (InvalidDataException ex)
+            {
+                var field = ex.Message == Resources.Messages.Errors.CurrentPasswordIncorrect ? nameof(model.CurrentPassword) : nameof(model.Password);
+                ModelState.AddModelError(field, ex.Message);
+                return View(model);
+            }
             await this._signInManager.SignInAsync(user);   // refresh the cookie without the must-change claim
             NotifySuccess(Resources.Messages.Common.PasswordChanged);
             return RedirectToAction("Index", "Home");

@@ -76,7 +76,7 @@
                                         <a class="btn btn-outline btn-sm btn-icon" asp-action="Edit" asp-route-id="@e.Id" title="Edit @e.Title" aria-label="Edit @e.Title"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
                                     }
                                     <a class="btn btn-outline btn-sm btn-icon" asp-controller="Report" asp-action="Event" asp-route-id="@e.Id" title="Report for @e.Title" aria-label="Report for @e.Title"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></a>
-                                    @if (e.RegisteredCount == 0 && e.WaitlistedCount == 0)
+                                    @if (!e.HasRegistrations)
                                     {
                                         <form asp-action="Delete" method="post" class="inline-form" data-confirm="Delete '@e.Title'? This can't be undone.">
                                             <input type="hidden" name="id" value="@e.Id" />

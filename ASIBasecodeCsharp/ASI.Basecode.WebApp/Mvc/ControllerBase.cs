@@ -1,6 +1,5 @@
 ﻿using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.ServiceModels;
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -39,22 +38,16 @@ namespace ASI.Basecode.WebApp.Mvc
         /// <param name="localizer">Localizer</param>
         /// <param name="loggerFactory">Logger factory</param>
         /// <param name="configuration">Configuration</param>
-        /// <param name="mapper">Mapper</param>
         public ControllerBase(
                                 IHttpContextAccessor httpContextAccessor,
                                 ILoggerFactory loggerFactory,
-                                IConfiguration configuration,
-                                IMapper mapper = null)
+                                IConfiguration configuration)
         {
             this._httpContextAccessor = httpContextAccessor;
             this._configuration = configuration;
             this._logger = loggerFactory.CreateLogger<TController>();
             this._configuration = configuration;
-            this._mapper = mapper;
         }
-
-        /// <summary>Mapper</summary>
-        protected IMapper _mapper { get; set; }
 
         /// <summary>
         /// Get UserId.

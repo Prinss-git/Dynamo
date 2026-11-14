@@ -1,7 +1,6 @@
 ﻿using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.WebApp.Mvc;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,8 +20,7 @@ namespace ASI.Basecode.WebApp.Controllers
         public RegistrationController(IHttpContextAccessor httpContextAccessor,
                                       ILoggerFactory loggerFactory,
                                       IConfiguration configuration,
-                                      IRegistrationService registrationService,
-                                      IMapper mapper = null) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+                                      IRegistrationService registrationService) : base(httpContextAccessor, loggerFactory, configuration)
         {
             _registrationService = registrationService;
         }

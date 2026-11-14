@@ -1,4 +1,5 @@
 ﻿using ASI.Basecode.Data.Interfaces;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels;
@@ -13,6 +14,12 @@ namespace ASI.Basecode.Services.Services
 {
     public class AttendanceService : IAttendanceService
     {
+        /// <summary>Check-in opens this many hours before the event starts.</summary>
+        public const int CheckInOpensHoursBefore = 2;
+
+        /// <summary>Same as the remarks column length.</summary>
+        public const int RemarksMaxLength = 250;
+
         private readonly IAttendanceRepository _repository;
         private readonly IEventRegistrationRepository _registrationRepository;
         private readonly IEventRepository _eventRepository;
@@ -66,6 +73,11 @@ namespace ASI.Basecode.Services.Services
             _accessService.EnsureCanManageOrganization(ev.OrganizationId, currentUser);
             EnsureAttendanceAllowed(ev);
 
+            if (AppClock.Now < ev.StartTime.AddHours(-CheckInOpensHoursBefore))
+            {
+                return Fail(string.Format(Resources.Messages.Errors.CheckInNotOpenYet, CheckInOpensHoursBefore));
+            }
+
             var input = (codeOrStudentNumber ?? string.Empty).Trim();
             var code = input.ToUpperInvariant();
             var registration = _registrationRepository.GetRegistrations()
@@ -99,7 +111,7 @@ namespace ASI.Basecode.Services.Services
                 return result;
             }
 
-            var now = DateTime.Now;
+            var now = AppClock.Now;
             var status = now > ev.StartTime.AddMinutes(ev.LateAfterMinutes) ? AttendanceStatus.Late : AttendanceStatus.Present;
             var attendance = registration.Attendance;
             if (attendance == null)
@@ -142,9 +154,9 @@ namespace ASI.Basecode.Services.Services
                 throw new InvalidDataException(Resources.Messages.Errors.NotCheckedIn);
             }
 
-            attendance.CheckOutTime = DateTime.Now;
+            attendance.CheckOutTime = AppClock.Now;
             attendance.RecordedBy = currentUser.UserId;
-            attendance.RecordedTime = DateTime.Now;
+            attendance.RecordedTime = AppClock.Now;
             _repository.UpdateAttendance(attendance);
         }
 
@@ -160,8 +172,16 @@ namespace ASI.Basecode.Services.Services
             {
                 throw new InvalidDataException(Resources.Messages.Errors.RegistrationNotActive);
             }
+            if ((remarks?.Trim().Length ?? 0) > RemarksMaxLength)
+            {
+                throw new InvalidDataException(Resources.Messages.Errors.RemarksTooLong);
+            }
 
-            var now = DateTime.Now;
+            var now = AppClock.Now;
+            if (status != AttendanceStatus.Absent && now < registration.Event.StartTime.AddHours(-CheckInOpensHoursBefore))
+            {
+                throw new InvalidDataException(string.Format(Resources.Messages.Errors.CheckInNotOpenYet, CheckInOpensHoursBefore));
+            }
             var attendance = registration.Attendance;
             if (attendance == null)
             {
@@ -195,7 +215,7 @@ namespace ASI.Basecode.Services.Services
 
         public void MarkAbsentees(int eventId, string actor)
         {
-            var now = DateTime.Now;
+            var now = AppClock.Now;
             var absentees = _registrationRepository.GetRegistrations()
                 .Where(r => r.EventId == eventId && r.Status == RegistrationStatus.Registered && r.Attendance == null)
                 .Select(r => r.Id)

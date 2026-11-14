@@ -329,5 +329,113 @@ namespace ASI.Basecode.Resources.Messages {
                 return ResourceManager.GetString("PasswordResetNotPending", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your current password is incorrect..
+        /// </summary>
+        public static string CurrentPasswordIncorrect {
+            get {
+                return ResourceManager.GetString("CurrentPasswordIncorrect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Choose a password that is different from your current one..
+        /// </summary>
+        public static string PasswordSameAsCurrent {
+            get {
+                return ResourceManager.GetString("PasswordSameAsCurrent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Too many failed sign-in attempts. Try again in {0} minute(s)..
+        /// </summary>
+        public static string TooManyLoginAttempts {
+            get {
+                return ResourceManager.GetString("TooManyLoginAttempts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You can't deactivate your own account or change your own role. Ask another administrator..
+        /// </summary>
+        public static string SelfAccountChange {
+            get {
+                return ResourceManager.GetString("SelfAccountChange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Check-in opens {0} hours before the event starts..
+        /// </summary>
+        public static string CheckInNotOpenYet {
+            get {
+                return ResourceManager.GetString("CheckInNotOpenYet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remarks must be 250 characters or fewer..
+        /// </summary>
+        public static string RemarksTooLong {
+            get {
+                return ResourceManager.GetString("RemarksTooLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The event must start in the future..
+        /// </summary>
+        public static string EventMustStartInFuture {
+            get {
+                return ResourceManager.GetString("EventMustStartInFuture", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The registration deadline must be in the future..
+        /// </summary>
+        public static string DeadlineMustBeInFuture {
+            get {
+                return ResourceManager.GetString("DeadlineMustBeInFuture", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Completed or cancelled events can't be edited..
+        /// </summary>
+        public static string EventFinalized {
+            get {
+                return ResourceManager.GetString("EventFinalized", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This organization is inactive, so its events can't be changed or joined..
+        /// </summary>
+        public static string OrganizationInactive {
+            get {
+                return ResourceManager.GetString("OrganizationInactive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Student accounts need a student number, course and year level..
+        /// </summary>
+        public static string StudentDetailsRequired {
+            get {
+                return ResourceManager.GetString("StudentDetailsRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Lots of students are registering right now. Please try again..
+        /// </summary>
+        public static string RegistrationBusy {
+            get {
+                return ResourceManager.GetString("RegistrationBusy", resourceCulture);
+            }
+        }
     }
 }

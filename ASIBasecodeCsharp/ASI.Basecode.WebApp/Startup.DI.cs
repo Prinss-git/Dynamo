@@ -52,6 +52,9 @@ namespace ASI.Basecode.WebApp
 
             // Manager Class
             this._services.AddScoped<SignInManager>();
+            this._services.AddMemoryCache();
+            this._services.AddSingleton<LoginThrottle>();
+            this._services.AddHostedService<ASI.Basecode.WebApp.Configuration.EventStatusUpdater>();
 
             this._services.AddHttpClient();
         }

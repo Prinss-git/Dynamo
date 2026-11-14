@@ -14,10 +14,11 @@ namespace ASI.Basecode.Services.ServiceModels
         [Display(Name = "Username")]
         public string UserId { get; set; }
 
-        [Required(ErrorMessage = "Student number is required.")]
-        [StringLength(20)]
-        [Display(Name = "Student Number")]
-        public string StudentNumber { get; set; }
+        /// <summary>Students enter their student number; staff accounts (no student number) enter their email.</summary>
+        [Required(ErrorMessage = "Student number or email is required.")]
+        [StringLength(100)]
+        [Display(Name = "Student number or email")]
+        public string StudentNumberOrEmail { get; set; }
     }
 
     /// <summary>
@@ -35,6 +36,16 @@ namespace ASI.Basecode.Services.ServiceModels
         [Compare(nameof(Password), ErrorMessage = "Passwords don't match.")]
         [Display(Name = "Confirm Password")]
         public string ConfirmPassword { get; set; }
+    }
+
+    /// <summary>
+    /// The signed-in user's own password change: the current password plus the new one typed twice.
+    /// </summary>
+    public class ChangePasswordModel : NewPasswordModel
+    {
+        [Required(ErrorMessage = "Current password is required.")]
+        [Display(Name = "Current Password")]
+        public string CurrentPassword { get; set; }
     }
 
     /// <summary>
