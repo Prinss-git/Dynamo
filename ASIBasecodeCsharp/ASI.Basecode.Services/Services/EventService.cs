@@ -93,6 +93,18 @@ namespace ASI.Basecode.Services.Services
             {
                 throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
             }
+            if (currentUser.Role == Role.Student)
+            {
+                // tell the student up front when this event clashes with one they're already registered for
+                var accountId = currentUser.AccountId;
+                model.ConflictingEventTitle = _repository.GetEvents()
+                    .Where(e => e.Id != id && e.Status != EventStatus.Cancelled
+                             && e.StartTime < model.EndTime && e.EndTime > model.StartTime
+                             && e.Registrations.Any(r => r.StudentId == accountId && r.Status != RegistrationStatus.Cancelled))
+                    .OrderBy(e => e.StartTime)
+                    .Select(e => e.Title)
+                    .FirstOrDefault();
+            }
             return model;
         }
 

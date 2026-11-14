@@ -105,6 +105,16 @@ namespace ASI.Basecode.Services.Services
             // Course restriction: a new registration (or re-registering after a cancellation) needs an allowed course.
             EnsureCourseAllowed(eventId, currentUser);
 
+            // No double booking: refuse when the student already holds a registration for an event at the same time.
+            var clash = ScheduleConflicts.Overlapping(_repository.GetRegistrations(), currentUser.AccountId, eventId, ev.StartTime, ev.EndTime)
+                .OrderBy(r => r.Event.StartTime)
+                .Select(r => new { r.Event.Title, r.Event.StartTime })
+                .FirstOrDefault();
+            if (clash != null)
+            {
+                throw new InvalidDataException(string.Format(Resources.Messages.Errors.ScheduleConflict, clash.Title, clash.StartTime.ToString("MMM d, h:mm tt")));
+            }
+
             if (existing != null)
             {
                 // Re-registering after a cancellation reuses the row (one row per student per event).

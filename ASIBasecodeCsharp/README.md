@@ -123,6 +123,8 @@ Other rules worth knowing:
 - A background job (`EventStatusUpdater`, every 5 minutes) closes Open events once they start and completes
   Open/Closed events 24 hours after they end, marking unrecorded attendees Absent.
 - Check-in opens 2 hours before an event starts.
+- A student can't register for two events whose times overlap (back-to-back is fine), and can't be checked in
+  to two overlapping events.
 - Events of a deactivated organization are hidden from students and can't be joined; its officers can't manage it
   until an administrator reactivates it.
 

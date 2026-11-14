@@ -110,6 +110,13 @@ namespace ASI.Basecode.Services.Services
                 result.Time = registration.Attendance.CheckInTime.Value.ToString("hh:mm tt");
                 return result;
             }
+            // students registered before the overlap rule (or whose event was rescheduled) can't be present twice
+            var elsewhere = ScheduleConflicts.CheckedInElsewhere(_registrationRepository.GetRegistrations(), registration.StudentId, eventId, ev.StartTime, ev.EndTime);
+            if (elsewhere != null)
+            {
+                result.Message = string.Format(Resources.Messages.Errors.ScheduleConflictCheckIn, registration.Student.Name, elsewhere);
+                return result;
+            }
 
             var now = AppClock.Now;
             var status = now > ev.StartTime.AddMinutes(ev.LateAfterMinutes) ? AttendanceStatus.Late : AttendanceStatus.Present;
@@ -182,6 +189,15 @@ namespace ASI.Basecode.Services.Services
             {
                 throw new InvalidDataException(string.Format(Resources.Messages.Errors.CheckInNotOpenYet, CheckInOpensHoursBefore));
             }
+            if (status != AttendanceStatus.Absent)
+            {
+                var elsewhere = ScheduleConflicts.CheckedInElsewhere(_registrationRepository.GetRegistrations(), registration.StudentId,
+                                                                     registration.EventId, registration.Event.StartTime, registration.Event.EndTime);
+                if (elsewhere != null)
+                {
+                    throw new InvalidDataException(string.Format(Resources.Messages.Errors.ScheduleConflictCheckIn, registration.Student.Name, elsewhere));
+                }
+            }
             var attendance = registration.Attendance;
             if (attendance == null)
             {
@@ -245,6 +261,7 @@ namespace ASI.Basecode.Services.Services
         {
             return _registrationRepository.GetRegistrations()
                        .Include(r => r.Event)
+                       .Include(r => r.Student)
                        .Include(r => r.Attendance)
                        .FirstOrDefault(r => r.Id == registrationId)
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);

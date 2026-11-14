@@ -243,4 +243,10 @@
   <data name="RegistrationBusy" xml:space="preserve">
     <value>Lots of students are registering right now. Please try again.</value>
   </data>
+  <data name="ScheduleConflict" xml:space="preserve">
+    <value>You're already registered for "{0}" ({1}), which happens at the same time. Cancel that registration first if you'd rather attend this one.</value>
+  </data>
+  <data name="ScheduleConflictCheckIn" xml:space="preserve">
+    <value>{0} is already checked in to "{1}", which happens at the same time.</value>
+  </data>
 </root>

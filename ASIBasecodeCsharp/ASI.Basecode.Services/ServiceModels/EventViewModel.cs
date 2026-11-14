@@ -68,6 +68,9 @@ namespace ASI.Basecode.Services.ServiceModels
         /// <summary>True when any registration row exists (cancelled ones too); such an event can't be deleted.</summary>
         public bool HasRegistrations { get; set; }
 
+        /// <summary>Another event the signed-in student is registered for at the same time (blocks registering), or null.</summary>
+        public string ConflictingEventTitle { get; set; }
+
         /// <summary>False when the organizing organization was deactivated.</summary>
         public bool OrganizationIsActive { get; set; } = true;
 

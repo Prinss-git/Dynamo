@@ -90,6 +90,11 @@
                         <p>This event is only open to students of: <strong>@Model.EligibilityText</strong>. Your course isn't on the list, so you can't register.</p>
                         <button type="button" class="btn btn-key btn-block" disabled aria-disabled="true">Register for this event</button>
                     }
+                    else if (Model.IsRegistrationOpen && Model.ConflictingEventTitle != null)
+                    {
+                        <p>This event happens at the same time as <strong>@Model.ConflictingEventTitle</strong>, which you're already registered for. Cancel that registration first if you'd rather attend this one.</p>
+                        <button type="button" class="btn btn-key btn-block" disabled aria-disabled="true">Register for this event</button>
+                    }
                     else if (Model.IsRegistrationOpen)
                     {
                         <p>@(Model.SlotsLeft == 0 ? "Every seat is taken. Join the waitlist and you'll move up if someone cancels." : "Register to get your pass. You'll show its QR code at the door.")</p>

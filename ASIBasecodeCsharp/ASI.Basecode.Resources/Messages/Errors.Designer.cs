@@ -437,5 +437,23 @@ namespace ASI.Basecode.Resources.Messages {
                 return ResourceManager.GetString("RegistrationBusy", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You're already registered for "{0}" ({1}), which happens at the same time. Cancel that registration first if you'd rather attend this one..
+        /// </summary>
+        public static string ScheduleConflict {
+            get {
+                return ResourceManager.GetString("ScheduleConflict", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} is already checked in to "{1}", which happens at the same time..
+        /// </summary>
+        public static string ScheduleConflictCheckIn {
+            get {
+                return ResourceManager.GetString("ScheduleConflictCheckIn", resourceCulture);
+            }
+        }
     }
 }
