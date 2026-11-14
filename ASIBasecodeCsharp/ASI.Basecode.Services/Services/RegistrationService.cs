@@ -71,27 +71,40 @@ namespace ASI.Basecode.Services.Services
             }
         }
 
+        /// <summary>
+        /// The registration rules, checked in this order (any failure throws, and ServiceExceptionFilter shows the
+        /// message to the student): event exists -> organization active -> registration open -> capacity decides
+        /// Registered/Waitlisted -> not registered twice -> course allowed -> no overlapping event -> save.
+        /// </summary>
         private RegistrationStatus RegisterLocked(int eventId, CurrentUserModel currentUser)
         {
+            // STEP 1: the event must exist and be published (students never see Draft events)
             var ev = _eventRepository.GetEvents().FirstOrDefault(e => e.Id == eventId && e.Status != EventStatus.Draft)
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
+            // STEP 2: a deactivated organization's events can't be joined
             if (!_eventRepository.GetEvents().Any(e => e.Id == eventId && e.Organization.IsActive))
             {
                 throw new InvalidDataException(Resources.Messages.Errors.OrganizationInactive);
             }
 
+            // STEP 3: registration is open only while the event is Open, the deadline hasn't passed and it hasn't started
+            // (AppClock.Now = Philippine time, whatever time zone the server is in)
             var now = AppClock.Now;
             if (ev.Status != EventStatus.Open || now > ev.RegistrationDeadline || now >= ev.StartTime)
             {
                 throw new InvalidDataException(Resources.Messages.Errors.RegistrationClosed);
             }
 
+            // STEP 4: capacity. Count only Registered students (waitlisted/cancelled don't hold a slot).
+            // Full -> Waitlisted, otherwise Registered. Capacity 0 means unlimited.
             var registeredCount = _repository.GetRegistrations()
                 .Count(r => r.EventId == eventId && r.Status == RegistrationStatus.Registered);
             var status = ev.Capacity > 0 && registeredCount >= ev.Capacity
                 ? RegistrationStatus.Waitlisted
                 : RegistrationStatus.Registered;
 
+            // STEP 5: one registration per student per event. CurrentUser comes from the sign-in cookie,
+            // so a student can only ever register themselves.
             var existing = _repository.GetRegistrations()
                 .FirstOrDefault(r => r.EventId == eventId && r.StudentId == currentUser.AccountId);
             if (existing != null)
@@ -102,10 +115,10 @@ namespace ASI.Basecode.Services.Services
                 }
             }
 
-            // Course restriction: a new registration (or re-registering after a cancellation) needs an allowed course.
+            // STEP 6: course restriction: a new registration (or re-registering after a cancellation) needs an allowed course.
             EnsureCourseAllowed(eventId, currentUser);
 
-            // No double booking: refuse when the student already holds a registration for an event at the same time.
+            // STEP 7: no double booking: refuse when the student already holds a registration for an event at the same time.
             var clash = ScheduleConflicts.Overlapping(_repository.GetRegistrations(), currentUser.AccountId, eventId, ev.StartTime, ev.EndTime)
                 .OrderBy(r => r.Event.StartTime)
                 .Select(r => new { r.Event.Title, r.Event.StartTime })
@@ -115,6 +128,8 @@ namespace ASI.Basecode.Services.Services
                 throw new InvalidDataException(string.Format(Resources.Messages.Errors.ScheduleConflict, clash.Title, clash.StartTime.ToString("MMM d, h:mm tt")));
             }
 
+            // STEP 8: save. Re-registering reuses the old cancelled row; otherwise insert a new one with a random
+            // code (that code is what the QR pass contains).
             if (existing != null)
             {
                 // Re-registering after a cancellation reuses the row (one row per student per event).
@@ -136,26 +151,34 @@ namespace ASI.Basecode.Services.Services
             return status;
         }
 
+        /// <summary>
+        /// Cancels a registration (the student's own, or by an officer/admin of the event's organization).
+        /// If it held a slot, the first waitlisted students move up into it.
+        /// </summary>
         public void Cancel(int registrationId, CurrentUserModel currentUser)
         {
+            // STEP 1: load the registration (projected so CanCancel can see the event's status and time)
             var registration = _repository.GetRegistrations()
                 .Where(r => r.Id == registrationId)
                 .Select(RegistrationProjection.ToViewModel)
                 .FirstOrDefault()
                 ?? throw new KeyNotFoundException(Resources.Messages.Errors.NotFound);
 
+            // STEP 2: only the owner or a manager; and only before the event starts with no attendance recorded
             EnsureOwnerOrManager(registration, currentUser);
             if (!registration.CanCancel)
             {
                 throw new InvalidDataException(Resources.Messages.Errors.CannotCancelRegistration);
             }
 
+            // STEP 3: mark it Cancelled (the row is kept for history; it is not deleted)
             var entity = _repository.GetRegistrations().First(r => r.Id == registrationId);
             var wasRegistered = entity.Status == RegistrationStatus.Registered;
             entity.Status = RegistrationStatus.Cancelled;
             entity.CancelledTime = AppClock.Now;
             _repository.UpdateRegistration(entity);
 
+            // STEP 4: a slot was freed (a waitlisted cancellation frees nothing) -> promote from the waitlist
             if (wasRegistered)
             {
                 PromoteWaitlisted(entity.EventId);
@@ -189,8 +212,13 @@ namespace ASI.Basecode.Services.Services
             return registration;
         }
 
+        /// <summary>
+        /// Fills free slots from the waitlist, first come first served (oldest RegisteredTime first).
+        /// Called after a cancellation and after an officer edits the event (the capacity may have gone up).
+        /// </summary>
         public void PromoteWaitlisted(int eventId)
         {
+            // only while the event is still running (not Draft, Completed or Cancelled)
             var ev = _eventRepository.GetEvents().FirstOrDefault(e => e.Id == eventId);
             if (ev == null || (ev.Status != EventStatus.Open && ev.Status != EventStatus.Closed))
             {
@@ -203,6 +231,7 @@ namespace ASI.Basecode.Services.Services
                 .ToList();
             if (waitlist.Count == 0) return;
 
+            // free slots = capacity - registered (unlimited capacity: everyone on the waitlist gets in)
             var freeSlots = waitlist.Count;
             if (ev.Capacity > 0)
             {
@@ -218,14 +247,20 @@ namespace ASI.Basecode.Services.Services
             }
         }
 
+        /// <summary>
+        /// Course eligibility, enforced on the server. The Event page also disables the button for ineligible
+        /// students, but this check is what actually stops a forced request.
+        /// </summary>
         private void EnsureCourseAllowed(int eventId, CurrentUserModel currentUser)
         {
+            // the event's allowed courses (event_allowed_courses table)
             var allowed = _eventRepository.GetEvents()
                 .Where(e => e.Id == eventId)
                 .SelectMany(e => e.AllowedCourses.Select(c => c.Course))
                 .ToList();
             if (allowed.Count == 0) return;   // open to all students
 
+            // the student's course is read from the database, never from the form
             var course = _userRepository.GetUsers().Where(u => u.Id == currentUser.AccountId).Select(u => u.Course).FirstOrDefault();
             if (course == null || !allowed.Contains(course))
             {

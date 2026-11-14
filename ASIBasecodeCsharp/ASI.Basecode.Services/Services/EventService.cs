@@ -14,6 +14,10 @@ namespace ASI.Basecode.Services.Services
 {
     public class EventService : IEventService
     {
+        /// <summary>
+        /// The event lifecycle: which status each status may change to. Draft -> Open -> Closed -> Completed;
+        /// Cancelled can happen before completion. Completed and Cancelled are final (empty lists).
+        /// </summary>
         private static readonly Dictionary<EventStatus, EventStatus[]> AllowedTransitions = new()
         {
             [EventStatus.Draft] = new[] { EventStatus.Open, EventStatus.Cancelled },
@@ -108,9 +112,15 @@ namespace ASI.Basecode.Services.Services
             return model;
         }
 
+        /// <summary>
+        /// Creates an event as a Draft (invisible to students until an officer opens it). The form's own checks
+        /// (end after start, deadline before start, a course picked if restricted) ran already in EventViewModel.Validate.
+        /// </summary>
         public int CreateEvent(EventViewModel model, CurrentUserModel currentUser)
         {
+            // STEP 1: the officer must belong to the organization (admins may use any)
             _accessService.EnsureCanManageOrganization(model.OrganizationId, currentUser);
+            // STEP 2: no events in the past
             var now = AppClock.Now;
             if (model.StartTime <= now)
             {
@@ -121,6 +131,7 @@ namespace ASI.Basecode.Services.Services
                 throw new InvalidDataException(Resources.Messages.Errors.DeadlineMustBeInFuture);
             }
 
+            // STEP 3: copy the form into a new Event, always starting as Draft, with who/when for the audit fields
             var entity = new Event();
             model.ApplyTo(entity);
             entity.Status = EventStatus.Draft;
@@ -128,6 +139,7 @@ namespace ASI.Basecode.Services.Services
             entity.UpdatedTime = AppClock.Now;
             entity.CreatedBy = currentUser.UserId;
             entity.UpdatedBy = currentUser.UserId;
+            // STEP 4: course restriction rows (none = open to all students), saved together with the event
             foreach (var course in AllowedCoursesOf(model))
             {
                 entity.AllowedCourses.Add(new EventAllowedCourse { Course = course });
@@ -137,8 +149,10 @@ namespace ASI.Basecode.Services.Services
             return entity.Id;
         }
 
+        /// <summary>Edits an event, then fills any newly freed slots from the waitlist.</summary>
         public void UpdateEvent(EventViewModel model, CurrentUserModel currentUser)
         {
+            // STEP 1: must manage both the current organization and the one chosen on the form; finished events are locked
             var entity = FindEvent(model.Id);
             _accessService.EnsureCanManageOrganization(entity.OrganizationId, currentUser);
             _accessService.EnsureCanManageOrganization(model.OrganizationId, currentUser);
@@ -157,6 +171,7 @@ namespace ASI.Basecode.Services.Services
                 throw new InvalidDataException(Resources.Messages.Errors.DeadlineMustBeInFuture);
             }
 
+            // STEP 2: capacity can't go below the students already registered (we never un-register anyone)
             var registeredCount = entity.Registrations.Count(r => r.Status == RegistrationStatus.Registered);
             if (model.Capacity > 0 && model.Capacity < registeredCount)
             {
@@ -197,10 +212,13 @@ namespace ASI.Basecode.Services.Services
             _repository.DeleteEvent(entity);
         }
 
+        /// <summary>Publish / close / reopen / complete / cancel an event (the buttons on the event page).</summary>
         public void ChangeStatus(int id, EventStatus status, CurrentUserModel currentUser)
         {
+            // STEP 1: must manage the event's organization
             var entity = FindEvent(id);
             _accessService.EnsureCanManageOrganization(entity.OrganizationId, currentUser);
+            // STEP 2: the change must be allowed by the AllowedTransitions table (e.g. Completed can't be reopened)
             if (!AllowedTransitions[entity.Status].Contains(status))
             {
                 throw new InvalidDataException(Resources.Messages.Errors.InvalidStatusChange);
@@ -211,6 +229,7 @@ namespace ASI.Basecode.Services.Services
             entity.UpdatedBy = currentUser.UserId;
             _repository.UpdateEvent(entity);
 
+            // STEP 3: completing an event records everyone who never checked in as Absent
             if (status == EventStatus.Completed)
             {
                 _attendanceService.MarkAbsentees(id, currentUser.UserId);

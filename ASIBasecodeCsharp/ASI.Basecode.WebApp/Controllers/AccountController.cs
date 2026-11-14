@@ -85,13 +85,14 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(model);
             }
 
-            // too many wrong passwords for this username: refuse without checking the password at all
+            // STEP 1: too many wrong passwords for this username: refuse without checking the password at all
             if (_loginThrottle.IsLocked(model.UserId, out var minutesLeft))
             {
                 TempData["ErrorMessage"] = string.Format(Resources.Messages.Errors.TooManyLoginAttempts, minutesLeft);
                 return View(model);
             }
 
+            // STEP 2: check the password (UserService), and count failures for the lockout
             User user = null;
             var loginResult = _userService.AuthenticateUser(model.UserId, model.Password, ref user);
             if (loginResult == LoginResult.Failed)
@@ -105,11 +106,12 @@ namespace ASI.Basecode.WebApp.Controllers
 
             if (loginResult == LoginResult.Success)
             {
-                // 認証OK
+                // STEP 3: success -> write the signed sign-in cookie (account id, role, password stamp as claims)
                 await this._signInManager.SignInAsync(user);
                 this._session.SetString("UserName", user.Name);
                 this._session.SetString("Role", user.Role.ToString());
 
+                // STEP 4: after an admin reset, the temporary password must be changed before anything else
                 if (user.MustChangePassword)
                 {
                     TempData["WarningMessage"] = Resources.Messages.Common.MustChangePassword;
@@ -124,7 +126,7 @@ namespace ASI.Basecode.WebApp.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // 認証NG
+            // STEP 5: failed -> one message per reason (pending approval / deactivated / wrong username or password)
             TempData["ErrorMessage"] = loginResult switch
             {
                 LoginResult.Pending => Resources.Messages.Errors.AccountPending,

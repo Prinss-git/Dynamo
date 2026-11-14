@@ -24,8 +24,13 @@ namespace ASI.Basecode.Services.Services
             _resetRepository = resetRepository;
         }
 
+        /// <summary>
+        /// Checks a username and password. Wrong username and wrong password give the same result (Failed),
+        /// so the login page never reveals which usernames exist.
+        /// </summary>
         public LoginResult AuthenticateUser(string userId, string password, ref User user)
         {
+            // STEP 1: find the account and compare the password with the stored hash (see PasswordManager)
             user = _repository.GetUsers().FirstOrDefault(x => x.UserId == userId);
             if (user == null || !PasswordManager.VerifyPassword(user.Password, password, out var needsUpgrade))
             {
@@ -40,6 +45,7 @@ namespace ASI.Basecode.Services.Services
                 _repository.UpdateUser(user);
             }
 
+            // STEP 2: the password is right, but the account must be approved by an admin and still active
             if (!user.IsApproved) return LoginResult.Pending;
             return user.IsActive ? LoginResult.Success : LoginResult.Inactive;
         }

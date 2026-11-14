@@ -67,17 +67,24 @@ namespace ASI.Basecode.Services.Services
             };
         }
 
+        /// <summary>
+        /// QR check-in at the door. The scanner page sends the scanned code (or a typed student number) and gets
+        /// this result back as JSON. Problems return a message instead of throwing, so scanning can continue.
+        /// </summary>
         public CheckInResultModel CheckIn(int eventId, string codeOrStudentNumber, CurrentUserModel currentUser)
         {
+            // STEP 1: only an officer of this event's organization (or an admin), and only while the event is Open/Closed
             var ev = FindEvent(eventId);
             _accessService.EnsureCanManageOrganization(ev.OrganizationId, currentUser);
             EnsureAttendanceAllowed(ev);
 
+            // STEP 2: check-in opens 2 hours before the start
             if (AppClock.Now < ev.StartTime.AddHours(-CheckInOpensHoursBefore))
             {
                 return Fail(string.Format(Resources.Messages.Errors.CheckInNotOpenYet, CheckInOpensHoursBefore));
             }
 
+            // STEP 3: find the registration for THIS event by its QR code, or by student number as a backup
             var input = (codeOrStudentNumber ?? string.Empty).Trim();
             var code = input.ToUpperInvariant();
             var registration = _registrationRepository.GetRegistrations()
@@ -98,11 +105,13 @@ namespace ASI.Basecode.Services.Services
                 StudentNumber = registration.Student.StudentNumber,
             };
 
+            // STEP 4: waitlisted or cancelled passes can't check in
             if (registration.Status != RegistrationStatus.Registered)
             {
                 result.Message = Resources.Messages.Errors.RegistrationNotActive;
                 return result;
             }
+            // STEP 5: a pass can't be used twice; show when they already checked in
             if (registration.Attendance?.CheckInTime != null)
             {
                 result.Message = Resources.Messages.Errors.AlreadyCheckedIn;
@@ -110,7 +119,7 @@ namespace ASI.Basecode.Services.Services
                 result.Time = registration.Attendance.CheckInTime.Value.ToString("hh:mm tt");
                 return result;
             }
-            // students registered before the overlap rule (or whose event was rescheduled) can't be present twice
+            // STEP 6: students registered before the overlap rule (or whose event was rescheduled) can't be present twice
             var elsewhere = ScheduleConflicts.CheckedInElsewhere(_registrationRepository.GetRegistrations(), registration.StudentId, eventId, ev.StartTime, ev.EndTime);
             if (elsewhere != null)
             {
@@ -118,8 +127,11 @@ namespace ASI.Basecode.Services.Services
                 return result;
             }
 
+            // STEP 7: Present or Late. Late = checked in after the start time + the event's late-after minutes
+            // (e.g. starts 1:00 PM with 15 minutes -> 1:16 PM is Late)
             var now = AppClock.Now;
             var status = now > ev.StartTime.AddMinutes(ev.LateAfterMinutes) ? AttendanceStatus.Late : AttendanceStatus.Present;
+            // STEP 8: save the attendance row (one per registration), recording which officer scanned it
             var attendance = registration.Attendance;
             if (attendance == null)
             {
@@ -229,6 +241,10 @@ namespace ASI.Basecode.Services.Services
             _repository.UpdateAttendance(attendance);
         }
 
+        /// <summary>
+        /// When an event is completed: every Registered student with no attendance row gets an Absent row,
+        /// saved together in one batch. Called by ChangeStatus(Completed) and by the automatic status job.
+        /// </summary>
         public void MarkAbsentees(int eventId, string actor)
         {
             var now = AppClock.Now;
