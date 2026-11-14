@@ -6,6 +6,8 @@ ASP.NET Core 9 MVC. Test cases are derived from the business rules in `UserServi
 
 **New in PR #1** (`feature/approvals-filters-password-toggle`): AUTH-11 to AUTH-14, STU-36 to STU-42, ADM-36 to ADM-48 and the updated ADM-03. Run them on that branch until it is merged into `main`.
 
+**New in PR #2** (`fix/overlapping-events`): STU-43 to STU-49 and OFF-56 to OFF-60. Run them on that branch until it is merged into `main`.
+
 ## Contents
 
 1. [Authentication and Access Control](#1-authentication-and-access-control)
@@ -28,6 +30,7 @@ ASP.NET Core 9 MVC. Test cases are derived from the business rules in `UserServi
 | Event lifecycle | Draft → Open → Closed → Completed, or Cancelled. Allowed: Draft→Open/Cancelled; Open→Closed/Completed/Cancelled; Closed→Open/Completed/Cancelled. Completed and Cancelled are final. |
 | Registration | Open events only, before the registration deadline and before the start time. If capacity > 0 and registered count ≥ capacity, the student is **Waitlisted**. Capacity 0 means unlimited. |
 | Registration code | 10 characters, no `0/O/1/I`, unique. The QR pass is shown only for `Registered` status. |
+| Time conflicts | A student can hold only one **Registered** spot among events whose times overlap, and cannot be checked in at two overlapping events at once. Two events overlap when one starts before the other ends; back-to-back events (one ends at 5 PM, the next starts at 5 PM) do not. Waitlist places and cancelled events do not count. |
 | Cancel registration | Allowed only if not already cancelled, not yet checked in, event is Open/Closed, and the event has not started. |
 | Waitlist | The earliest waitlisted student (by registered time) is promoted when a registered student cancels or an officer raises capacity. |
 | Check-in | Allowed only while the event is Open or Closed. **Present** if scanned at or before `StartTime + LateAfterMinutes`, otherwise **Late**. Accepts a registration code or student number. |
@@ -126,6 +129,20 @@ Required fields have a red * on their label. Middle name is the only optional fi
 | STU-40 | Submit with errors marks every invalid field | Only First name and School email filled in correctly | Click Create account. | Every empty or invalid required field turns red with its message at the same time. The page scrolls to and focuses the first invalid field (Last name). Valid fields stay green. No account is created. | Pending |
 | STU-41 | Optional field never shows an error | — | 1. Click Middle name, leave it empty and press Tab.<br>2. Submit the form with errors. | Middle name stays neutral: no red border and no message. | Pending |
 | STU-42 | Confirm password follows the password | — | 1. Type the same valid password in Password and Confirm password.<br>2. Click Password and change it. | Step 1: both fields turn green. Step 2: Confirm password turns red, and "Passwords don't match." appears once you leave Password. | Pending |
+
+### 2.6 Overlapping Events
+
+Example times: Event A runs Nov 19, 3:00–5:00 PM. Event B is Open and runs Nov 19, 4:00–6:00 PM (overlaps A). Event C is Open and runs Nov 19, 5:00–7:00 PM (starts when A ends).
+
+| ID | Scenario | Setup | Steps | Expected Result | Status |
+|---|---|---|---|---|---|
+| STU-43 | Overlapping registration blocked | Student is Registered for Event A | Register for Event B. | Error: "You are already registered for "Event A", which runs at the same time." No registration for Event B is created. | Pending |
+| STU-44 | Back-to-back events are allowed | Student is Registered for Event A | Register for Event C. | Registration succeeds (status Registered). | Pending |
+| STU-45 | Waitlist place is allowed despite an overlap | Student is Registered for Event A; Event B is full | Register for Event B. | No error. Status = **Waitlisted** for Event B. | Pending |
+| STU-46 | Cancelled registration no longer conflicts | Student is Registered for Event A | 1. Cancel the Event A registration.<br>2. Register for Event B. | Registration for Event B succeeds. | Pending |
+| STU-47 | Cancelled event does not conflict | Student is Registered for Event A; an officer then cancels Event A | Register for Event B. | Registration for Event B succeeds. | Pending |
+| STU-48 | Re-registering is also checked | Student cancelled Event B earlier and is now Registered for Event A | Register for Event B again. | Same error as STU-43; the cancelled Event B registration stays Cancelled. | Pending |
+| STU-49 | Waitlist promotion is not blocked | Student is Registered for Event A and Waitlisted for Event B | A Registered student in Event B cancels. | The student is promoted to **Registered** for Event B (allowed by design; they can cancel one). This is also how to set up OFF-56. | Pending |
 
 ---
 
@@ -287,6 +304,18 @@ Use an event with `StartTime = T` and `LateAfterMinutes = L`. The Late threshold
 | OFF-54 | Student cannot export | Logged in as Student | Open `/Report/ExportEvent/{id}`. | Access Denied. | Pending |
 | OFF-55 | Officer dashboard | Officer with events | Open Home as Officer. | Counts scoped to the officer's organizations; pending approvals shows 0 (non-Admin). | Pending |
 
+### 4.5 Overlapping Check-ins
+
+Uses Event A and Event B from section 2.6, both Open. The student is Registered for both (registered before PR #2, or promoted from the waitlist as in STU-49).
+
+| ID | Scenario | Setup | Steps | Expected Result | Status |
+|---|---|---|---|---|---|
+| OFF-56 | Check-in blocked while checked in elsewhere | Student is checked in at Event A and not checked out | Check the student in at Event B. | Failure: "This student is still checked in at "Event A", which runs at the same time. Check them out there first." No attendance record is created for Event B. | Pending |
+| OFF-57 | Check-in allowed after check-out | Same as OFF-56 | 1. Check the student out at Event A.<br>2. Check them in at Event B. | Check-in at Event B succeeds (Present or Late). | Pending |
+| OFF-58 | Events at different times are not affected | Student is checked in at Event A; Event D does not overlap Event A | Check the student in at Event D. | Check-in succeeds. | Pending |
+| OFF-59 | Completed event does not block | Student checked in at Event A, never checked out, and Event A is now Completed | Check the student in at Event B. | Check-in succeeds. | Pending |
+| OFF-60 | Manual status is not blocked | Same as OFF-56 | Set the student's status to Present at Event B by hand. | Allowed, so officers can still correct records. | Pending |
+
 ---
 
 ## 5. Cross-cutting and Data Integrity
@@ -307,11 +336,11 @@ Use an event with `StartTime = T` and `LateAfterMinutes = L`. The Late threshold
 | Area | Test IDs | Count |
 |---|---|---|
 | Authentication and access | AUTH-01 to AUTH-14 | 14 |
-| Student flow | STU-01 to STU-42 | 42 |
+| Student flow | STU-01 to STU-49 | 49 |
 | Admin flow | ADM-01 to ADM-48 | 48 |
-| Officer flow | OFF-01 to OFF-55 | 55 |
+| Officer flow | OFF-01 to OFF-60 | 60 |
 | Cross-cutting | X-01 to X-06 | 6 |
-| **Total** | | **165** |
+| **Total** | | **177** |
 
 ## Defense Walkthrough
 
