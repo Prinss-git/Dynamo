@@ -94,7 +94,7 @@
             <h2 class="sheet-title">Open for registration</h2>
             <a asp-controller="Event" asp-action="Index">Browse all events</a>
         </div>
-        @{ ViewData["EmptyText"] = "No event is taking registrations right now. Check back soon."; ViewData["PageSize"] = 6; }
+        @{ ViewData["EmptyText"] = "No event is taking registrations right now. Check back soon."; ViewData["PageSize"] = 12; }
         @await Html.PartialAsync("_PassRack", Model.UpcomingEvents)
     </section>
 }

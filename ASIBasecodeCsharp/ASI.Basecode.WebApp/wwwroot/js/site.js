@@ -22,7 +22,7 @@ document.addEventListener("click", function (e) {
 /* ------------------------------------------------------------------
    Pagination for every ledger table and every pass-card rack.
    - Tables page their tbody rows; racks (.rack) page their cards.
-   - data-page-size sets the first page size (tables 10, racks 9);
+   - data-page-size sets the first page size (tables 10, racks 12);
      the size menu offers 10/25/50 for tables, otherwise that size, x2, x4.
    - Items a page filters out carry [data-filtered-out]; call
      el.pager.render() after changing them. Each render dispatches a
@@ -141,7 +141,7 @@ document.addEventListener("click", function (e) {
 
     document.querySelectorAll(".rack").forEach(function (rack) {
         attach(rack, {
-            size: 9, label: "Event pages", unit: "Cards", free: true,
+            size: 12, label: "Event pages", unit: "Cards", free: true,
             anchor: rack,
             items: function () { return Array.prototype.slice.call(rack.children); }
         });
@@ -362,5 +362,212 @@ function initCoursePicker() {
 }
 
 // Run after jquery.validate.unobtrusive has parsed the forms on document ready.
-function initForms() { initPasswordToggles(); initPasswordRules(); initRequiredMarkers(); initCoursePicker(); }
+/* ------------------------------------------------------------------
+   Searchable picker: <select data-combobox> becomes a text box that filters
+   the options as you type (name, student number or course), with a short
+   two-line result list. The original <select> stays in the form, hidden,
+   and receives the chosen value, so the server side doesn't change.
+   ------------------------------------------------------------------ */
+function initComboboxes() {
+    var MAX_RESULTS = 30;
+
+    function escapeHtml(s) {
+        return s.replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+    }
+    function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+    // wrap every typed word found in the text in <mark>
+    function highlight(text, terms) {
+        var html = escapeHtml(text);
+        if (!terms.length) return html;
+        var re = new RegExp("(" + terms.map(function (t) { return escapeRegex(escapeHtml(t)); }).join("|") + ")", "gi");
+        return html.replace(re, "<mark>$1</mark>");
+    }
+    function initials(name) {
+        var parts = name.trim().split(/\s+/);
+        return ((parts[0] || "").charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : "")).toUpperCase();
+    }
+
+    document.querySelectorAll("select[data-combobox]").forEach(function (select, n) {
+        var items = Array.prototype.filter.call(select.options, function (o) { return o.value; }).map(function (o) {
+            var label = o.getAttribute("data-label") || o.text;
+            var hint = o.getAttribute("data-hint") || "";
+            return { value: o.value, label: label, hint: hint, tag: o.getAttribute("data-tag") || "", haystack: (label + " " + hint).toLowerCase() };
+        });
+        var noun = select.getAttribute("data-noun") || "results";
+        var listId = "combo-list-" + n;
+
+        // the visible label now points at the text box; the select keeps its name for the form
+        var wrap = document.createElement("div");
+        wrap.className = "combo";
+        var input = document.createElement("input");
+        input.type = "text";
+        input.className = "input combo-input";
+        input.id = select.id;
+        input.autocomplete = "off";
+        input.spellcheck = false;
+        input.placeholder = select.getAttribute("data-placeholder") || "Type to search";
+        input.setAttribute("role", "combobox");
+        input.setAttribute("aria-autocomplete", "list");
+        input.setAttribute("aria-expanded", "false");
+        input.setAttribute("aria-controls", listId);
+        select.id = select.id + "-native";
+        select.required = false;
+        select.tabIndex = -1;
+        select.setAttribute("aria-hidden", "true");
+        select.classList.add("combo-native");
+
+        var icon = document.createElement("span");
+        icon.className = "combo-icon";
+        icon.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>';
+        var clear = document.createElement("button");
+        clear.type = "button";
+        clear.className = "combo-clear";
+        clear.hidden = true;
+        clear.setAttribute("aria-label", "Clear");
+        clear.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+        var pop = document.createElement("div");
+        pop.className = "combo-pop";
+        pop.hidden = true;
+        var list = document.createElement("ul");
+        list.className = "combo-list";
+        list.id = listId;
+        list.setAttribute("role", "listbox");
+        var foot = document.createElement("div");
+        foot.className = "combo-foot";
+        var error = document.createElement("span");
+        error.className = "text-danger combo-error";
+        error.hidden = true;
+        error.textContent = "Pick someone from the list.";
+        pop.appendChild(list);
+        pop.appendChild(foot);
+
+        select.parentNode.insertBefore(wrap, select);
+        wrap.appendChild(icon);
+        wrap.appendChild(input);
+        wrap.appendChild(clear);
+        wrap.appendChild(pop);
+        wrap.appendChild(select);
+        wrap.parentNode.insertBefore(error, wrap.nextSibling);
+
+        var shown = [];
+        var active = -1;
+
+        function setActive(i) {
+            var nodes = list.querySelectorAll(".combo-opt");
+            if (active >= 0 && nodes[active]) nodes[active].classList.remove("is-active");
+            active = i;
+            if (active >= 0 && nodes[active]) {
+                nodes[active].classList.add("is-active");
+                input.setAttribute("aria-activedescendant", nodes[active].id);
+                nodes[active].scrollIntoView({ block: "nearest" });
+            } else {
+                input.removeAttribute("aria-activedescendant");
+            }
+        }
+
+        function render() {
+            var query = input.value.trim().toLowerCase();
+            var terms = query ? query.split(/\s+/) : [];
+            var matches = items.filter(function (it) {
+                return terms.every(function (t) { return it.haystack.indexOf(t) >= 0; });
+            });
+            // names that start with what was typed come first
+            if (terms.length) {
+                matches.sort(function (a, b) {
+                    var sa = a.label.toLowerCase().indexOf(terms[0]) === 0 ? 0 : 1;
+                    var sb = b.label.toLowerCase().indexOf(terms[0]) === 0 ? 0 : 1;
+                    return sa - sb;
+                });
+            }
+            shown = matches.slice(0, MAX_RESULTS);
+            list.innerHTML = "";
+            shown.forEach(function (it, i) {
+                var li = document.createElement("li");
+                li.className = "combo-opt" + (select.value === it.value ? " is-chosen" : "");
+                li.id = listId + "-" + i;
+                li.setAttribute("role", "option");
+                li.setAttribute("aria-selected", select.value === it.value ? "true" : "false");
+                var tag = it.tag && it.tag !== "Student"
+                    ? '<span class="tag tag-' + escapeHtml(it.tag.toLowerCase()) + '">' + escapeHtml(it.tag) + "</span>" : "";
+                li.innerHTML = '<span class="combo-avatar" aria-hidden="true">' + escapeHtml(initials(it.label)) + "</span>"
+                    + '<span class="combo-text"><span class="combo-name">' + highlight(it.label, terms) + "</span>"
+                    + (it.hint ? '<span class="combo-hint">' + highlight(it.hint, terms) + "</span>" : "") + "</span>" + tag;
+                li.addEventListener("mousedown", function (e) { e.preventDefault(); choose(it); });
+                list.appendChild(li);
+            });
+
+            if (!matches.length) {
+                list.innerHTML = '<li class="combo-empty" role="presentation">No one matches \u201c' + escapeHtml(input.value.trim()) + "\u201d</li>";
+                foot.hidden = true;
+            } else if (matches.length > shown.length) {
+                foot.hidden = false;
+                foot.textContent = "Showing " + shown.length + " of " + matches.length + " " + noun + " \u00b7 keep typing to narrow it down";
+            } else {
+                foot.hidden = false;
+                foot.textContent = matches.length === 1 ? "1 match" : matches.length + " " + noun;
+            }
+            setActive(shown.length ? 0 : -1);
+        }
+
+        function open() {
+            if (!pop.hidden) return;
+            pop.hidden = false;
+            input.setAttribute("aria-expanded", "true");
+            render();
+        }
+        function close() {
+            pop.hidden = true;
+            input.setAttribute("aria-expanded", "false");
+            setActive(-1);
+        }
+        function choose(it) {
+            select.value = it.value;
+            input.value = it.label;
+            wrap.classList.add("has-value");
+            clear.hidden = false;
+            error.hidden = true;
+            input.classList.remove("field-unmet");
+            close();
+        }
+        function reset() {
+            select.value = "";
+            wrap.classList.remove("has-value");
+        }
+
+        input.addEventListener("focus", open);
+        input.addEventListener("click", open);
+        input.addEventListener("input", function () {
+            reset();
+            clear.hidden = !input.value;
+            if (pop.hidden) open(); else render();
+        });
+        input.addEventListener("blur", function () {
+            close();
+            // typed text that wasn't picked from the list doesn't count as a choice
+            if (!select.value && input.value && shown.length === 1 && shown[0].label.toLowerCase() === input.value.trim().toLowerCase()) choose(shown[0]);
+        });
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "ArrowDown") { e.preventDefault(); if (pop.hidden) open(); else setActive(Math.min(active + 1, shown.length - 1)); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); setActive(Math.max(active - 1, 0)); }
+            else if (e.key === "Enter") { if (!pop.hidden && active >= 0) { e.preventDefault(); choose(shown[active]); } }
+            else if (e.key === "Escape") { if (!pop.hidden) { e.preventDefault(); close(); } }
+        });
+        clear.addEventListener("click", function () {
+            input.value = "";
+            reset();
+            clear.hidden = true;
+            input.focus();
+        });
+        select.form && select.form.addEventListener("submit", function (e) {
+            if (select.value) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            error.hidden = false;
+            input.classList.add("field-unmet");
+            input.focus();
+        });
+    });
+}
+
+function initForms() { initPasswordToggles(); initPasswordRules(); initRequiredMarkers(); initCoursePicker(); initComboboxes(); }
 if (window.jQuery) { jQuery(initForms); } else { document.addEventListener("DOMContentLoaded", initForms); }

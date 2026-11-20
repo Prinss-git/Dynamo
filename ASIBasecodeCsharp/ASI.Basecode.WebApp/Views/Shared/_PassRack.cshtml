@@ -7,7 +7,7 @@
 }
 else
 {
-    <div class="rack" data-page-size="@(ViewData["PageSize"] ?? 9)">
+    <div class="rack" data-page-size="@(ViewData["PageSize"] ?? 12)">
         @foreach (var e in Model)
         {
             var mine = e.MyRegistrationStatus.HasValue && e.MyRegistrationStatus != RegistrationStatus.Cancelled;

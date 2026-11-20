@@ -131,10 +131,16 @@ namespace ASI.Basecode.Services.Services
             model.AvailableUsers = _userRepository.GetUsers()
                 .Where(u => u.IsActive && u.IsApproved && !memberIds.Contains(u.Id))
                 .OrderBy(u => u.Name)
+                .Select(u => new { u.Id, u.Name, u.StudentNumber, u.UserId, u.Course, u.Role })
+                .ToList()
                 .Select(u => new OptionModel
                 {
                     Id = u.Id,
                     Text = u.Name + " (" + (u.StudentNumber ?? u.UserId) + ") - " + u.Role,
+                    // parts for the searchable person picker on the Members page
+                    Label = u.Name,
+                    Hint = (u.StudentNumber ?? u.UserId) + (string.IsNullOrEmpty(u.Course) ? string.Empty : " · " + u.Course),
+                    Tag = u.Role.ToString(),
                 })
                 .ToList();
 

@@ -17,11 +17,13 @@
             <input type="hidden" name="organizationId" value="@Model.Organization.Id" />
             <div class="field">
                 <label class="label" for="memberId">Person</label>
-                <select name="memberId" id="memberId" class="input" required>
+                @* data-combobox: site.js turns this into a type-to-search picker (the plain list still works without JavaScript) *@
+                <select name="memberId" id="memberId" class="input" required data-combobox
+                        data-placeholder="Name or student number" data-noun="people">
                     <option value="">Select a user</option>
                     @foreach (var u in Model.AvailableUsers)
                     {
-                        <option value="@u.Id">@u.Text</option>
+                        <option value="@u.Id" data-label="@u.Label" data-hint="@u.Hint" data-tag="@u.Tag">@u.Text</option>
                     }
                 </select>
             </div>
