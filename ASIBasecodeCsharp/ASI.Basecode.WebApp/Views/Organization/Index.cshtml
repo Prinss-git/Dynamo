@@ -56,12 +56,12 @@
                             <td class="r">
                                 <div class="row-actions">
                                     <a class="btn btn-outline btn-sm" asp-action="Members" asp-route-id="@o.Id"><i class="fa-solid fa-users" aria-hidden="true"></i> Members</a>
-                                    <a class="btn btn-outline btn-sm btn-icon" asp-action="Edit" asp-route-id="@o.Id" title="Edit @o.Name" aria-label="Edit @o.Name"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                                    <a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@o.Id" aria-label="Edit @o.Name"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit</a>
                                     @if (o.EventCount == 0)
                                     {
                                         <form asp-action="Delete" method="post" class="inline-form" data-confirm="Delete '@o.Name'? Its member list is removed too.">
                                             <input type="hidden" name="id" value="@o.Id" />
-                                            <button type="submit" class="btn btn-danger btn-sm btn-icon" title="Delete @o.Name" aria-label="Delete @o.Name"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                                            <button type="submit" class="btn btn-danger btn-sm" aria-label="Delete @o.Name"><i class="fa-solid fa-trash" aria-hidden="true"></i> Delete</button>
                                         </form>
                                     }
                                 </div>

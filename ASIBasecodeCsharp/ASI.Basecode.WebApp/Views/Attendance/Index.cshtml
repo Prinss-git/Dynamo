@@ -31,7 +31,7 @@
                     <label class="label" for="checkin-code" style="display:block;margin-bottom:6px">Or type the code or student no.</label>
                     <div class="scan-entry">
                         <input type="text" name="code" id="checkin-code" class="input" placeholder="e.g. TT4K9QZP2A" required autocapitalize="characters" spellcheck="false" />
-                        <button type="submit" class="btn btn-key">Check in</button>
+                        <button type="submit" class="btn btn-key"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Check in</button>
                     </div>
                 </form>
 
@@ -100,7 +100,7 @@
                                                 </select>
                                                 <label class="sr-only" for="remarks-@a.Id">Remarks for @a.StudentName</label>
                                                 <input type="text" name="remarks" id="remarks-@a.Id" value="@a.Remarks" maxlength="250" class="input" placeholder="Remarks" style="min-height:36px;width:120px;padding:4px 8px" />
-                                                <button type="submit" class="btn btn-outline btn-sm">Save</button>
+                                                <button type="submit" class="btn btn-outline btn-sm"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save</button>
                                             </form>
                                             @if (canCheckIn && a.CheckInTime.HasValue && !a.CheckOutTime.HasValue)
                                             {

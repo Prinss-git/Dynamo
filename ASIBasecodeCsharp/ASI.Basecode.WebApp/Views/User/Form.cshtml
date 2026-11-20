@@ -83,8 +83,8 @@
             </div>
         </div>
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">@(isNew ? "Create user" : "Save changes")</button>
-            <a class="btn btn-outline" asp-action="Index">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> @(isNew ? "Create user" : "Save changes")</button>
+            <a class="btn btn-outline" asp-action="Index"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Cancel</a>
         </div>
     </form>
 </section>

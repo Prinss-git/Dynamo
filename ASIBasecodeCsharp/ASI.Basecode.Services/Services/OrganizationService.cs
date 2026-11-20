@@ -168,13 +168,6 @@ namespace ASI.Basecode.Services.Services
             });
         }
 
-        public void UpdateMemberPosition(int membershipId, string position)
-        {
-            var membership = FindMembership(membershipId);
-            membership.Position = string.IsNullOrWhiteSpace(position) ? "Member" : position.Trim();
-            _repository.UpdateMember(membership);
-        }
-
         public int RemoveMember(int membershipId)
         {
             var membership = FindMembership(membershipId);

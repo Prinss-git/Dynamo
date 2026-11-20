@@ -119,15 +119,6 @@ namespace ASI.Basecode.WebApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult UpdateMember(int id, int organizationId, string position)
-        {
-            _organizationService.UpdateMemberPosition(id, position);
-            NotifySuccess(Resources.Messages.Common.SaveSuccess);
-            return RedirectToAction(nameof(Members), new { id = organizationId });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult RemoveMember(int id)
         {
             var organizationId = _organizationService.RemoveMember(id);

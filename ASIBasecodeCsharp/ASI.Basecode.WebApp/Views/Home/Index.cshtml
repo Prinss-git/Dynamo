@@ -123,7 +123,7 @@ else
             </div>
             <div class="door-act">
                 <a class="btn btn-key btn-block" asp-controller="Attendance" asp-action="Index" asp-route-eventId="@door.Id"><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Open the check-in desk</a>
-                <a class="btn btn-outline btn-block" asp-controller="Event" asp-action="Details" asp-route-id="@door.Id">Event details</a>
+                <a class="btn btn-outline btn-block" asp-controller="Event" asp-action="Details" asp-route-id="@door.Id"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Event details</a>
             </div>
             <div class="pass-foot"><span class="label">@(door.StartTime.Date == AppClock.Today ? "Today's door" : "Next door")</span><span class="label">@door.Venue</span></div>
         </section>

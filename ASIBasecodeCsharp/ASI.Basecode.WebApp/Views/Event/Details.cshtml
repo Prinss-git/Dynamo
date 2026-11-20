@@ -80,7 +80,7 @@
                                 <form asp-controller="Registration" asp-action="Cancel" method="post" data-confirm="Give up your spot for this event?">
                                     <input type="hidden" name="id" value="@Model.MyRegistrationId" />
                                     <input type="hidden" name="returnUrl" value="@Url.Action("Details", new { id = Model.Id })" />
-                                    <button type="submit" class="btn btn-danger btn-block">Cancel registration</button>
+                                    <button type="submit" class="btn btn-danger btn-block"><i class="fa-solid fa-ban" aria-hidden="true"></i> Cancel registration</button>
                                 </form>
                             }
                         </div>
@@ -88,19 +88,19 @@
                     else if (Model.IsRegistrationOpen && !Model.IsEligible)
                     {
                         <p>This event is only open to students of: <strong>@Model.EligibilityText</strong>. Your course isn't on the list, so you can't register.</p>
-                        <button type="button" class="btn btn-key btn-block" disabled aria-disabled="true">Register for this event</button>
+                        <button type="button" class="btn btn-key btn-block" disabled aria-disabled="true"><i class="fa-solid fa-ticket" aria-hidden="true"></i> Register for this event</button>
                     }
                     else if (Model.IsRegistrationOpen && Model.ConflictingEventTitle != null)
                     {
                         <p>This event happens at the same time as <strong>@Model.ConflictingEventTitle</strong>, which you're already registered for. Cancel that registration first if you'd rather attend this one.</p>
-                        <button type="button" class="btn btn-key btn-block" disabled aria-disabled="true">Register for this event</button>
+                        <button type="button" class="btn btn-key btn-block" disabled aria-disabled="true"><i class="fa-solid fa-ticket" aria-hidden="true"></i> Register for this event</button>
                     }
                     else if (Model.IsRegistrationOpen)
                     {
                         <p>@(Model.SlotsLeft == 0 ? "Every seat is taken. Join the waitlist and you'll move up if someone cancels." : "Register to get your pass. You'll show its QR code at the door.")</p>
                         <form asp-controller="Registration" asp-action="Register" method="post">
                             <input type="hidden" name="eventId" value="@Model.Id" />
-                            <button type="submit" class="btn btn-key btn-block">@(Model.SlotsLeft == 0 ? "Join the waitlist" : "Register for this event")</button>
+                            <button type="submit" class="btn btn-key btn-block"><i class="fa-solid fa-ticket" aria-hidden="true"></i> @(Model.SlotsLeft == 0 ? "Join the waitlist" : "Register for this event")</button>
                         </form>
                     }
                     else
@@ -148,10 +148,18 @@
                                     EventStatus.Cancelled => "Cancel event",
                                     _ => status.ToString()
                                 };
+                                var icon = status switch
+                                {
+                                    EventStatus.Open => Model.Status == EventStatus.Draft ? "bullhorn" : "lock-open",
+                                    EventStatus.Closed => "lock",
+                                    EventStatus.Completed => "flag-checkered",
+                                    EventStatus.Cancelled => "ban",
+                                    _ => "arrows-rotate"
+                                };
                                 <form asp-action="ChangeStatus" method="post" data-confirm="@confirm">
                                     <input type="hidden" name="id" value="@Model.Id" />
                                     <input type="hidden" name="status" value="@status" />
-                                    <button type="submit" class="btn btn-block @(status == EventStatus.Cancelled ? "btn-danger" : status == EventStatus.Open && Model.Status == EventStatus.Draft ? "btn-primary" : "btn-outline")">@label</button>
+                                    <button type="submit" class="btn btn-block @(status == EventStatus.Cancelled ? "btn-danger" : status == EventStatus.Open && Model.Status == EventStatus.Draft ? "btn-primary" : "btn-outline")"><i class="fa-solid fa-@icon" aria-hidden="true"></i> @label</button>
                                 </form>
                             }
                         </div>

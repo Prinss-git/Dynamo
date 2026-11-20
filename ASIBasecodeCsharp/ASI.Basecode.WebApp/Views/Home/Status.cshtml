@@ -11,6 +11,6 @@
         notFound ? "The link may be old, or the page may have moved. Check the address, or head back and try again."
                  : "The request couldn't be completed. Go back and try again."))
     <div style="text-align:center;padding:0 16px 32px">
-        <a class="btn btn-primary" href="@(signedIn ? Url.Action("Index", "Home") : Url.Action("Login", "Account"))">@(signedIn ? "Back to dashboard" : "Back to sign in")</a>
+        <a class="btn btn-primary" href="@(signedIn ? Url.Action("Index", "Home") : Url.Action("Login", "Account"))"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> @(signedIn ? "Back to dashboard" : "Back to sign in")</a>
     </div>
 </div>

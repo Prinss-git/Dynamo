@@ -208,7 +208,7 @@
                                     <a class="btn btn-primary btn-sm" asp-action="ResetPassword" asp-route-id="@r.Id"><i class="fa-solid fa-key" aria-hidden="true"></i> Set password</a>
                                     <form asp-action="DismissReset" method="post" class="inline-form" data-confirm="Dismiss the request from @r.Name? Their password stays the same.">
                                         <input type="hidden" name="id" value="@r.Id" />
-                                        <button type="submit" class="btn btn-outline btn-sm">Dismiss</button>
+                                        <button type="submit" class="btn btn-outline btn-sm"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Dismiss</button>
                                     </form>
                                 </div>
                             </td>

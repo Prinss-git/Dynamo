@@ -13,7 +13,6 @@ namespace ASI.Basecode.Services.Interfaces
 
         OrganizationMembersModel GetMembers(int organizationId);
         void AddMember(int organizationId, int memberId, string position);
-        void UpdateMemberPosition(int membershipId, string position);
         int RemoveMember(int membershipId);
 
         /// <summary>Active organizations the user may create events for</summary>

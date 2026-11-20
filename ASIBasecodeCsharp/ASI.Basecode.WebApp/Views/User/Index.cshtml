@@ -71,10 +71,10 @@
                             <td data-label="Status" class="hide-sm">@statusTag</td>
                             <td class="r">
                                 <div class="row-actions">
-                                    <a class="btn btn-outline btn-sm btn-icon" asp-action="Edit" asp-route-id="@u.Id" title="Edit @u.Name" aria-label="Edit @u.Name"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                                    <a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@u.Id" aria-label="Edit @u.Name"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit</a>
                                     <form asp-action="ToggleActive" method="post" class="inline-form" data-confirm="@(u.IsActive ? "Deactivate" : "Reactivate") @u.Name?">
                                         <input type="hidden" name="id" value="@u.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline">@(u.IsActive ? "Deactivate" : "Reactivate")</button>
+                                        <button type="submit" class="btn btn-sm btn-outline"><i class="fa-solid fa-@(u.IsActive ? "user-slash" : "user-check")" aria-hidden="true"></i> @(u.IsActive ? "Deactivate" : "Reactivate")</button>
                                     </form>
                                 </div>
                             </td>

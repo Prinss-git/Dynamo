@@ -27,7 +27,7 @@
                     }
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Add member</button>
+            <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add member</button>
         </form>
     </section>
 
@@ -41,27 +41,18 @@
         {
             <div class="ledger-wrap">
                 <table class="ledger ledger--stack">
-                    <thead><tr><th>Name</th><th>Role</th><th>Position</th><th>Joined</th><th class="r"><span class="sr-only">Actions</span></th></tr></thead>
+                    <thead><tr><th>Name</th><th>Role</th><th>Joined</th><th class="r"><span class="sr-only">Actions</span></th></tr></thead>
                     <tbody>
                         @foreach (var m in Model.Members)
                         {
                             <tr>
                                 <td><div class="cell-main">@m.MemberName</div><div class="cell-sub"><span class="@(m.StudentNumber != null ? "code" : "")">@(m.StudentNumber ?? m.UserId)</span></div></td>
                                 <td data-label="Role">@BadgeHelper.Badge(m.Role)</td>
-                                <td data-label="Position">
-                                    <form asp-action="UpdateMember" method="post" class="row-actions" style="justify-content:flex-start">
-                                        <input type="hidden" name="id" value="@m.Id" />
-                                        <input type="hidden" name="organizationId" value="@m.OrganizationId" />
-                                        <label class="sr-only" for="position-@m.Id">Position of @m.MemberName</label>
-                                        <input type="text" name="position" id="position-@m.Id" value="@m.Position" class="input" maxlength="50" style="min-height:36px;width:150px;padding:4px 10px" />
-                                        <button type="submit" class="btn btn-outline btn-sm">Save</button>
-                                    </form>
-                                </td>
                                 <td data-label="Joined" class="num nowrap">@m.JoinedTime.ToString("MMM d, yyyy")</td>
                                 <td class="r">
                                     <form asp-action="RemoveMember" method="post" class="inline-form" data-confirm="Remove @m.MemberName from this organization?">
                                         <input type="hidden" name="id" value="@m.Id" />
-                                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-user-minus" aria-hidden="true"></i> Remove</button>
                                     </form>
                                 </td>
                             </tr>
