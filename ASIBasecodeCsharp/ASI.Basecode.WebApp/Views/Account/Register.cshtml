@@ -40,7 +40,8 @@
                     </div>
                     <div class="field span-8">
                         <label class="label" asp-for="Course">Course</label>
-                        <select asp-for="Course" class="input">
+                        @* data-combobox: type-to-search course picker (site.js) *@
+                        <select asp-for="Course" class="input" data-combobox data-placeholder="Search your course" data-noun="courses">
                             <option value="">Select your course</option>
                             @foreach (var department in ASI.Basecode.Resources.Constants.Courses.Departments)
                             {

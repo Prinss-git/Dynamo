@@ -59,12 +59,12 @@
                 <label class="sr-only" for="search">Search pending accounts</label>
                 <input id="search" type="search" name="Search" value="@f.Search" class="input" placeholder="Name or student no." />
 
-                <label class="sr-only" for="department">Department</label>
+                <label class="sr-only" for="department">College</label>
                 <select id="department" name="Department" class="input" onchange="this.form.elements.Course.value = ''; this.form.submit()">
-                    <option value="">All departments (@Model.TotalPending)</option>
+                    <option value="">All colleges (@Model.TotalPending)</option>
                     @foreach (var d in Departments.All)
                     {
-                        <option value="@d.Code" title="@d.Name" selected="@(string.Equals(f.Department, d.Code, StringComparison.OrdinalIgnoreCase))">@d.Code (@Model.CountFor(d.Code))</option>
+                        <option value="@d.Code" selected="@(string.Equals(f.Department, d.Code, StringComparison.OrdinalIgnoreCase))">@d.Name (@Model.CountFor(d.Code))</option>
                     }
                     @if (otherCount > 0 || otherSelected)
                     {

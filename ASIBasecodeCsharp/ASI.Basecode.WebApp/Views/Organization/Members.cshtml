@@ -18,7 +18,7 @@
             <div class="field">
                 <label class="label" for="memberId">Person</label>
                 @* data-combobox: site.js turns this into a type-to-search picker (the plain list still works without JavaScript) *@
-                <select name="memberId" id="memberId" class="input" required data-combobox
+                <select name="memberId" id="memberId" class="input" required data-combobox data-avatars
                         data-placeholder="Name or student number" data-noun="people">
                     <option value="">Select a user</option>
                     @foreach (var u in Model.AvailableUsers)

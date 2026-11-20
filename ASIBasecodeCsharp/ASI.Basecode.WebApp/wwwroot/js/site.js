@@ -488,7 +488,8 @@ function initComboboxes() {
     document.querySelectorAll("select[data-combobox]").forEach(function (select, n) {
         var items = Array.prototype.filter.call(select.options, function (o) { return o.value; }).map(function (o) {
             var label = o.getAttribute("data-label") || o.text;
-            var hint = o.getAttribute("data-hint") || "";
+            // second line: the option's own hint, else its group (e.g. a course's college)
+            var hint = o.getAttribute("data-hint") || (o.parentNode.tagName === "OPTGROUP" ? o.parentNode.label : "");
             return { value: o.value, label: label, hint: hint, tag: o.getAttribute("data-tag") || "", haystack: (label + " " + hint).toLowerCase() };
         });
         var noun = select.getAttribute("data-noun") || "results";
@@ -509,6 +510,8 @@ function initComboboxes() {
         input.setAttribute("aria-expanded", "false");
         input.setAttribute("aria-controls", listId);
         select.id = select.id + "-native";
+        var wasRequired = select.required;   // only a required picker blocks submitting without a choice
+        var avatars = select.hasAttribute("data-avatars");   // initials bubble: people yes, courses no
         select.required = false;
         select.tabIndex = -1;
         select.setAttribute("aria-hidden", "true");
@@ -548,6 +551,14 @@ function initComboboxes() {
         wrap.parentNode.insertBefore(error, wrap.nextSibling);
 
         var shown = [];
+
+        // editing a record: show the value it already has
+        var preset = items.filter(function (it) { return it.value === select.value; })[0];
+        if (preset) {
+            input.value = preset.label;
+            wrap.classList.add("has-value");
+            clear.hidden = false;
+        }
         var active = -1;
 
         function setActive(i) {
@@ -587,7 +598,7 @@ function initComboboxes() {
                 li.setAttribute("aria-selected", select.value === it.value ? "true" : "false");
                 var tag = it.tag && it.tag !== "Student"
                     ? '<span class="tag tag-' + escapeHtml(it.tag.toLowerCase()) + '">' + escapeHtml(it.tag) + "</span>" : "";
-                li.innerHTML = '<span class="combo-avatar" aria-hidden="true">' + escapeHtml(initials(it.label)) + "</span>"
+                li.innerHTML = (avatars ? '<span class="combo-avatar" aria-hidden="true">' + escapeHtml(initials(it.label)) + "</span>" : "")
                     + '<span class="combo-text"><span class="combo-name">' + highlight(it.label, terms) + "</span>"
                     + (it.hint ? '<span class="combo-hint">' + highlight(it.hint, terms) + "</span>" : "") + "</span>" + tag;
                 li.addEventListener("mousedown", function (e) { e.preventDefault(); choose(it); });
@@ -657,7 +668,7 @@ function initComboboxes() {
             input.focus();
         });
         select.form && select.form.addEventListener("submit", function (e) {
-            if (select.value) return;
+            if (select.value || !wasRequired) return;
             e.preventDefault();
             e.stopImmediatePropagation();
             error.hidden = false;
