@@ -32,7 +32,7 @@
     </section>
 
     <section class="sheet">
-        <div class="sheet-head"><h2 class="sheet-title">Members</h2><span class="muted num">@Model.Members.Count</span></div>
+        <div class="sheet-head"><h2 class="sheet-title">Members <span class="title-count">@Model.Members.Count</span></h2></div>
         @if (!Model.Members.Any())
         {
             @await Html.PartialAsync("_Empty", ("No members yet", "Add the organization's officers first so they can create events."))

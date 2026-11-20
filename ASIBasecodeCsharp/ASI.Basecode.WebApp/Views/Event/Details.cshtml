@@ -138,6 +138,9 @@
                                 {
                                     EventStatus.Completed => "Mark this event completed? Registered students who never checked in will be recorded Absent.",
                                     EventStatus.Cancelled => "Cancel this event? Students keep their record but can no longer attend. This can't be undone.",
+                                    EventStatus.Open when Model.Status == EventStatus.Draft => "Publish this event? Students can see it and register right away.",
+                                    EventStatus.Open => "Reopen registration? Students can register again until the deadline.",
+                                    EventStatus.Closed => "Close registration? No one else can register. Students who already registered keep their pass.",
                                     _ => $"Change the status to {status}?"
                                 };
                                 var label = status switch

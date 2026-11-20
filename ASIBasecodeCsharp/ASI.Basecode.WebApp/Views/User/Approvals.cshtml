@@ -176,8 +176,7 @@
 @{ var resets = Model.ResetRequests; }
 <section class="sheet" aria-labelledby="reset-title">
     <div class="sheet-head">
-        <h2 class="sheet-title" id="reset-title">Forgot-password requests</h2>
-        @if (resets.Any()) { <span class="nav-count">@resets.Count</span> }
+        <h2 class="sheet-title" id="reset-title">Forgot-password requests @if (resets.Any()) {<span class="title-count is-alert" aria-label="@resets.Count waiting">@resets.Count</span>}</h2>
     </div>
     @if (!resets.Any())
     {
@@ -250,11 +249,7 @@
             table.addEventListener("change", function (e) { if (e.target.name === "ids") sync(); });
             table.addEventListener("pager:render", sync);
 
-            form.querySelectorAll("[data-confirm-button]").forEach(function (b) {
-                b.addEventListener("click", function (e) {
-                    if (!window.confirm(b.getAttribute("data-confirm-button"))) e.preventDefault();
-                });
-            });
+            // the Reject button's data-confirm-button is handled by the shared confirmation dialog (site.js)
             sync();
         })();
     </script>

@@ -1,10 +1,108 @@
-﻿// Ask before destructive actions: <form data-confirm="Are you sure?">
-document.addEventListener("submit", function (e) {
-    var message = e.target.getAttribute("data-confirm");
-    if (message && !window.confirm(message)) {
-        e.preventDefault();
+﻿/* ------------------------------------------------------------------
+   Confirmation dialog (replaces the browser's confirm() popup).
+   - <form data-confirm="Delete 'X'? This can't be undone."> asks before submitting;
+   - <button data-confirm-button="..."> asks before that one button submits.
+   The question becomes the heading, any sentence after it the body. The
+   confirm button copies the clicked button's icon and label, and is red when
+   that button is a danger button. Esc, the backdrop or "Go back" cancels.
+   ------------------------------------------------------------------ */
+var confirmDialog = (function () {
+    var dialog, iconEl, titleEl, textEl, okBtn, backBtn, resolver;
+
+    function build() {
+        dialog = document.createElement("dialog");
+        dialog.className = "confirm";
+        dialog.setAttribute("aria-labelledby", "confirm-title");
+        dialog.setAttribute("aria-describedby", "confirm-text");
+        dialog.innerHTML =
+            '<div class="confirm-main">' +
+            '  <span class="confirm-icon" aria-hidden="true"><i class="fa-solid"></i></span>' +
+            '  <div class="confirm-copy"><h2 class="confirm-title" id="confirm-title"></h2><p class="confirm-text" id="confirm-text"></p></div>' +
+            "</div>" +
+            '<div class="confirm-actions">' +
+            '  <button type="button" class="btn btn-outline" data-act="back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Go back</button>' +
+            '  <button type="button" class="btn" data-act="ok"></button>' +
+            "</div>";
+        document.body.appendChild(dialog);
+        iconEl = dialog.querySelector(".confirm-icon i");
+        titleEl = dialog.querySelector(".confirm-title");
+        textEl = dialog.querySelector(".confirm-text");
+        okBtn = dialog.querySelector('[data-act="ok"]');
+        backBtn = dialog.querySelector('[data-act="back"]');
+        okBtn.addEventListener("click", function () { finish(true); });
+        backBtn.addEventListener("click", function () { finish(false); });
+        dialog.addEventListener("cancel", function (e) { e.preventDefault(); finish(false); });
+        // a click on the dimmed backdrop (outside the panel) cancels
+        dialog.addEventListener("mousedown", function (e) { if (e.target === dialog) finish(false); });
     }
-});
+
+    function finish(result) {
+        if (!dialog.open) return;
+        dialog.close();
+        if (resolver) { var r = resolver; resolver = null; r(result); }
+    }
+
+    // opts: { message, okHtml, danger }
+    return function (opts) {
+        if (!dialog) build();
+        var message = (opts.message || "Are you sure?").trim();
+        var cut = message.indexOf("?");
+        var title = cut >= 0 ? message.slice(0, cut + 1) : message;
+        var rest = cut >= 0 ? message.slice(cut + 1).trim() : "";
+        titleEl.textContent = title;
+        textEl.textContent = rest;
+        textEl.hidden = !rest;
+        dialog.classList.toggle("is-danger", !!opts.danger);
+        iconEl.className = "fa-solid " + (opts.danger ? "fa-triangle-exclamation" : "fa-circle-question");
+        okBtn.className = "btn " + (opts.danger ? "btn-danger-solid" : "btn-primary");
+        okBtn.innerHTML = opts.okHtml || '<i class="fa-solid fa-check" aria-hidden="true"></i> Confirm';
+        return new Promise(function (resolve) {
+            resolver = resolve;
+            dialog.showModal();
+            // destructive: the safe choice has focus, so Enter can't destroy anything by accident
+            (opts.danger ? backBtn : okBtn).focus();
+        });
+    };
+})();
+
+(function () {
+    // Builds the dialog options from the button that was clicked.
+    function optionsFor(message, button) {
+        var label = button ? button.innerHTML.trim() : "";
+        if (button && !/fa-/.test(label)) label = '<i class="fa-solid fa-check" aria-hidden="true"></i> ' + label;
+        return {
+            message: message,
+            okHtml: label || null,
+            danger: !!(button && button.classList.contains("btn-danger"))
+        };
+    }
+
+    function submitConfirmed(form, button) {
+        form.setAttribute("data-confirmed", "");
+        if (form.requestSubmit) form.requestSubmit(button || undefined); else form.submit();
+        form.removeAttribute("data-confirmed");
+    }
+
+    // whole forms: <form data-confirm="...">
+    document.addEventListener("submit", function (e) {
+        var form = e.target;
+        var message = form.getAttribute("data-confirm");
+        if (!message || form.hasAttribute("data-confirmed")) return;
+        e.preventDefault();
+        var button = e.submitter || form.querySelector('[type="submit"]');
+        confirmDialog(optionsFor(message, button)).then(function (ok) { if (ok) submitConfirmed(form, button); });
+    });
+
+    // single buttons: <button data-confirm-button="...">
+    document.addEventListener("click", function (e) {
+        var button = e.target.closest && e.target.closest("[data-confirm-button]");
+        if (!button || button.disabled || !button.form || button.form.hasAttribute("data-confirmed")) return;
+        e.preventDefault();
+        confirmDialog(optionsFor(button.getAttribute("data-confirm-button"), button)).then(function (ok) {
+            if (ok) submitConfirmed(button.form, button);
+        });
+    });
+})();
 
 // Close the mobile account menu when tapping outside it
 document.addEventListener("click", function (e) {

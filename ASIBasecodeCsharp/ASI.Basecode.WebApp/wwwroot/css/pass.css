@@ -359,10 +359,14 @@ textarea.input { min-height: 110px; resize: vertical; }
 .pw-toggle:hover, .pw-toggle[aria-pressed="true"] { color: var(--navy); }
 .pw-toggle:focus-visible { outline: 3px solid var(--gold); outline-offset: -3px; border-radius: 8px; }
 
-.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.sheet-head > .toolbar { flex: 1 1 auto; }
-.toolbar .input { width: auto; flex: 1 1 220px; max-width: 340px; }
-.toolbar select.input { flex: 0 1 190px; }
+/* Filter bars: an even grid, so every filter gets the same width whatever option is selected (a select no longer
+   grows to its longest option and reshuffles the rows). The search box takes two columns on wider screens. */
+.toolbar { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; align-items: center; }
+.sheet-head > .toolbar { flex: 1 1 100%; }
+.toolbar .input, .toolbar select.input { width: 100%; min-width: 0; max-width: none; }
+.toolbar .btn { width: 100%; justify-content: center; }
+.toolbar .check { white-space: nowrap; }
+@media (min-width: 720px) { .toolbar input[type="search"] { grid-column: span 2; } }
 
 .notice { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius); background: var(--gold-wash); color: #5c4300; margin-bottom: 20px; }
 .notice i { margin-top: 3px; }
@@ -645,6 +649,37 @@ body.id-auth .switcher { bottom: 20px; }
 /* green once valid; red only after the user leaves a field empty or invalid, or submits (see site.js) */
 .input.field-unmet { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(168, 35, 28, .16); }
 
+/* ---------- Confirmation dialog (see confirmDialog in site.js) ---------- */
+dialog.confirm {
+    width: min(440px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: var(--radius-pass);
+    background: var(--card); color: var(--ink); box-shadow: 0 24px 60px rgba(14, 42, 71, .28), 0 4px 12px rgba(14, 42, 71, .12);
+    overflow: hidden;
+}
+dialog.confirm[open] { animation: confirm-in .18s var(--ease-out); }
+dialog.confirm::backdrop { background: rgba(14, 42, 71, .45); }
+dialog.confirm[open]::backdrop { animation: confirm-fade .18s ease-out; }
+@keyframes confirm-in { from { opacity: 0; transform: translateY(8px) scale(.97); } }
+@keyframes confirm-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { dialog.confirm[open], dialog.confirm[open]::backdrop { animation: none; } }
+.confirm-main { display: flex; gap: 16px; align-items: flex-start; padding: 24px 24px 20px; }
+.confirm-icon {
+    flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--gold-wash); color: var(--gold-deep); font-size: 1.15rem;
+}
+dialog.confirm.is-danger .confirm-icon { background: var(--bad-wash); color: var(--bad); }
+.confirm-copy { min-width: 0; padding-top: 2px; }
+.confirm-title { font-family: var(--font-label); font-weight: 700; font-size: 1.3rem; line-height: 1.15; color: var(--navy); margin: 0; overflow-wrap: anywhere; }
+.confirm-text { margin: 8px 0 0; color: var(--muted); line-height: 1.5; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; background: var(--card-2); border-top: 1px solid var(--rule); }
+/* the destructive confirm is a solid red, so it can't be mistaken for "Go back" */
+.btn-danger-solid { background: var(--bad); color: #fff; border-color: var(--bad); }
+.btn-danger-solid:hover { background: #8e1d17; border-color: #8e1d17; color: #fff; }
+@media (max-width: 479.98px) {
+    .confirm-main { padding: 20px 18px 16px; gap: 12px; }
+    .confirm-actions { flex-direction: column-reverse; padding: 12px 16px; }
+    .confirm-actions .btn { width: 100%; }
+}
+
 /* ---------- Searchable picker (select[data-combobox], see site.js) ---------- */
 .combo { position: relative; }
 .combo-input { padding-left: 38px; padding-right: 40px; }
@@ -710,6 +745,14 @@ body.id-auth .switcher { bottom: 20px; }
 }
 .nav-item[aria-current="page"] .nav-count { margin-right: 26px; }
 .menu-sheet .nav-count { margin-left: 8px; }
+/* a count that sits right after a section heading, e.g. "Members 28" */
+.title-count {
+    display: inline-flex; align-items: center; justify-content: center; vertical-align: 3px;
+    min-width: 24px; height: 22px; margin-left: 6px; padding: 0 8px; border-radius: 999px;
+    background: var(--idle-wash); color: var(--idle);
+    font-family: var(--font-label); font-weight: 700; font-size: .8rem; letter-spacing: .02em; font-variant-numeric: tabular-nums;
+}
+.title-count.is-alert { background: var(--gold); color: var(--navy); }
 .check-cell { width: 44px; text-align: center; }
 .row-check { width: 20px; height: 20px; accent-color: var(--navy); cursor: pointer; vertical-align: middle; }
 .ledger tbody tr.is-picked td { background: var(--gold-wash); }
