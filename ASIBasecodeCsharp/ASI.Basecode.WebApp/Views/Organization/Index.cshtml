@@ -19,7 +19,7 @@
             <input id="search" type="search" name="search" value="@ViewBag.Search" class="input" placeholder="Search name or acronym" />
             <label class="sr-only" for="status">Status</label>
             <select id="status" name="status" class="input" onchange="this.form.submit()">
-                <option value="">Active and inactive</option>
+                <option value="">All statuses</option>
                 <option value="active" selected="@(ViewBag.OrgStatus == "active")">Active only</option>
                 <option value="inactive" selected="@(ViewBag.OrgStatus == "inactive")">Inactive only</option>
             </select>
