@@ -513,6 +513,16 @@ body.id-auth {
 .auth-logos img { display: block; height: auto; max-width: 100%; }
 .auth-logos img:first-child { width: 96px; }
 .auth-logos img:last-child { width: 180px; }
+/* phones: the partner logos and the footer step back so the sign-in card stays the focus */
+@media (max-width: 719.98px) {
+    .auth-logos { gap: 4px; margin-bottom: 0; }
+    .auth-logos-label { font-size: .6rem; letter-spacing: .1em; }
+    .auth-logos-row { gap: 12px; }
+    .auth-logos img:first-child { width: 62px; }
+    .auth-logos img:last-child { width: 116px; }
+    body.id-auth .foot { padding: 20px 16px 16px !important; font-size: .72rem; line-height: 1.45; }
+    body.id-auth .foot-team { font-size: .6rem; }
+}
 @media (min-width: 1500px) {
     .auth-logos { position: fixed; left: 24px; bottom: 20px; margin: 0; z-index: 50; align-items: flex-start; }
     .auth-logos img:first-child { width: 124px; }
