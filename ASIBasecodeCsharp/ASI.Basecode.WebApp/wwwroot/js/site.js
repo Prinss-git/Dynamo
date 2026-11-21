@@ -701,5 +701,103 @@ function initComboboxes() {
     });
 }
 
-function initForms() { initPasswordToggles(); initPasswordRules(); initRequiredMarkers(); initCoursePicker(); initComboboxes(); }
+/* ------------------------------------------------------------------
+   Plain dropdowns: every ordinary <select class="input"> gets a menu that shows
+   5 options and scrolls for the rest (a native select popup can't be height-limited).
+   The original <select> stays in the form (hidden) and gets the chosen value plus a
+   "change" event, so inline onchange handlers and the server side are unchanged.
+   ------------------------------------------------------------------ */
+function initSelectMenus() {
+    var menu = null, openFor = null;   // one shared popup, reused by every dropdown
+
+    function closeMenu() {
+        if (!menu) return;
+        menu.hidden = true;
+        if (openFor) { openFor.setAttribute("aria-expanded", "false"); openFor = null; }
+    }
+
+    document.querySelectorAll("select.input:not([data-combobox]):not([multiple]):not([size]):not(.combo-native)").forEach(function (select) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = select.className + " smenu-btn";
+        if (select.getAttribute("style")) btn.setAttribute("style", select.getAttribute("style"));
+        btn.id = select.id;
+        btn.setAttribute("aria-haspopup", "listbox");
+        btn.setAttribute("aria-expanded", "false");
+        select.id = select.id ? select.id + "-native" : "";
+        select.required = false;           // a hidden required select would block submit silently
+        select.tabIndex = -1;
+        select.setAttribute("aria-hidden", "true");
+        select.style.display = "none";
+        select.parentNode.insertBefore(btn, select.nextSibling);
+
+        function label() {
+            var o = select.options[select.selectedIndex];
+            btn.textContent = o ? o.text : "";
+        }
+        label();
+
+        function show() {
+            if (!menu) {
+                menu = document.createElement("ul");
+                menu.className = "smenu-list";
+                menu.setAttribute("role", "listbox");
+                menu.hidden = true;
+                document.body.appendChild(menu);
+            }
+            menu.innerHTML = "";
+            var chosenLi = null, activeLi = null;
+            Array.prototype.forEach.call(select.options, function (o) {
+                var li = document.createElement("li");
+                li.className = "smenu-opt" + (o.selected ? " is-chosen" : "") + (o.disabled ? " is-disabled" : "");
+                li.setAttribute("role", "option");
+                li.setAttribute("aria-selected", o.selected ? "true" : "false");
+                li.textContent = o.text;
+                if (o.selected) chosenLi = li;
+                if (!o.disabled) li.addEventListener("mousedown", function (e) {
+                    e.preventDefault();
+                    var changed = select.value !== o.value;
+                    select.value = o.value;
+                    label();
+                    closeMenu();
+                    btn.focus();
+                    if (changed) select.dispatchEvent(new Event("change", { bubbles: true }));
+                });
+                menu.appendChild(li);
+            });
+            var r = btn.getBoundingClientRect();
+            menu.style.left = r.left + "px";
+            menu.style.minWidth = r.width + "px";
+            menu.style.top = (r.bottom + 4) + "px";
+            menu.hidden = false;
+            // not enough room below: open upward
+            var mr = menu.getBoundingClientRect();
+            if (mr.bottom > window.innerHeight - 8 && r.top > mr.height + 8) menu.style.top = (r.top - mr.height - 4) + "px";
+            openFor = btn;
+            btn.setAttribute("aria-expanded", "true");
+            if (chosenLi) chosenLi.scrollIntoView({ block: "nearest" });
+        }
+
+        btn.addEventListener("click", function () { if (openFor === btn) closeMenu(); else { closeMenu(); show(); } });
+        btn.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") { closeMenu(); return; }
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                e.preventDefault();
+                var i = select.selectedIndex + (e.key === "ArrowDown" ? 1 : -1);
+                while (i >= 0 && i < select.options.length && select.options[i].disabled) i += (e.key === "ArrowDown" ? 1 : -1);
+                if (i < 0 || i >= select.options.length) return;
+                select.selectedIndex = i;
+                label();
+                if (openFor === btn) show();
+                select.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+        });
+        btn.addEventListener("blur", closeMenu);
+    });
+
+    window.addEventListener("resize", closeMenu);
+    window.addEventListener("scroll", function (e) { if (!(menu && e.target === menu)) closeMenu(); }, true);
+}
+
+function initForms() { initPasswordToggles(); initPasswordRules(); initRequiredMarkers(); initCoursePicker(); initComboboxes(); initSelectMenus(); }
 if (window.jQuery) { jQuery(initForms); } else { document.addEventListener("DOMContentLoaded", initForms); }

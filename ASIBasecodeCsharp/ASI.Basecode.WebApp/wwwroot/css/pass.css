@@ -744,7 +744,19 @@ dialog.confirm.is-danger .confirm-icon { background: var(--bad-wash); color: var
 }
 @keyframes combo-in { from { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .combo-pop { animation: none; } }
-.combo-list { list-style: none; margin: 0; padding: 6px; max-height: 292px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--rule-strong) transparent; }
+/* plain dropdowns (site.js initSelectMenus): 5 rows visible, the rest scrolls */
+.smenu-btn { text-align: left; cursor: pointer; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 34px; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+.smenu-list {
+    position: fixed; z-index: 1000; list-style: none; margin: 0; padding: 4px; max-width: min(92vw, 420px);
+    max-height: calc(5 * 40px + 8px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--rule-strong) transparent;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow-2);
+}
+.smenu-list[hidden] { display: none; }
+.smenu-opt { min-height: 40px; display: flex; align-items: center; padding: 6px 10px; border-radius: 6px; cursor: pointer; color: var(--ink); }
+.smenu-opt:hover { background: var(--card-2); }
+.smenu-opt.is-chosen { font-weight: 700; color: var(--navy); background: var(--gold-wash); }
+.smenu-opt.is-disabled { color: var(--muted); cursor: default; }
+.combo-list { list-style: none; margin: 0; padding: 6px; max-height: 272px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--rule-strong) transparent; }
 .combo-opt { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 7px 10px; border-radius: 8px; cursor: pointer; }
 .combo-opt.is-active { background: var(--card-2); box-shadow: inset 0 0 0 1px var(--rule); }
 .combo-opt.is-chosen .combo-avatar { background: var(--gold); }
