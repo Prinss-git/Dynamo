@@ -17,12 +17,12 @@
             <p class="auth-sub">Use the username you registered with.</p>
             <form method="post" asp-controller="Account" asp-action="Login" id="loginForm" novalidate>
                 <div class="field">
-                    <label class="label" asp-for="UserId">Username</label>
+                    <label class="label" asp-for="UserId">Username<span class="req" title="Required">*</span></label>
                     <input asp-for="UserId" class="input" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus />
                     <span asp-validation-for="UserId" class="text-danger"></span>
                 </div>
                 <div class="field">
-                    <label class="label" asp-for="Password">Password</label>
+                    <label class="label" asp-for="Password">Password<span class="req" title="Required">*</span></label>
                     <input asp-for="Password" type="password" class="input" autocomplete="current-password" />
                     <span asp-validation-for="Password" class="text-danger"></span>
                     <a class="field-link" asp-controller="Account" asp-action="ForgotPassword">Forgot password?</a>

@@ -18,7 +18,7 @@
 }
 
 <section class="sheet" style="max-width:880px">
-    <form asp-action="@(isNew ? "Create" : "Edit")" method="post" class="sheet-body">
+    <form asp-action="@(isNew ? "Create" : "Edit")" method="post" class="sheet-body" data-live-required>
         <input type="hidden" asp-for="Id" />
         <div asp-validation-summary="All"></div>
 

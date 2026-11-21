@@ -65,7 +65,7 @@
             @if (Model.AvailableUsers.Any())
             {
                 <div class="field" style="margin-bottom:0">
-                    <label class="label" for="memberId">Person</label>
+                    <label class="label" for="memberId">Person<span class="req" title="Required">*</span></label>
                     @* data-combobox: site.js turns this into a type-to-search picker (the plain list still works without JavaScript) *@
                     <select name="memberId" id="memberId" class="input" required data-combobox data-avatars
                             data-placeholder="Name or student number" data-noun="people">
