@@ -225,6 +225,9 @@
   <data name="RemarksTooLong" xml:space="preserve">
     <value>Remarks must be 250 characters or fewer.</value>
   </data>
+  <data name="VenueConflict" xml:space="preserve">
+    <value>The venue is already booked for "{0}" during this time. Choose a different venue or time.</value>
+  </data>
   <data name="EventMustStartInFuture" xml:space="preserve">
     <value>The event must start in the future.</value>
   </data>

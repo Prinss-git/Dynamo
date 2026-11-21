@@ -131,6 +131,8 @@ namespace ASI.Basecode.Services.Services
                 throw new InvalidDataException(Resources.Messages.Errors.DeadlineMustBeInFuture);
             }
 
+            EnsureVenueIsFree(model, null);
+
             // STEP 3: copy the form into a new Event, always starting as Draft, with who/when for the audit fields
             var entity = new Event();
             model.ApplyTo(entity);
@@ -145,8 +147,29 @@ namespace ASI.Basecode.Services.Services
                 entity.AllowedCourses.Add(new EventAllowedCourse { Course = course });
             }
 
-            _repository.AddEvent(entity);
+            _repository.AddEvent(entity); 
             return entity.Id;
+        }
+
+        /// <summary>Rejects the event if another active event uses the same venue during an overlapping time.</summary>
+        private void EnsureVenueIsFree(EventViewModel model, int? excludeEventId)
+        {
+            var venue = (model.Venue ?? string.Empty).Trim().ToLower();
+            if (venue.Length == 0)
+            {
+                return;
+            }
+            var conflict = _repository.GetEvents()
+                .Where(e => e.Status != EventStatus.Cancelled
+                         && (excludeEventId == null || e.Id != excludeEventId)
+                         && e.Venue != null && e.Venue.Trim().ToLower() == venue
+                         && e.StartTime < model.EndTime && model.StartTime < e.EndTime)
+                .Select(e => e.Title)
+                .FirstOrDefault();
+            if (conflict != null)
+            {
+                throw new InvalidDataException(string.Format(Resources.Messages.Errors.VenueConflict, conflict));
+            }
         }
 
         /// <summary>Edits an event, then fills any newly freed slots from the waitlist.</summary>
@@ -170,6 +193,8 @@ namespace ASI.Basecode.Services.Services
             {
                 throw new InvalidDataException(Resources.Messages.Errors.DeadlineMustBeInFuture);
             }
+
+            EnsureVenueIsFree(model, entity.Id);
 
             // STEP 2: capacity can't go below the students already registered (we never un-register anyone)
             var registeredCount = entity.Registrations.Count(r => r.Status == RegistrationStatus.Registered);

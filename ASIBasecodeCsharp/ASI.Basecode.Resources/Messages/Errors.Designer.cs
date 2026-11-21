@@ -387,6 +387,15 @@ namespace ASI.Basecode.Resources.Messages {
         /// <summary>
         ///   Looks up a localized string similar to The event must start in the future..
         /// </summary>
+        public static string VenueConflict {
+            get {
+                return ResourceManager.GetString("VenueConflict", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The event must start in the future..
+        /// </summary>
         public static string EventMustStartInFuture {
             get {
                 return ResourceManager.GetString("EventMustStartInFuture", resourceCulture);
