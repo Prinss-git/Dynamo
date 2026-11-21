@@ -25,7 +25,20 @@ else
                     <h3 class="pass-title"><a asp-controller="Event" asp-action="Details" asp-route-id="@e.Id">@e.Title</a></h3>
                     @if (!e.IsOpenToAll)
                     {
-                        <p class="for-tag"><i class="fa-solid fa-user-graduate" aria-hidden="true"></i> For @e.EligibilityText</p>
+                        @* one line with an ellipsis; hover / focus / tap shows every allowed course *@
+                        <div class="for-tag" tabindex="0" aria-label="Open to @e.EligibilityText">
+                            <i class="fa-solid fa-user-graduate" aria-hidden="true"></i>
+                            <span class="for-tag-text">For @e.EligibilityText</span>
+                            <div class="for-pop" role="tooltip">
+                                <span class="label">Open to</span>
+                                <ul class="chips">
+                                    @foreach (var item in Courses.Describe(e.AllowedCourses))
+                                    {
+                                        <li class="chip">@item</li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
                     }
                     <dl class="pass-fields">
                         <div><dt class="label">Date</dt><dd>@e.StartTime.ToString("ddd, MMM d")</dd></div>

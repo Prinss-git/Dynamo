@@ -10,56 +10,108 @@
     </div>
 </div>
 
-<div class="split">
-    <section class="sheet">
-        <div class="sheet-head"><h2 class="sheet-title">Add a member</h2></div>
-        <form asp-action="AddMember" method="post" class="sheet-body">
-            <input type="hidden" name="organizationId" value="@Model.Organization.Id" />
-            <div class="field">
-                <label class="label" for="memberId">Person</label>
-                @* data-combobox: site.js turns this into a type-to-search picker (the plain list still works without JavaScript) *@
-                <select name="memberId" id="memberId" class="input" required data-combobox data-avatars
-                        data-placeholder="Name or student number" data-noun="people">
-                    <option value="">Select a user</option>
-                    @foreach (var u in Model.AvailableUsers)
+<section class="sheet">
+    <div class="sheet-head">
+        <h2 class="sheet-title">Members <span class="title-count">@Model.Members.Count</span></h2>
+        <div class="sheet-tools">
+            @if (Model.Members.Any())
+            {
+                <label class="sr-only" for="member-filter">Search members</label>
+                <input type="search" id="member-filter" class="input" placeholder="Search name or student no." />
+            }
+            <button type="button" class="btn btn-primary" data-open-modal="add-member-modal"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add member</button>
+        </div>
+    </div>
+    @if (!Model.Members.Any())
+    {
+        @await Html.PartialAsync("_Empty", ("No members yet", "Add the organization's officers first so they can create events."))
+    }
+    else
+    {
+        <div class="ledger-wrap">
+            <table class="ledger ledger--stack" id="member-table">
+                <thead><tr><th>Name</th><th>Role</th><th>Joined</th><th class="r"><span class="sr-only">Actions</span></th></tr></thead>
+                <tbody>
+                    @foreach (var m in Model.Members)
                     {
-                        <option value="@u.Id" data-label="@u.Label" data-hint="@u.Hint" data-tag="@u.Tag">@u.Text</option>
+                        <tr data-search="@($"{m.MemberName} {m.StudentNumber} {m.UserId}".ToLowerInvariant())">
+                            <td><div class="cell-main">@m.MemberName</div><div class="cell-sub"><span class="@(m.StudentNumber != null ? "code" : "")">@(m.StudentNumber ?? m.UserId)</span></div></td>
+                            <td data-label="Role">@BadgeHelper.Badge(m.Role)</td>
+                            <td data-label="Joined" class="num nowrap">@m.JoinedTime.ToString("MMM d, yyyy")</td>
+                            <td class="r">
+                                <form asp-action="RemoveMember" method="post" class="inline-form" data-confirm="Remove @m.MemberName from this organization?">
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-user-minus" aria-hidden="true"></i> Remove</button>
+                                </form>
+                            </td>
+                        </tr>
                     }
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add member</button>
-        </form>
-    </section>
+                </tbody>
+            </table>
+        </div>
+        <p class="filter-empty muted" id="member-filter-empty" hidden>No member matches that search.</p>
+    }
+</section>
 
-    <section class="sheet">
-        <div class="sheet-head"><h2 class="sheet-title">Members <span class="title-count">@Model.Members.Count</span></h2></div>
-        @if (!Model.Members.Any())
-        {
-            @await Html.PartialAsync("_Empty", ("No members yet", "Add the organization's officers first so they can create events."))
-        }
-        else
-        {
-            <div class="ledger-wrap">
-                <table class="ledger ledger--stack">
-                    <thead><tr><th>Name</th><th>Role</th><th>Joined</th><th class="r"><span class="sr-only">Actions</span></th></tr></thead>
-                    <tbody>
-                        @foreach (var m in Model.Members)
+@* "Add member" dialog (opened by the button above; see data-open-modal in site.js) *@
+<dialog class="modal" id="add-member-modal" aria-labelledby="add-member-title">
+    <form asp-action="AddMember" method="post">
+        <div class="modal-head">
+            <h2 class="modal-title" id="add-member-title">Add a member</h2>
+            <button type="button" class="modal-close" data-close-modal aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" name="organizationId" value="@Model.Organization.Id" />
+            @if (Model.AvailableUsers.Any())
+            {
+                <div class="field" style="margin-bottom:0">
+                    <label class="label" for="memberId">Person</label>
+                    @* data-combobox: site.js turns this into a type-to-search picker (the plain list still works without JavaScript) *@
+                    <select name="memberId" id="memberId" class="input" required data-combobox data-avatars
+                            data-placeholder="Name or student number" data-noun="people">
+                        <option value="">Select a user</option>
+                        @foreach (var u in Model.AvailableUsers)
                         {
-                            <tr>
-                                <td><div class="cell-main">@m.MemberName</div><div class="cell-sub"><span class="@(m.StudentNumber != null ? "code" : "")">@(m.StudentNumber ?? m.UserId)</span></div></td>
-                                <td data-label="Role">@BadgeHelper.Badge(m.Role)</td>
-                                <td data-label="Joined" class="num nowrap">@m.JoinedTime.ToString("MMM d, yyyy")</td>
-                                <td class="r">
-                                    <form asp-action="RemoveMember" method="post" class="inline-form" data-confirm="Remove @m.MemberName from this organization?">
-                                        <input type="hidden" name="id" value="@m.Id" />
-                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-user-minus" aria-hidden="true"></i> Remove</button>
-                                    </form>
-                                </td>
-                            </tr>
+                            <option value="@u.Id" data-label="@u.Label" data-hint="@u.Hint" data-tag="@u.Tag">@u.Text</option>
                         }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </section>
-</div>
+                    </select>
+                </div>
+            }
+            else
+            {
+                <p class="muted" style="margin:0">Everyone with an active account is already a member.</p>
+            }
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline" data-close-modal><i class="fa-solid fa-xmark" aria-hidden="true"></i> Cancel</button>
+            @if (Model.AvailableUsers.Any())
+            {
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add member</button>
+            }
+        </div>
+    </form>
+</dialog>
+
+@section Scripts {
+    <script>
+        (function () {
+            // search the member list (rows already on the page; works with the table's page numbers)
+            var filter = document.getElementById("member-filter");
+            var table = document.getElementById("member-table");
+            var empty = document.getElementById("member-filter-empty");
+            if (filter && table) {
+                filter.addEventListener("input", function () {
+                    var term = this.value.trim().toLowerCase();
+                    var shown = 0;
+                    table.querySelectorAll("tbody tr").forEach(function (row) {
+                        var hit = row.dataset.search.indexOf(term) >= 0;
+                        if (hit) { row.removeAttribute("data-filtered-out"); shown++; }
+                        else row.setAttribute("data-filtered-out", "");
+                    });
+                    if (table.pager) table.pager.render();
+                    empty.hidden = shown > 0;
+                });
+            }
+        })();
+    </script>
+}

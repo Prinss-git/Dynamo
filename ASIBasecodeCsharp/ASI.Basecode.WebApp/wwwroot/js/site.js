@@ -1,4 +1,27 @@
 ﻿/* ------------------------------------------------------------------
+   Simple dialogs: <button data-open-modal="dialog-id"> opens <dialog id="dialog-id" class="modal">;
+   [data-close-modal], Esc or a click on the dimmed backdrop closes it. The first field gets focus.
+   ------------------------------------------------------------------ */
+document.addEventListener("click", function (e) {
+    var opener = e.target.closest && e.target.closest("[data-open-modal]");
+    if (opener) {
+        var dialog = document.getElementById(opener.getAttribute("data-open-modal"));
+        if (dialog && !dialog.open) {
+            dialog.showModal();
+            var first = dialog.querySelector(".modal-body input:not([type=hidden]), .modal-body select, .modal-body textarea");
+            if (first) first.focus();
+        }
+        return;
+    }
+    var closer = e.target.closest && e.target.closest("[data-close-modal]");
+    if (closer && closer.closest("dialog")) closer.closest("dialog").close();
+});
+document.addEventListener("mousedown", function (e) {
+    // a press on the backdrop (the dialog element itself, outside its panel) closes it
+    if (e.target.matches && e.target.matches("dialog.modal[open]")) e.target.close();
+});
+
+/* ------------------------------------------------------------------
    Confirmation dialog (replaces the browser's confirm() popup).
    - <form data-confirm="Delete 'X'? This can't be undone."> asks before submitting;
    - <button data-confirm-button="..."> asks before that one button submits.

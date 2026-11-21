@@ -24,7 +24,21 @@
                 <dt class="label">Venue</dt>
                 <dd>@Model.Venue</dd>
                 <dt class="label">Open to</dt>
-                <dd>@Model.EligibilityText</dd>
+                <dd>
+                    @if (Model.IsOpenToAll)
+                    {
+                        <span class="chip is-all">All students</span>
+                    }
+                    else
+                    {
+                        <ul class="chips">
+                            @foreach (var item in Courses.Describe(Model.AllowedCourses))
+                            {
+                                <li class="chip">@item</li>
+                            }
+                        </ul>
+                    }
+                </dd>
                 <dt class="label">Register by</dt>
                 <dd>@Model.RegistrationDeadline.ToString("MMMM d, yyyy · h:mm tt")</dd>
                 <dt class="label">Seats</dt>
