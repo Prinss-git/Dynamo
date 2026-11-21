@@ -101,7 +101,7 @@
                     }
                     else if (Model.IsRegistrationOpen && !Model.IsEligible)
                     {
-                        <p>This event is only open to students of: <strong>@Model.EligibilityText</strong>. Your course isn't on the list, so you can't register.</p>
+                        <p>This event is only for the courses listed under <strong>Open to</strong>. Your course isn't one of them, so you can't register.</p>
                         <button type="button" class="btn btn-key btn-block" disabled aria-disabled="true"><i class="fa-solid fa-ticket" aria-hidden="true"></i> Register for this event</button>
                     }
                     else if (Model.IsRegistrationOpen && Model.ConflictingEventTitle != null)
